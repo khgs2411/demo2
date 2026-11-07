@@ -108,3 +108,73 @@ describe("booking slot selection and request", () => {
 		expect(transition(selected, { type: "slots_refresh_requested" })).toEqual(loading);
 	});
 });
+
+describe("booking transition table", () => {
+	const signingIn: BookingState = { ...account, step: "signing_in" };
+	const signingUp: BookingState = { ...account, step: "signing_up" };
+	const requested: BookingState = { step: "requested", selection: selected.selection, userId: "visitor", registration };
+	const authFailure: BookingState = { step: "failed", operation: "auth", reason: "generic", resume: account };
+	const profileFailure: BookingState = { step: "failed", operation: "profile", reason: "generic", resume: profile };
+	const slotsFailure: BookingState = { step: "failed", operation: "slots", reason: "generic", resume: loading };
+	const registrationFailure: BookingState = { step: "failed", operation: "registration", reason: "generic", resume: loading };
+	const closed: BookingState = { ...loading, availability: "not_open" };
+	const stateCases = { initialState, account, signingIn, signingUp, profile, loading, ready, selected, submitting, requested, authFailure, profileFailure, slotsFailure, registrationFailure, closed };
+	const eventCases = {
+		chosen,
+		signIn: { type: "auth_started", method: "sign_in" },
+		signUp: { type: "auth_started", method: "sign_up" },
+		google: { type: "auth_started", method: "google" },
+		redirectStarted: { type: "auth_redirect_started" },
+		signedIn: { type: "signed_in", userId: "visitor" },
+		profileSaved: { type: "profile_saved" },
+		notOpen: { type: "booking_not_open" },
+		refresh: { type: "slots_refresh_requested" },
+		loaded: { type: "slots_loaded", slots: [slot] },
+		slotChosen: { type: "slot_chosen", slotId: slot.id },
+		submit: { type: "submit_requested" },
+		registered: { type: "registration_requested", registration },
+		full: { type: "slot_full" },
+		unauthenticated: { type: "unauthenticated" },
+		restored: { type: "redirect_restored", selection, profileUserId: "visitor", userId: "visitor" },
+		authFailed: { type: "operation_failed", operation: "auth", reason: "generic" },
+		profileFailed: { type: "operation_failed", operation: "profile", reason: "generic" },
+		slotsFailed: { type: "operation_failed", operation: "slots", reason: "generic" },
+		registrationFailed: { type: "operation_failed", operation: "registration", reason: "generic" },
+		retry: { type: "retry_requested" },
+		restart: { type: "restarted" },
+	} satisfies Record<string, BookingEvent>;
+	type EventName = keyof typeof eventCases;
+	const expected: Record<keyof typeof stateCases, Partial<Record<EventName, BookingState>>> = {
+		initialState: { chosen: account, restored: loading },
+		account: { signIn: signingIn, signUp: signingUp, google: signingIn, signedIn: profile, authFailed: authFailure },
+		signingIn: { signedIn: profile, authFailed: authFailure },
+		signingUp: { signedIn: profile, authFailed: authFailure },
+		profile: { profileSaved: loading, profileFailed: profileFailure },
+		loading: { notOpen: closed, refresh: loading, loaded: ready, slotsFailed: slotsFailure },
+		ready: { notOpen: closed, refresh: loading, loaded: ready, slotChosen: selected, slotsFailed: slotsFailure },
+		selected: { notOpen: closed, refresh: loading, loaded: selected, slotChosen: selected, submit: submitting, slotsFailed: slotsFailure },
+		submitting: { registered: requested, full: { ...loading, notice: "slot_full" }, registrationFailed: registrationFailure },
+		requested: {},
+		authFailure: { retry: account }, profileFailure: { retry: profile },
+		slotsFailure: { retry: loading }, registrationFailure: { retry: loading },
+		closed: { notOpen: closed, refresh: loading, loaded: ready, slotsFailed: slotsFailure },
+	};
+
+	for (const [name, state] of Object.entries(stateCases)) {
+		for (const [eventName, event] of Object.entries(eventCases)) {
+			it(`${name} × ${eventName}`, () => {
+				const before = structuredClone(state);
+				const expectedState = eventName === "restart" ? initialState
+					: eventName === "unauthenticated" && "selection" in state ? { step: "needs_account", selection: state.selection }
+						: expected[name as keyof typeof stateCases][eventName as EventName];
+				const next = transition(Object.freeze(state), Object.freeze(event));
+				if (expectedState) expect(next).toEqual(expectedState);
+				else expect(next).toBe(state);
+				expect(state).toEqual(before);
+			});
+		}
+		it(`${name} ignores unknown events`, () => {
+			expect(transition(state, { type: "unknown" } as unknown as BookingEvent)).toBe(state);
+		});
+	}
+});

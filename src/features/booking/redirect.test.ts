@@ -14,6 +14,9 @@ describe("booking OAuth redirect persistence", () => {
 		const restored = restoreBookingRedirect("visitor");
 		expect(restored).not.toBeNull();
 		expect(transition(initialState, restored!)).toEqual(slotState);
+		const slot = { id: "slot-1", startsAt: "2026-11-10T09:00:00Z", canRegister: true, canCancelRegistration: false, userRegistrationState: null };
+		expect(transition(transition(initialState, restored!), { type: "slots_loaded", slots: [slot] }))
+			.toEqual({ ...slotState, slots: [slot], availability: "ready" });
 		expect(restoreBookingRedirect("visitor")).toBeNull();
 	});
 
@@ -41,6 +44,7 @@ describe("booking OAuth redirect persistence", () => {
 		clearBookingRedirect();
 		expect(restoreBookingRedirect("visitor")).toBeNull();
 		expect(saveBookingRedirect(initialState)).toBe(false);
+		expect(saveBookingRedirect({ step: "requested", selection, userId: "visitor", registration: { id: "request-1", classId: "slot-1", status: "pending" } })).toBe(false);
 	});
 
 	it.each([

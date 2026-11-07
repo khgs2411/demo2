@@ -6,8 +6,7 @@ type RedirectIntent = { selection: BookingSelection; profileUserId: string | nul
 type RedirectStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
 export function saveBookingRedirect(state: BookingState, storage?: RedirectStorage): boolean {
-	if (state.step === "failed") return saveBookingRedirect(state.resume, storage);
-	if (state.step === "choosing_package" || state.step === "requested") return false;
+	if (state.step === "choosing_package" || state.step === "requested" || state.step === "failed") return false;
 	const intent: RedirectIntent = {
 		selection: state.selection,
 		profileUserId: state.step === "choosing_slot" || state.step === "submitting" ? state.userId : null,

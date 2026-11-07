@@ -78,6 +78,13 @@ describe("booking profile", () => {
 	it("handles an unconfigured SDK as a recoverable failure", async () => {
 		expect(await createBookingAdapter(null, refresh).saveProfile(profile, selection)).toEqual({ type: "operation_failed", operation: "profile", reason: "generic" });
 	});
+
+	it("allows an omitted website and maps a rejected profile update", async () => {
+		sdk.profile.update.mockRejectedValueOnce(new Error("offline"));
+		const { websiteUrl, ...withoutWebsite } = profile;
+		expect(await adapter.saveProfile(withoutWebsite, selection)).toEqual({ type: "operation_failed", operation: "profile", reason: "generic" });
+		expect(sdk.profile.update).toHaveBeenCalledWith(expect.objectContaining({ metadata: expect.objectContaining({ website_url: null }) }));
+	});
 });
 
 const range = { start: "2026-11-08", end: "2026-11-14" };
@@ -136,6 +143,19 @@ describe("booking slot SDK adapter", () => {
 		expect(sdk.classes.list).not.toHaveBeenCalled();
 	});
 
+	it("preserves an approved backend result instead of assuming a pending status", async () => {
+		sdk.classes.register.mockResolvedValueOnce({ data: { ...registered, status: "approved", registration: { ...registered.registration, status: "approved" } }, error: null });
+		expect(await adapter.requestRegistration("slot-1", "system", range)).toEqual([
+			{ type: "registration_requested", registration: { id: "request-1", classId: "slot-1", status: "approved" } },
+		]);
+	});
+
+	it("maps rejected registration promises without replay", async () => {
+		sdk.classes.register.mockRejectedValueOnce(new Error("offline"));
+		expect(await adapter.requestRegistration("slot-1", "system", range)).toEqual([{ type: "operation_failed", operation: "registration", reason: "generic" }]);
+		expect(sdk.classes.register).toHaveBeenCalledOnce();
+	});
+
 	it("refreshes the list after the backend capacity race without replaying registration", async () => {
 		provideTemplate();
 		sdk.classes.register.mockResolvedValueOnce({ data: null, error: { code: "bad_request", message: "class_capacity_full" } });
@@ -166,11 +186,15 @@ describe("booking slot SDK adapter", () => {
 
 	it("runs the package → authenticated profile → requested path through the real machine", async () => {
 		provideTemplate();
+		sdk.profile.update.mockResolvedValueOnce({ data: {
+			profile: { customer_id: "customer-1", user_id: "visitor", display_name: profile.displayName, contact_email: null, phone_number: profile.phoneNumber },
+			product_user: { customer_id: "customer-1", user_id: "visitor", metadata: {} },
+		}, error: null });
 		sdk.classes.list.mockResolvedValueOnce({ data: { classes: [sdkSlot] }, error: null });
 		sdk.classes.register.mockResolvedValueOnce({ data: registered, error: null });
 		let state = transition(initialState, { type: "package_chosen", packageId: "system", addonInterests: [] });
 		state = transition(state, await adapter.signIn("visitor@example.com", "test-password"));
-		state = transition(state, { type: "profile_saved" });
+		state = transition(state, await adapter.saveProfile(profile, selection));
 		state = transition(state, await adapter.loadSlots("system", range));
 		state = transition(state, { type: "slot_chosen", slotId: "slot-1" });
 		state = transition(state, { type: "submit_requested" });

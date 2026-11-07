@@ -74,8 +74,10 @@ export function transition(state: BookingState, event: BookingEvent): BookingSta
 		if (event.operation !== operation) return state;
 		const resume = state.step === "submitting"
 			? chooseSlot({ ...state.selection, slotId: null }, state.userId)
-			: state.step === "signing_up" || state.step === "signing_in"
-				? { ...state, step: "needs_account" as const } : state;
+			: state.step === "choosing_slot"
+				? { ...chooseSlot({ ...state.selection, slotId: null }, state.userId), notice: state.notice }
+				: state.step === "signing_up" || state.step === "signing_in"
+					? { ...state, step: "needs_account" as const } : state;
 		if (resume.step === "choosing_package" || resume.step === "requested") return state;
 		return { step: "failed", operation: event.operation, reason: event.reason, resume };
 	}
