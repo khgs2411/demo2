@@ -14,7 +14,10 @@ export const he = {
 		languageSwitch: "EN",
 		languageSwitchLabel: "מעבר לאנגלית",
 	},
-	showcase: { title: "ברוכים הבאים", placeholder: "היכרות עם השירותים שלנו תופיע כאן." },
+	showcase: {
+		title: "ברוכים הבאים", placeholder: "היכרות עם השירותים שלנו תופיע כאן.",
+		scene: { studio: "סטודיו נועה", open: "פתוח", customers: "לקוחות", bookings: "פגישות", requests: "בקשות" },
+	},
 	packages: { title: "חבילות", placeholder: "החבילות שלנו יופיעו כאן." },
 	"admin-sim": { title: "הדגמה", placeholder: "הדגמת המערכת תופיע כאן." },
 	booking: {

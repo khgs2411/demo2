@@ -14,7 +14,10 @@ export const en = {
 		languageSwitch: "עב",
 		languageSwitchLabel: "Switch to Hebrew",
 	},
-	showcase: { title: "Welcome", placeholder: "An introduction to our services will appear here." },
+	showcase: {
+		title: "Welcome", placeholder: "An introduction to our services will appear here.",
+		scene: { studio: "Noa Studio", open: "Open", customers: "Customers", bookings: "Bookings", requests: "Requests" },
+	},
 	packages: { title: "Packages", placeholder: "Our packages will appear here." },
 	"admin-sim": { title: "Demo", placeholder: "A demonstration of the system will appear here." },
 	booking: {
