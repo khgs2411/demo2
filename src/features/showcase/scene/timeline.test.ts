@@ -31,15 +31,46 @@ describe("the approved diorama timeline", () => {
 		expect(frame.chapterOpacities).toEqual([0, 0, 0, 0, 1]);
 		expect(frame.log).toBe("deploy ✓ live");
 	});
-	it("crossfades chapters without jumps over 0.05 at steps of 0.005", () => {
+	it("keeps the 0.035 fades continuous at steps of 0.005", () => {
 		for (let i = 1; i <= 200; i++) {
 			const before = timeline((i - 1) * 0.005, 0).chapterOpacities;
 			timeline(i * 0.005, 0).chapterOpacities.forEach((opacity, chapter) => {
 				expect(opacity).toBeGreaterThanOrEqual(0);
 				expect(opacity).toBeLessThanOrEqual(1);
-				expect(Math.abs(opacity - before[chapter])).toBeLessThanOrEqual(0.05 + Number.EPSILON * 8);
+				expect(Math.abs(opacity - before[chapter])).toBeLessThanOrEqual(0.005 / 0.035 + Number.EPSILON * 8);
 			});
 		}
+	});
+	it("never shows two chapters at any sampled progress", () => {
+		for (let i = 0; i <= 200; i++) {
+			expect(timeline(i * 0.005, 0).chapterOpacities.filter(opacity => opacity > 0).length).toBeLessThanOrEqual(1);
+		}
+		expect(timeline(0.5, 0).chapterOpacities[2]).toBeGreaterThan(0);
+		expect(timeline(0.5, 0).chapterOpacities[3]).toBe(0);
+	});
+	it("uses the approved plateau windows and 0.035 fades", () => {
+		for (const [chapter, start, end] of [[1, .13, .35], [2, .38, .52], [3, .55, .78]]) {
+			expect(timeline(start, 0).chapterOpacities[chapter]).toBe(0);
+			expect(timeline(end, 0).chapterOpacities[chapter]).toBe(0);
+			expect(timeline(start + .035 / 2, 0).chapterOpacities[chapter]).toBeCloseTo(.5);
+			expect(timeline((start + end) / 2, 0).chapterOpacities[chapter]).toBe(1);
+			expect(timeline(end - .035 / 2, 0).chapterOpacities[chapter]).toBeCloseTo(.5);
+		}
+		expect(timeline(.065, 0).chapterOpacities[0]).toBe(1);
+		expect(timeline(.1, 0).chapterOpacities[0]).toBe(0);
+		expect(timeline(.82, 0).chapterOpacities[4]).toBe(0);
+		expect(timeline(.855, 0).chapterOpacities[4]).toBeCloseTo(1);
+	});
+	it("switches the camera lead at gap midpoints, including fully empty frames", () => {
+		const midpoints = [.115, .365, .535, .8];
+		const anchors = ["top", "start", "end", "bottom", "top"];
+		midpoints.forEach((p, index) => {
+			expect(timeline(p, 0).chapterOpacities).toEqual([0, 0, 0, 0, 0]);
+			expect(timeline(p - Number.EPSILON, 0).lead).toBe(index);
+			expect(timeline(p - Number.EPSILON, 0).anchor).toBe(anchors[index]);
+			expect(timeline(p, 0).lead).toBe(index + 1);
+			expect(timeline(p, 0).anchor).toBe(anchors[index + 1]);
+		});
 	});
 	it("keeps the mockup camera distances and mirrored anchor offsets", () => {
 		const rtl = getCameraLayout(1440, 900, "rtl");

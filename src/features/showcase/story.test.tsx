@@ -20,12 +20,13 @@ beforeEach(async () => {
 	vi.stubGlobal("matchMedia", () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
 	vi.stubGlobal("scrollTo", vi.fn());
 });
-afterEach(() => { cleanup(); vi.unstubAllGlobals(); Reflect.deleteProperty(navigator, "connection"); });
+afterEach(() => { cleanup(); vi.unstubAllGlobals(); Reflect.deleteProperty(navigator, "connection"); document.documentElement.style.removeProperty("--bg"); });
 
 it.each(["reduced motion", "save data", "WebGL failure"])("stacks all chapters with posters and no canvas for %s", async reason => {
 	if (reason === "reduced motion") vi.stubGlobal("matchMedia", () => ({ matches: true, addEventListener() {}, removeEventListener() {} }));
 	if (reason === "save data") Object.defineProperty(navigator, "connection", { configurable: true, value: Object.assign(new EventTarget(), { saveData: true }) });
 	if (reason === "WebGL failure") scene.fail = true;
+	document.documentElement.style.setProperty("--bg", "#0f1726");
 	const { container } = render(<Story />);
 	await act(async () => {});
 	expect(container.querySelector("canvas")).toBeNull();
@@ -35,6 +36,7 @@ it.each(["reduced motion", "save data", "WebGL failure"])("stacks all chapters w
 		`${import.meta.env.BASE_URL}poster-topside.webp`, `${import.meta.env.BASE_URL}poster-underside.webp`,
 	]));
 	expect(screen.getAllByRole("heading")).toHaveLength(5);
+	expect(document.documentElement.style.getPropertyValue("--bg")).toBe("");
 });
 
 it("uses the approved anchors, continuous opacities, log and inert inactive chapters", () => {
@@ -50,10 +52,12 @@ it("uses the approved anchors, continuous opacities, log and inert inactive chap
 	expect(chapters[2].hasAttribute("inert")).toBe(false);
 	expect(document.documentElement.style.getPropertyValue("--n")).toBe("1");
 	expect(container.querySelector(".showcase-log")!.textContent).toBe("agent ▸ fixing: sign mount");
-	act(() => scene.props!.onFrame!(.135, timeline(.135, 0)));
+	act(() => scene.props!.onFrame!(.115, timeline(.115, 0)));
 	expect(chapters.every(chapter => chapter.hasAttribute("inert") && chapter.getAttribute("aria-hidden") === "true")).toBe(true);
+	document.documentElement.style.setProperty("--bg", "#0f1726");
 	unmount();
 	expect(document.documentElement.style.getPropertyValue("--n")).toBe("0");
+	expect(document.documentElement.style.getPropertyValue("--bg")).toBe("");
 });
 
 it("routes the first and final chapter tickets through openBooking and links to the demo", () => {

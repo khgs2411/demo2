@@ -19,10 +19,9 @@ export function Story() {
 	const onFrame = useCallback((progress: number, frame: Timeline) => {
 		document.documentElement.style.setProperty("--n", String(frame.night));
 		storyRef.current?.style.setProperty("--p", String(progress));
-		const lead = frame.chapterOpacities.indexOf(Math.max(...frame.chapterOpacities));
 		chaptersRef.current?.querySelectorAll<HTMLElement>(".chapter").forEach((chapter, i) => {
 			const opacity = frame.chapterOpacities[i];
-			const inactive = i !== lead || opacity === 0;
+			const inactive = i !== frame.lead || opacity === 0;
 			chapter.style.opacity = String(opacity);
 			chapter.style.transform = `translateY(${(1 - opacity) * 26}px)`;
 			chapter.style.pointerEvents = opacity > .5 ? "auto" : "none";
@@ -32,8 +31,12 @@ export function Story() {
 		if (logRef.current) logRef.current.value = frame.log;
 	}, []);
 	useEffect(() => {
-		document.documentElement.style.setProperty("--n", "0");
-		return () => document.documentElement.style.setProperty("--n", "0");
+		const resetBackground = () => {
+			document.documentElement.style.setProperty("--n", "0");
+			document.documentElement.style.removeProperty("--bg");
+		};
+		resetBackground();
+		return resetBackground;
 	}, [staticStory]);
 	return <section ref={storyRef} className={`showcase-story${staticStory ? " showcase-static" : ""}`} aria-label={t("storyLabel")}>
 		<div className="showcase-stage">

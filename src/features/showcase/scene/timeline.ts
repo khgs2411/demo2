@@ -7,7 +7,7 @@ export const ranges = {
 export const chapterAnchors = ["top", "start", "end", "bottom", "top"] as const;
 export const segment = (p: number, a: number, b: number) => clamp((p - a) / (b - a));
 const ease = (t: number) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-const bump = (p: number, center: number, width: number) => clamp(1 - Math.abs(p - center) / width);
+const plateau = (p: number, start: number, end: number, fade = .035) => clamp(Math.min((p - start) / fade, (end - p) / fade));
 
 export function timeline(p: number, t: number) {
 	const angle = (ease(segment(p, ...ranges.flipDown)) + ease(segment(p, ...ranges.flipUp))) * Math.PI;
@@ -18,7 +18,8 @@ export function timeline(p: number, t: number) {
 	const b = segment(p, ...ranges.beam);
 	const fixed = a >= 0.985;
 	const lit = segment(p, ranges.beam[1], ranges.flipUp[1]);
-	const chapterOpacities = [1 - segment(p, 0.03, 0.13), bump(p, 0.25, 0.11), bump(p, 0.44, 0.1), bump(p, 0.62, 0.17), segment(p, 0.8, 0.9)];
+	const chapterOpacities = [clamp((.1 - p) / .035), plateau(p, .13, .35), plateau(p, .38, .52), plateau(p, .55, .78), clamp((p - .82) / .035)];
+	const lead = p < .115 ? 0 : p < .365 ? 1 : p < .535 ? 2 : p < .8 ? 3 : 4;
 	return {
 		angle, night, turning,
 		twistY: Math.sin(angle) * 0.55,
@@ -47,8 +48,8 @@ export function timeline(p: number, t: number) {
 		beamScale: 1 + b * 2,
 		windowLight: lit * 1.4,
 		peopleY: [0, 1, 2].map(i => lit > 0.9 ? Math.abs(Math.sin(t * 5 + i)) * 0.12 : 0),
-		chapterOpacities,
-		anchor: chapterAnchors[chapterOpacities.indexOf(Math.max(...chapterOpacities))],
+		chapterOpacities, lead,
+		anchor: chapterAnchors[lead],
 		log: a === 0 ? "agent ▸ idle" : a < 0.35 ? "ticket #214 ▸ claimed" : a < 0.985 ? "agent ▸ fixing: sign mount" : b < 1 ? "deploy ▸ shipping" : "deploy ✓ live",
 	};
 }

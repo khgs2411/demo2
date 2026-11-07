@@ -16,11 +16,16 @@ Import `ShowcaseScene` from `features/showcase/scene` inside a React
   fills its positioned stage parent.
 - `onFrame(p, frame)` receives damped progress and the pure timeline result.
   Use `frame.night` for `--n`, `frame.chapterOpacities` for the chapter
-  crossfades, and `frame.log` for the machine log. The callback does not need
+  disjoint chapter fades, and `frame.log` for the machine log. The callback does not need
   to update React state on every frame; it can update the existing elements.
 - The renderer already applies the damped camera view offset for the leading
   chapter, including mirrored desktop start/end anchors and the mobile top
-  fallback. The page should not add another world offset.
+  fallback. Its progress-based lead switches at the gap midpoints: 0.115,
+  0.365, 0.535 and 0.80. The page should not add another world offset.
+- The scene uses `NoToneMapping` and writes its background hex to root
+  `--bg` every frame so the canvas, halos and header share the same colour.
+  The story clears this inline colour on fallback and unmount, restoring the
+  static CSS `color-mix` background.
 - The page owns static fallback selection. Skip mounting the scene when
   reduced motion or save-data requires posters. `onError(error)` reports
   initialization failure or context loss so the page can switch to fallback.
@@ -41,6 +46,7 @@ The last command builds the ordinary app and the isolated validation entry
 into `/tmp/demo2-showcase-validation-build`. Its manifest distinguishes static
 imports from dynamic imports. The ordinary app now exercises the lazy scene import through the home story.
 The command writes the import-graph check to `artifacts/showcase/build.json`.
+The `artifacts/showcase/` folder is ignored generated output and is not committed.
 
 ## Browser checks and screenshots
 
@@ -102,11 +108,11 @@ of overlap/horizontal scrolling at 1280×800 and 2000px wide, both languages,
 all ticket actions, and the stacked fallback with reduced motion or save-data
 on. Check that changing routes clears the story's night color.
 
-Tasks 9–10 were accepted after Liad's browser comparison at p = 0, 0.5, 0.65
-and 1 and a clean canvas removal on unmount. For task 11, browser automation
-still reports an unavailable host and native Chrome returns
-`cgWindowNotFound`. No live-home screenshots were captured, and the two poster
-assets have not been exported yet. Component tests cover fallback selection,
-chapter anchors and opacity, lead-chapter accessibility, color cleanup, and
-catalog-backed prices and booking targets; they do not prove visual layout or
-asset availability.
+Liad verified the live home story end to end and requested the timing and
+colour corrections recorded in `spec-showcase.md`. The renderer and timeline
+now port those corrections. Local tests cover disjoint chapter windows,
+midpoint camera lead, tone-mapping configuration, background hex values and
+cleanup, along with fallback selection and catalog-backed booking targets.
+These tests do not constitute a browser visual check of the corrected scene.
+Liad owns rendering `public/poster-*.webp` from the corrected scene; the assets
+are left unchanged by this correction.

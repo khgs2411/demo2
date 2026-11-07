@@ -12,7 +12,7 @@ export function createScene(canvas: HTMLCanvasElement, labels: SceneLabels, dire
 	renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75));
 	renderer.shadowMap.enabled = true;
 	renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-	renderer.toneMapping = THREE.ACESFilmicToneMapping;
+	renderer.toneMapping = THREE.NoToneMapping;
 	const scene = new THREE.Scene();
 	const background = new THREE.Color(C.paper), paper = new THREE.Color(C.paper), night = new THREE.Color(C.night);
 	scene.background = background;
@@ -54,6 +54,7 @@ export function createScene(canvas: HTMLCanvasElement, labels: SceneLabels, dire
 			render(frame: Timeline, t: number, dt: number, pointerX = 0, pointerY = 0) {
 				world.apply(frame, t, pointerX, pointerY);
 				background.copy(paper).lerp(night, frame.night);
+				document.documentElement.style.setProperty("--bg", "#" + background.getHexString());
 				hemi.intensity = frame.hemisphereIntensity; sun.intensity = frame.sunIntensity; rim.intensity = frame.rimIntensity;
 				bloom.strength = frame.bloomStrength;
 				camera.position.set(0, frame.cameraY, layout.distance - frame.cameraDolly);
