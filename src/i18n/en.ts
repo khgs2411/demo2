@@ -17,6 +17,15 @@ export const en = {
 	showcase: {
 		title: "Welcome", placeholder: "An introduction to our services will appear here.",
 		scene: { studio: "Noa Studio", open: "Open", customers: "Customers", bookings: "Bookings", requests: "Requests" },
+		storyLabel: "The story", bookMeeting: "Book a meeting", chooseTime: "Choose a time", seeItWork: "See it work",
+		posterTopside: "The studio storefront on its slab of ground", posterUnderside: "ClassKit, data pipes and the AI agent beneath the studio",
+		chapters: {
+			front: { lead: "Your site", bridge: "is ", end: "the front.", body: "What your customers see. Your design, fast and precise." },
+			flip: { lead: "But a business", bridge: "", end: "doesn’t run on a front.", body: "Customers, appointments, site fixes. It all happens beneath the surface." },
+			system: { lead: "Under the site:", bridge: "", end: "a system.", body: "ClassKit manages customers, leads, appointments and permissions. From the same site, without another app." },
+			agent: { lead: "And an agent to fix it", bridge: "", end: "for you.", body: "The sign fell? Open a request. An AI agent takes it, fixes it, and ships it live." },
+			book: { lead: "Your meeting with me", bridge: "starts ", end: "here.", body: "Through this very same system." },
+		},
 	},
 	packages: {
 		title: "Two ways to begin. One keeps working for you.",

@@ -17,6 +17,15 @@ export const he = {
 	showcase: {
 		title: "ברוכים הבאים", placeholder: "היכרות עם השירותים שלנו תופיע כאן.",
 		scene: { studio: "סטודיו נועה", open: "פתוח", customers: "לקוחות", bookings: "פגישות", requests: "בקשות" },
+		storyLabel: "הסיפור", bookMeeting: "קביעת פגישה", chooseTime: "לבחור מועד", seeItWork: "לראות את זה עובד",
+		posterTopside: "חזית הסטודיו על משטח הקרקע", posterUnderside: "ClassKit, צינורות המידע וסוכן ה-AI מתחת לסטודיו",
+		chapters: {
+			front: { lead: "האתר שלך", bridge: "הוא ", end: "החזית.", body: "מה שהלקוחות רואים. עיצוב שלך, מהיר, מדויק." },
+			flip: { lead: "אבל עסק", bridge: "", end: "לא רץ על חזית.", body: "לקוחות, פגישות, תיקונים באתר. כל זה קורה מתחת לפני השטח." },
+			system: { lead: "מתחת לאתר:", bridge: "", end: "מערכת.", body: "ClassKit מנהלת לקוחות, לידים, פגישות והרשאות. מאותו אתר, בלי עוד תוכנה." },
+			agent: { lead: "וסוכן שמתקן", bridge: "", end: "בשבילך.", body: "השלט נפל? פותחים בקשה. סוכן AI לוקח אותה, מתקן, ומעלה לאוויר." },
+			book: { lead: "את הפגישה איתי", bridge: "קובעים ", end: "מכאן.", body: "דרך אותה מערכת בדיוק." },
+		},
 	},
 	packages: {
 		title: "שתי דרכים להתחיל. אחת מהן ממשיכה לעבוד בשבילך.",
