@@ -9,9 +9,15 @@ import { useRequests } from "./use-requests";
 import "./booking.css";
 
 type AuthState = { busy: boolean; error: string | null };
-type AuthEvent = { type: "started" } | { type: "finished"; error: string | null; redirecting?: boolean };
+type AuthEvent = { type: "started" } | { type: "auth_finished"; result: BookingEvent } | { type: "sign_out_finished"; success: boolean };
 function authTransition(_state: AuthState, event: AuthEvent): AuthState {
-	return event.type === "started" ? { busy:true, error:null } : { busy:Boolean(event.redirecting), error:event.error };
+	if (event.type === "started") return { busy: true, error: null };
+	if (event.type === "sign_out_finished") return { busy: false, error: event.success ? null : "signOutFailed" };
+	const result = event.result;
+	if (result.type === "auth_redirect_started") return { busy: true, error: null };
+	if (result.type === "signed_in") return { busy: false, error: null };
+	const storageFailed = result.type === "operation_failed" && result.reason === "redirect_storage";
+	return { busy: false, error: storageFailed ? "messages.redirect_storage" : "messages.auth_failed" };
 }
 
 export function AccountPage() {
@@ -29,7 +35,7 @@ export function AccountPage() {
 		dispatch({ type:"started" });
 		try {
 			const result = await operation();
-			if (mounted.current) dispatch({ type:"finished", error: result.type === "signed_in" || result.type === "auth_redirect_started" ? null : result.type === "operation_failed" && result.reason === "redirect_storage" ? "messages.redirect_storage" : "messages.auth_failed", redirecting: result.type === "auth_redirect_started" });
+			if (mounted.current) dispatch({ type: "auth_finished", result });
 		} finally { locked.current = false; }
 	}
 	async function signOut() {
@@ -38,7 +44,7 @@ export function AccountPage() {
 		dispatch({ type:"started" });
 		try {
 			const success = await adapter.signOut();
-			if (mounted.current) dispatch({ type:"finished", error:success ? null : "signOutFailed" });
+			if (mounted.current) dispatch({ type: "sign_out_finished", success });
 		} finally { locked.current = false; }
 	}
 	const signedOut = !context.session || requests.state.step === "signed_out";

@@ -18,3 +18,8 @@ it.each(["loading", "signed_out", "failed"] as const)("loads requests from %s an
 	expect(requestsTransition(state, { type: "loaded", requests: [request] })).toEqual(ready);
 	for (const type of ["loading", "signed_out", "failed"] as const) expect(requestsTransition(ready, { type })).toEqual({ step: type });
 });
+it("retains the backend cancellation receipt if the follow-up read fails", () => {
+	const registration = {id:"registration",classId:"slot",status:"cancelled" as const};
+	const completed = requestsTransition(ready, {type:"cancel_completed",registration});
+	expect(requestsTransition(completed,{type:"failed"})).toEqual({step:"failed",lastCancellation:registration});
+});

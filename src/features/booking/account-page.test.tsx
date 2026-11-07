@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { i18n } from "../../i18n";
 import * as adapterModule from "./adapter";
@@ -20,12 +20,13 @@ beforeEach(async () => {
 	await i18n.changeLanguage("en");
 });
 afterEach(cleanup);
-it("renders all backend statuses and only allowed cancellation controls", async () => {
+it.each(["he","en"])("renders all backend statuses and only allowed cancellation controls in %s", async language => {
+	await i18n.changeLanguage(language);
 	listRequests.mockResolvedValueOnce({type:"loaded",requests:["pending","approved","rejected","cancelled"].map(status => ({...request,id:status,canCancelRegistration:status==="pending",userRegistrationState:{id:status,status}}))});
 	render(<AccountPage />);
-	for (const label of ["Awaiting confirmation","Confirmed","Declined","Cancelled"]) expect(await screen.findByText(label)).toBeDefined();
-	expect(screen.getAllByRole("button",{name:"Cancel request"})).toHaveLength(1);
-	expect(screen.getByRole("link",{name:"Another meeting"}).getAttribute("href")).toBe("#/book");
+	for (const status of ["pending","approved","rejected","cancelled"]) expect(await screen.findByText(i18n.t(status,{ns:"booking"}))).toBeDefined();
+	expect(screen.getAllByRole("button",{name:i18n.t("cancel",{ns:"booking"})})).toHaveLength(1);
+	expect(screen.getByRole("link",{name:i18n.t("bookAnother",{ns:"booking"})}).getAttribute("href")).toBe("#/book");
 });
 it("does not replay cancellation after a failure and renders refreshed flags", async () => {
 	cancelRequest.mockResolvedValueOnce([{type:"cancel_failed"},{type:"loaded",requests:[{...request,canCancelRegistration:false}]}]);
@@ -48,4 +49,23 @@ it("offers authentication to signed-out visitors without reading private request
 	render(<AccountPage />);
 	expect(screen.getByRole("button",{name:"Continue with Google"})).toBeDefined();
 	expect(listRequests).not.toHaveBeenCalled();
+});
+it("ignores a stale read after the provider switches visitors", async () => {
+	let resolveOld!: (value: unknown) => void;
+	listRequests.mockImplementationOnce(() => new Promise(resolve => { resolveOld = resolve; })).mockResolvedValueOnce({type:"loaded",requests:[]});
+	const view = render(<AccountPage />);
+	context = {...context,session:{...context.session!,user:{...context.session!.user,id:"other"}}};
+	view.rerender(<AccountPage />);
+	await screen.findByText("No meeting requests yet.");
+	await act(async () => { resolveOld({type:"loaded",requests:[request]}); });
+	expect(screen.queryByText("Business meeting")).toBeNull();
+});
+
+it("reports sign-out failure without hiding the signed-in requests", async () => {
+	adapter.signOut.mockResolvedValueOnce(false);
+	render(<AccountPage />);
+	await screen.findByText("Business meeting");
+	fireEvent.click(screen.getByRole("button", {name:"Sign out"}));
+	await screen.findByText("Sign-out failed. Please try again.");
+	expect(screen.getByText("Business meeting")).toBeDefined();
 });

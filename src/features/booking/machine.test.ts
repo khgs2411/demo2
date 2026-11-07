@@ -112,13 +112,14 @@ describe("booking slot selection and request", () => {
 describe("booking transition table", () => {
 	const signingIn: BookingState = { ...account, step: "signing_in" };
 	const signingUp: BookingState = { ...account, step: "signing_up" };
+	const saving: BookingState = { ...profile, saving: true };
 	const requested: BookingState = { step: "requested", selection: selected.selection, userId: "visitor", registration, slot };
 	const authFailure: BookingState = { step: "failed", operation: "auth", reason: "generic", resume: account };
 	const profileFailure: BookingState = { step: "failed", operation: "profile", reason: "generic", resume: profile };
 	const slotsFailure: BookingState = { step: "failed", operation: "slots", reason: "generic", resume: loading };
 	const registrationFailure: BookingState = { step: "failed", operation: "registration", reason: "generic", resume: loading };
 	const closed: BookingState = { ...loading, availability: "not_open" };
-	const stateCases = { initialState, account, signingIn, signingUp, profile, loading, ready, selected, submitting, requested, authFailure, profileFailure, slotsFailure, registrationFailure, closed };
+	const stateCases = { initialState, account, signingIn, signingUp, profile, saving, loading, ready, selected, submitting, requested, authFailure, profileFailure, slotsFailure, registrationFailure, closed };
 	const eventCases = {
 		chosen,
 		signIn: { type: "auth_started", method: "sign_in" },
@@ -127,6 +128,9 @@ describe("booking transition table", () => {
 		redirectStarted: { type: "auth_redirect_started" },
 		signedIn: { type: "signed_in", userId: "visitor" },
 		profileSaved: { type: "profile_saved" },
+		profileSaveStarted: { type: "profile_save_started" },
+		profileReopened: { type: "profile_reopened" },
+		registrationUpdated: { type: "registration_updated", registration: { ...registration, status: "approved" } },
 		notOpen: { type: "booking_not_open" },
 		refresh: { type: "slots_refresh_requested" },
 		loaded: { type: "slots_loaded", slots: [slot] },
@@ -149,15 +153,16 @@ describe("booking transition table", () => {
 		account: { signIn: signingIn, signUp: signingUp, google: signingIn, signedIn: profile, authFailed: authFailure },
 		signingIn: { signedIn: profile, authFailed: authFailure },
 		signingUp: { signedIn: profile, authFailed: authFailure },
-		profile: { profileSaved: loading, profileFailed: profileFailure },
-		loading: { notOpen: closed, refresh: loading, loaded: ready, slotsFailed: slotsFailure },
-		ready: { notOpen: closed, refresh: loading, loaded: ready, slotChosen: selected, slotsFailed: slotsFailure },
-		selected: { notOpen: closed, refresh: loading, loaded: selected, slotChosen: selected, submit: submitting, slotsFailed: slotsFailure },
+		profile: { profileSaved: loading, profileFailed: profileFailure, profileSaveStarted: saving },
+		saving: { profileSaved: loading, profileFailed: profileFailure, profileSaveStarted: saving },
+		loading: { notOpen: closed, refresh: loading, loaded: ready, slotsFailed: slotsFailure, profileReopened: profile },
+		ready: { notOpen: closed, refresh: loading, loaded: ready, slotChosen: selected, slotsFailed: slotsFailure, profileReopened: profile },
+		selected: { notOpen: closed, refresh: loading, loaded: selected, slotChosen: selected, submit: submitting, slotsFailed: slotsFailure, profileReopened: { ...profile, selection:selected.selection } },
 		submitting: { registered: requested, full: { ...loading, notice: "slot_full" }, registrationFailed: registrationFailure },
-		requested: {},
+		requested: { registrationUpdated: { ...requested, registration: { ...registration, status:"approved" } } },
 		authFailure: { retry: account }, profileFailure: { retry: profile },
 		slotsFailure: { retry: loading }, registrationFailure: { retry: loading },
-		closed: { notOpen: closed, refresh: loading, loaded: ready, slotsFailed: slotsFailure },
+		closed: { notOpen: closed, refresh: loading, loaded: ready, slotsFailed: slotsFailure, profileReopened: profile },
 	};
 
 	for (const [name, state] of Object.entries(stateCases)) {

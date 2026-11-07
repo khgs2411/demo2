@@ -174,9 +174,6 @@ export const he = {
 		}
 	},
 	booking: {
-		title: "קביעת פגישה עסקית",
-		placeholder: "בקשת פגישה עסקית תתאפשר כאן.",
-		account: { title: "הבקשות שלי", placeholder: "בקשות הפגישה שלך יופיעו כאן." },
 		sPackage: "חבילה",
 		sAccount: "חשבון",
 		sProfile: "פרטים",

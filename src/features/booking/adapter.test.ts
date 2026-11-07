@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createBookingAdapter, type BookingSdk } from "./adapter";
 import * as packages from "../packages";
 import { initialState, transition } from "./machine";
-import { bookingRedirectKey, restoreBookingRedirect } from "./redirect";
+import { bookingRedirectKey, restoreBookingRedirect, consumeAccountRedirect, saveBookingRedirect } from "./redirect";
 
 vi.mock("@class-kit/react", () => ({ useProductContext: vi.fn() }));
 
@@ -269,4 +269,25 @@ describe("my meeting requests", () => {
 		sdk.classes.list.mockRejectedValueOnce(new Error("offline"));
 		expect(await adapter.listRequests(range)).toEqual({ type: "failed" });
 	});
+});
+
+it("returns account OAuth to the account route and clears any older booking redirect", async () => {
+	saveBookingRedirect({step:"needs_account",selection});
+	expect(await adapter.signInWithGoogle()).toEqual({type:"auth_redirect_started"});
+	expect(restoreBookingRedirect("visitor")).toBeNull();
+	expect(consumeAccountRedirect()).toBe(true);
+	expect(consumeAccountRedirect()).toBe(false);
+});
+it("maps sign-out errors without claiming the session ended", async () => {
+	expect(await adapter.signOut()).toBe(true);
+	sdk.auth.signOut.mockResolvedValueOnce({error:"offline"});
+	expect(await adapter.signOut()).toBe(false);
+	sdk.auth.signOut.mockRejectedValueOnce(new Error("offline"));
+	expect(await adapter.signOut()).toBe(false);
+});
+it("refreshes after a thrown cancellation error with no automatic retry", async () => {
+	sdk.classes.cancelRegistration.mockRejectedValueOnce(new Error("offline"));
+	sdk.classes.list.mockResolvedValueOnce({data:{classes:[]},error:null});
+	expect(await adapter.cancelRequest("request-1",range)).toEqual([{type:"cancel_failed"},{type:"loaded",requests:[]}]);
+	expect(sdk.classes.cancelRegistration).toHaveBeenCalledOnce();
 });

@@ -174,9 +174,6 @@ export const en = {
 		}
 	},
 	booking: {
-		title: "Book a business meeting",
-		placeholder: "You will be able to request a business meeting here.",
-		account: { title: "My requests", placeholder: "Your meeting requests will appear here." },
 		sPackage: "Package",
 		sAccount: "Account",
 		sProfile: "Details",

@@ -10,7 +10,8 @@ export function RequestedStep({ flow }: { flow: ReturnType<typeof useBooking> })
 	const requests = useRequests(flow.adapter, flow.context.session?.user.id ?? null);
 	const registrationId = state.step === "requested" ? state.registration.id : null;
 	const request = requests.state.step === "ready" ? requests.state.requests.find(row => row.userRegistrationState?.id === registrationId) : undefined;
-	const updated = requests.state.step === "ready" ? requests.state.lastCancellation ?? (request?.userRegistrationState ? { ...request.userRegistrationState, classId:request.id } : undefined) : undefined;
+	const receipt = "lastCancellation" in requests.state ? requests.state.lastCancellation : undefined;
+	const updated = receipt ?? (request?.userRegistrationState ? { ...request.userRegistrationState, classId:request.id } : undefined);
 	useEffect(() => { if (updated) flow.send({ type:"registration_updated", registration:updated }); }, [updated?.id, updated?.status, flow.send]);
 	if (state.step !== "requested") return null;
 	return <>
