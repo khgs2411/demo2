@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import css from "../../../index.css?raw";
+import { readFileSync } from "node:fs";
 import { he } from "../../../i18n/he";
 import { en } from "../../../i18n/en";
 import { brokenBookingButton as scenario } from "./broken-booking-button";
@@ -43,6 +43,7 @@ describe("broken booking button scenario", () => {
 	});
 
 	it("uses the shell's existing link and flip durations for demo pacing", () => {
+		const css = readFileSync("src/index.css", "utf8");
 		const duration = (token: string) => Number(css.match(new RegExp(`--duration-${token}: ([.\\d]+)s`))![1]) * 1000;
 		expect(scenario.timing.fixLineMs).toBe(duration("link"));
 		expect(scenario.timing.ticketSubmittedMs).toBe(duration("flip"));
