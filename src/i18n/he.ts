@@ -15,7 +15,6 @@ export const he = {
 		languageSwitchLabel: "מעבר לאנגלית",
 	},
 	showcase: {
-		title: "ברוכים הבאים", placeholder: "היכרות עם השירותים שלנו תופיע כאן.",
 		scene: { studio: "סטודיו נועה", open: "פתוח", customers: "לקוחות", bookings: "פגישות", requests: "בקשות" },
 		storyLabel: "הסיפור", bookMeeting: "קביעת פגישה", chooseTime: "לבחור מועד", seeItWork: "לראות את זה עובד",
 		posterTopside: "חזית הסטודיו על משטח הקרקע", posterUnderside: "ClassKit, צינורות המידע וסוכן ה-AI מתחת לסטודיו",

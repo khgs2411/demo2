@@ -45,7 +45,7 @@ if (process.argv.includes("--build")) {
 	const scene = manifest["src/features/showcase/scene/scene.tsx"];
 	if (!scene?.isDynamicEntry) throw new Error("Scene is not a dynamic entry");
 	const proof = {
-		scope: "Isolated validation entry plus the unchanged production home placeholder; task 11 owns home assembly",
+		scope: "Production home route and isolated scene validation entry",
 		threeExcludedFromStaticImports: true, entries, scene: scene.file,
 	};
 	await writeFile(resolve(evidence, "build.json"), JSON.stringify(proof, null, 2) + "\n");
@@ -66,6 +66,12 @@ const server = await createServer({
 		configureServer(vite) {
 			vite.middlewares.use(async (req, res, next) => {
 				const url = new URL(req.url!, "http://localhost");
+				if (req.method === "POST" && /^\/__posters\/poster-(topside|underside)\.webp$/.test(url.pathname)) {
+					if (req.headers.origin !== `http://${req.headers.host}`) { res.statusCode = 403; res.end("Same-origin export required"); return; }
+					const chunks: Buffer[] = []; for await (const chunk of req) chunks.push(Buffer.from(chunk));
+					await writeFile(resolve("public", url.pathname.split("/").at(-1)!), Buffer.from(Buffer.concat(chunks).toString(), "base64"));
+					res.end("saved"); return;
+				}
 				if (req.method === "POST" && /^\/__evidence\/[\w.-]+\.(png|json)$/.test(url.pathname)) {
 					const chunks: Buffer[] = []; for await (const chunk of req) chunks.push(Buffer.from(chunk));
 					const body = Buffer.concat(chunks).toString();

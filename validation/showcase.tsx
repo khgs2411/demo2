@@ -9,10 +9,10 @@ const root = createRoot(document.getElementById("root")!);
 const labels = { studio: "סטודיו נועה", open: "פתוח", customers: "לקוחות", bookings: "פגישות", requests: "בקשות" };
 
 // CSS-pixel screenshots, just like a browser screenshot at the specified viewport.
-function capture(canvas: HTMLCanvasElement) {
+function capture(canvas: HTMLCanvasElement, format = "image/png") {
 	const image = document.createElement("canvas"); image.width = innerWidth; image.height = innerHeight;
 	image.getContext("2d")!.drawImage(canvas, 0, 0, innerWidth, innerHeight);
-	return image.toDataURL("image/png");
+	return image.toDataURL(format);
 }
 
 async function snapshot() {
@@ -30,7 +30,7 @@ async function snapshot() {
 	// Settle the slowest relevant damping to less than half a CSS pixel.
 	const steps = Math.ceil(Math.log(.5 / Math.max(innerWidth, innerHeight)) / Math.log(Math.max(.92, Math.pow(.02, 1 / 60))));
 	for (let i = 0; i < steps; i++) view.render(frame, 0, 1 / 60);
-	const image = capture(canvas);
+	const image = capture(canvas, query.get("format") === "webp" ? "image/webp" : "image/png");
 	const before = { ...view.renderer.info.memory, programs: view.renderer.info.programs?.length };
 	view.dispose();
 	const after = { ...view.renderer.info.memory, programs: view.renderer.info.programs?.length };
@@ -105,6 +105,30 @@ async function comparisons(button: HTMLButtonElement) {
 	document.getElementById("status")!.textContent = "Captured all 20 scene screenshots. Resource results saved.";
 }
 
+async function exportPosters(button: HTMLButtonElement) {
+	button.disabled = true;
+	for (const [side, p] of [["topside", 0], ["underside", .5]] as const) {
+		const iframe = document.createElement("iframe"); iframe.width = "1440"; iframe.height = "900";
+		iframe.style.cssText = "position:absolute;top:150px;left:0;transform:scale(.45);transform-origin:top left;border:0";
+		document.body.append(iframe);
+		try {
+			const image = await new Promise<string>((resolve, reject) => {
+				const receive = (event: MessageEvent) => {
+					if (event.origin !== location.origin || event.source !== iframe.contentWindow) return;
+					if (event.data.type === "scene-capture") { removeEventListener("message", receive); resolve(event.data.image); }
+					if (event.data.type === "scene-error") { removeEventListener("message", receive); reject(new Error(event.data.error)); }
+				};
+				addEventListener("message", receive);
+				iframe.src = `/showcase-scene.html?mode=snapshot&p=${p}&format=webp`;
+			});
+			if (!image.startsWith("data:image/webp;base64,")) throw new Error("Browser did not export WebP");
+			const response = await fetch(`/__posters/poster-${side}.webp`, { method: "POST", body: image.split(",")[1] });
+			if (!response.ok) throw new Error(`Poster save failed: ${response.status}`);
+		} finally { iframe.remove(); }
+	}
+	document.getElementById("status")!.textContent = "Exported public/poster-topside.webp and public/poster-underside.webp from the scene. Reload the home fallback to inspect.";
+}
+
 addEventListener("error", event => {
 	parent.postMessage({ type: "scene-error", error: event.message }, location.origin);
 });
@@ -114,6 +138,9 @@ addEventListener("unhandledrejection", event => {
 });
 
 if (query.get("mode") === "snapshot") void snapshot();
+else if (query.get("mode") === "posters") root.render(<main dir="ltr" style={{ padding: 16 }}>
+	<button onClick={event => void exportPosters(event.currentTarget)}>Export fallback posters</button><p id="status">Ready · writes the two WebP assets into public/</p>
+</main>);
 else if (query.get("mode") === "compare") root.render(<main dir="ltr" style={{ padding: 16 }}>
 	<button onClick={event => void comparisons(event.currentTarget)}>Capture all comparisons</button><p id="status">Ready</p>
 </main>);

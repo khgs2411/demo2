@@ -15,7 +15,6 @@ export const en = {
 		languageSwitchLabel: "Switch to Hebrew",
 	},
 	showcase: {
-		title: "Welcome", placeholder: "An introduction to our services will appear here.",
 		scene: { studio: "Noa Studio", open: "Open", customers: "Customers", bookings: "Bookings", requests: "Requests" },
 		storyLabel: "The story", bookMeeting: "Book a meeting", chooseTime: "Choose a time", seeItWork: "See it work",
 		posterTopside: "The studio storefront on its slab of ground", posterUnderside: "ClassKit, data pipes and the AI agent beneath the studio",

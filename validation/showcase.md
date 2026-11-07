@@ -2,9 +2,9 @@
 
 The scene ports the approved `mockups/shell.html` from the
 `class-kit/docs/design/2026-11-07-demo2-showcase` design. It uses the same
-three.js release, 0.164.1. The production home route remains a placeholder;
-story-page assembly, reduced-motion/save-data fallback, posters, chapter
-markup, offers and tickets belong to task 11.
+three.js release, 0.164.1. The home route assembles the 360vh story, its anchored chapters, reduced-motion/
+save-data/error fallback, and the catalog-backed offers ledger. The shell
+continues to own the header, mobile ticket dock and footer.
 
 ## Integration contract
 
@@ -39,8 +39,8 @@ bun scripts/check-showcase.ts /absolute/path/to/approved/mockups/shell.html --bu
 
 The last command builds the ordinary app and the isolated validation entry
 into `/tmp/demo2-showcase-validation-build`. Its manifest distinguishes static
-imports from dynamic imports. The ordinary app build alone does not yet
-exercise the scene import: task 11 owns adding it to the home route.
+imports from dynamic imports. The ordinary app now exercises the lazy scene import through the home story.
+The command writes the import-graph check to `artifacts/showcase/build.json`.
 
 ## Browser checks and screenshots
 
@@ -68,7 +68,45 @@ pixel. The reference file itself is read only. The fixture changes its clock,
 progress, spark seed and import/font locations; its geometry, palette,
 timeline and camera formulas remain unchanged.
 
-The fixture and capture procedure compile but have not run in a browser in
-this implementation session: browser automation was unavailable, native
-Chrome returned `cgWindowNotFound`, and the subsequent native window-access
-check was denied. Visual parity, screenshots and GPU disposal remain unproven.
+## Fallback poster export
+
+Run the local server above, open `/showcase-scene.html?mode=posters` and choose
+**Export fallback posters**. This renders the accepted scene at p = 0 and 0.5,
+at 1440×900, and saves real WebP exports directly to:
+
+- `public/poster-topside.webp`
+- `public/poster-underside.webp`
+
+The scene and export use the same renderer, palette, camera offsets and
+settling logic as the accepted validation page. No substitute artwork is
+used. Inspect and commit the exported files; `bun run build` does not generate
+them. Asset URLs use `BASE_URL` for GitHub Pages subpaths.
+
+## Live home route checks
+
+Open `/#/` rather than the isolated scene fixture. In device emulation, check
+1440×900 and 375×812 at p = 0, 0.25, 0.5, 0.65 and 1. To position the actual
+scrolling home page from the browser console:
+
+```js
+function showProgress(p) {
+  const story = document.querySelector(".showcase-story");
+  scrollTo(0, scrollY + story.getBoundingClientRect().top + p * (story.offsetHeight - innerHeight));
+}
+showProgress(0.25);
+```
+
+Allow the scene to settle before each screenshot. The current damped value
+is the story element's `--p` style. Also check the chapter anchors and absence
+of overlap/horizontal scrolling at 1280×800 and 2000px wide, both languages,
+all ticket actions, and the stacked fallback with reduced motion or save-data
+on. Check that changing routes clears the story's night color.
+
+Tasks 9–10 were accepted after Liad's browser comparison at p = 0, 0.5, 0.65
+and 1 and a clean canvas removal on unmount. For task 11, browser automation
+still reports an unavailable host and native Chrome returns
+`cgWindowNotFound`. No live-home screenshots were captured, and the two poster
+assets have not been exported yet. Component tests cover fallback selection,
+chapter anchors and opacity, lead-chapter accessibility, color cleanup, and
+catalog-backed prices and booking targets; they do not prove visual layout or
+asset availability.
