@@ -14,6 +14,8 @@ it.each(["he", "en"])("shows the defect and opens the request in %s", async (lan
 	expect(button.style.transform).not.toBe("none");
 	fireEvent.click(button);
 	expect(open).toHaveBeenCalledOnce();
+	fireEvent.click(screen.getByRole("button", { name: i18n.t(scenario.defect.descriptionKey, { ns: "admin-sim" }) }));
+	expect(open).toHaveBeenCalledTimes(2);
 	expect(screen.queryByRole("slider")).toBeNull();
 });
 

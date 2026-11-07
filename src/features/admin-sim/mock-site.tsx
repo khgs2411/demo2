@@ -3,22 +3,24 @@ import { useTranslation } from "react-i18next";
 import type { SimStep } from "./machine";
 import type { SimulationScenario } from "./scenarios/types";
 
-type MockSiteProps = { scenario: SimulationScenario; step: SimStep; onOpenTicket: () => void };
+type MockSiteProps = { scenario: SimulationScenario; step: SimStep; onOpenTicket: () => void; shown?: boolean };
 
-export function MockSite({ scenario, step, onOpenTicket }: MockSiteProps) {
+export function MockSite({ scenario, step, onOpenTicket, shown = true }: MockSiteProps) {
 	const { t, i18n } = useTranslation("admin-sim");
 	const [comparison, setComparison] = useState(100);
 	const fixed = step === "live" && scenario.fixedRender.bookingButtonFixed;
 	const rtl = i18n.dir() === "rtl";
 	const brokenStyle = rtl ? scenario.defect.brokenStyle : scenario.defect.ltrBrokenStyle;
 	const site = "scenarios.brokenBookingButton.";
-	return <section className={`sim-topside ${fixed ? "fixed" : "broken"}`} aria-label={t("topTab")}>
+	return <section className={`sim-topside ${fixed ? "fixed" : "broken"} ${shown ? "shown" : ""}`} data-side="top" id="sim-panel-top" role="tabpanel" aria-label={t("topTab")}>
 		<span className="sim-label">{t("topLabel")}</span>
 		<div className="sim-site">
 			<div className="sim-site-nav"><span>{t(scenario.siteNameKey)}</span><small>{t(`${site}siteNav`)}</small></div>
 			<h2>{t(`${site}siteTitle`)}</h2><p>{t(`${site}siteBody`)}</p>
 			<div className="sim-cta-row">
-				{!fixed && <span className="sim-defect-mark" aria-hidden="true" />}
+				{!fixed && (step === "bug"
+					? <button type="button" className="sim-defect-mark" aria-label={t(scenario.defect.descriptionKey)} onClick={onOpenTicket} />
+					: <span className="sim-defect-mark" aria-hidden="true" />)}
 				<button type="button" className="sim-site-btn booking-cta" style={fixed ? scenario.defect.fixedStyle : brokenStyle}
 					onClick={onOpenTicket} disabled={step !== "bug"}>{t(scenario.bookingLabelKey)}</button>
 				{fixed && <div className="sim-before" data-testid="comparison-before" aria-hidden="true"

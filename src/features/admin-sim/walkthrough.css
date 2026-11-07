@@ -13,7 +13,7 @@
 .sim-narr { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 18px 32px; padding: 20px var(--gutter) 4px; min-block-size: 9.5em; }
 .sim-narr h1 { font: 900 clamp(2rem, 1rem + 3.2vw, 3.8rem)/1 var(--font-display); letter-spacing: -.02em; max-inline-size: 20ch; }
 .sim-narr p { opacity: .75; max-inline-size: 48ch; margin-block-start: 6px; }
-.sim-controls { display: flex; align-items: center; gap: 20px; }
+.sim-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 20px; }
 .sim-controls .sim-link { text-decoration: underline; text-underline-offset: 6px; opacity: .75; }
 .sim-controls .sim-link:disabled { opacity: .25; }
 .sim-rail { position: relative; margin: 28px var(--gutter) 0; display: grid; grid-template-columns: repeat(6, 1fr); }
@@ -41,6 +41,7 @@
 .admin-sim .sim-site-btn { display: inline-block; background: var(--ink); color: var(--paper); padding: 16px 26px; font-weight: 600; transition: transform var(--sim-site-duration) var(--ease), clip-path var(--sim-site-duration) var(--ease), box-shadow var(--duration-flip); }
 .fixed .sim-site-btn { box-shadow: 0 0 0 4px var(--wire); }
 .sim-defect-mark { position: absolute; inset-block-start: -10px; inset-inline-start: -10px; inline-size: 150px; block-size: 76px; border: 2px dashed var(--fault); border-radius: 10px; pointer-events: none; }
+.admin-sim button.sim-defect-mark { border: 2px dashed var(--fault); pointer-events: auto; }
 .broken .sim-defect-mark { animation: sim-pulse var(--sim-pulse-duration) infinite; }
 @keyframes sim-pulse { 50% { opacity: .35; } }
 .sim-schedule { margin-block-start: 34px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; max-inline-size: 360px; }
@@ -88,7 +89,7 @@
 .sim-log div { opacity: 0; transform: translateY(6px); animation: sim-in var(--sim-log-duration) var(--ease) forwards; white-space: pre-wrap; }
 .sim-log .ok, .sim-log .add { color: var(--wire); }
 .sim-log .del { color: var(--fault); }
-.sim-log .dim { color: color-mix(in srgb, var(--paper), transparent 50%); }
+.sim-log .dim { opacity: .5; }
 @keyframes sim-in { to { opacity: 1; transform: none; } }
 .sim-progress { display: block; inline-size: 100%; block-size: 3px; border: 0; background: var(--night-2); color: var(--wire); accent-color: var(--wire); }
 .sim-progress::-webkit-progress-bar { background: var(--night-2); }
@@ -101,5 +102,5 @@
 .sim-ship .go i::after { animation: sim-ship var(--ease) both; animation-duration: var(--stage-fill); animation-delay: var(--stage-delay); }
 @keyframes sim-ship { to { transform: scaleX(1); } }
 @media (min-width: 900px) { .sim-sides { grid-template-columns: 1fr 1fr; } .sim-side-tabs { display: none; } }
-@media (max-width: 899px) { .sim-beat span b { display: none; } .sim-sides [data-side]:not(.shown) { display: none; } .sim-top { gap: 10px; flex-wrap: wrap; } .sim-top .lang { margin-inline-start: auto; } .sim-demo-flag { order: 3; inline-size: 100%; margin: 0; } .sim-card { flex-wrap: wrap; gap: 6px; padding-inline: 10px; overflow-wrap: anywhere; } .sim-lane { padding-inline-end: 4px; padding-inline-start: 6px; } }
+@media (max-width: 899px) { .sim-beat span b { display: none; } .sim-sides [data-side]:not(.shown) { display: none; } .sim-top { gap: 10px; } .sim-top .lang { margin-inline-start: 0; } .sim-card { flex-wrap: wrap; gap: 6px; padding-inline: 10px; overflow-wrap: anywhere; } .sim-lane { padding-inline-end: 4px; padding-inline-start: 6px; } }
 @media (prefers-reduced-motion: reduce) { .admin-sim *, .admin-sim *::before, .admin-sim *::after { animation-duration: 0s !important; animation-delay: 0s !important; transition: none !important; } }
