@@ -1,1 +1,38 @@
-/* Design tokens and visual styling arrive with shell task 3. */
+@import "tailwindcss";
+@import "@fontsource/frank-ruhl-libre/500.css";
+@import "@fontsource/frank-ruhl-libre/700.css";
+@import "@fontsource/frank-ruhl-libre/900.css";
+@import "@fontsource/ibm-plex-sans-hebrew/400.css";
+@import "@fontsource/ibm-plex-sans-hebrew/500.css";
+@import "@fontsource/ibm-plex-sans-hebrew/600.css";
+@import "@fontsource/ibm-plex-sans/400.css";
+@import "@fontsource/ibm-plex-sans/500.css";
+@import "@fontsource/ibm-plex-sans/600.css";
+@import "@fontsource/ibm-plex-mono/400.css";
+@import "@fontsource/ibm-plex-mono/500.css";
+
+@theme static {
+	--paper: #f2eadb; --paper-2: #e7dcc6; --ink: #1a1814;
+	--night: #0f1726; --night-2: #18233a;
+	--coral: #ff5a36; --mustard: #f2b33d; --sage: #8db596; --glass: #cfe3e8;
+	--wire: #57e3d6; --fault: #ff4d6d;
+	--font-display: "Frank Ruhl Libre", Georgia, serif;
+	--font-sans: "IBM Plex Sans Hebrew", "IBM Plex Sans", system-ui, sans-serif;
+	--font-mono: "IBM Plex Mono", ui-monospace, monospace;
+	--text-mega: clamp(2.5rem, 1.1rem + 6vw, 6rem);
+	--text-h2: clamp(2rem, 1.2rem + 3.2vw, 4rem);
+	--gutter: clamp(16px, 4vw, 48px);
+	--ease: cubic-bezier(.65, 0, .35, 1);
+	--n: 0;
+	--bg: color-mix(in oklab, var(--paper), var(--night) calc(var(--n) * 100%));
+	--fg: color-mix(in oklab, var(--ink), var(--paper) calc(var(--n) * 100%));
+	--duration-link: .3s;
+	--duration-ticket: .35s;
+	--duration-flip: .6s;
+}
+
+html:lang(en) { --font-sans: "IBM Plex Sans", "IBM Plex Sans Hebrew", system-ui, sans-serif; }
+* { box-sizing: border-box; margin: 0; }
+html { background: var(--paper); }
+body { background: var(--bg); color: var(--fg); font: 400 1.0625rem/1.6 var(--font-sans); -webkit-font-smoothing: antialiased; overflow-x: clip; }
+a { color: inherit; }
