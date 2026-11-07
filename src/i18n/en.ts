@@ -91,7 +91,7 @@ export const en = {
 		"logs": {
 			"idle": "agent ▸ idle · waiting for requests",
 			"received": "inbox ▸ request #214 from noya_website",
-			"context": "type: issue · context: / (home)",
+			"context": "type: {{type}} · context: / (home)",
 			"cardCreated": "→ card created on board 'noya — requests'",
 			"claimed": "agent ▸ claimed #214",
 			"reading": "reading src/pages/home.tsx",
