@@ -1,6 +1,7 @@
 export const en = {
 	shell: {
 		brand: "Topsyde Studios",
+		sample: { kicker: "TOPSIDE", meeting: "Business meeting", request: "Request", name: "Name", log: "agent ▸ idle", book: "Book a meeting", demo: "See it work", ticketNumber: "№ 01" },
 		description: "Websites and systems built with ClassKit. Choose a package and book a business meeting.",
 		languageSwitch: "עברית",
 		languageSwitchLabel: "Switch to Hebrew",

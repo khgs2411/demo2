@@ -36,3 +36,47 @@ html:lang(en) { --font-sans: "IBM Plex Sans", "IBM Plex Sans Hebrew", system-ui,
 html { background: var(--paper); }
 body { background: var(--bg); color: var(--fg); font: 400 1.0625rem/1.6 var(--font-sans); -webkit-font-smoothing: antialiased; overflow-x: clip; }
 a { color: inherit; }
+
+/* The mockup primitives. */
+
+.ticket {
+	--notch: 9px; display: inline-flex; align-items: stretch; text-decoration: none; cursor: pointer;
+	background: var(--coral); color: var(--ink); font: 600 1rem/1 var(--font-sans);
+	-webkit-mask: radial-gradient(circle var(--notch) at 0 50%, transparent 97%, var(--ink)) 0 0 / 51% 100% no-repeat, radial-gradient(circle var(--notch) at 100% 50%, transparent 97%, var(--ink)) 100% 0 / 51% 100% no-repeat;
+	mask: radial-gradient(circle var(--notch) at 0 50%, transparent 97%, var(--ink)) 0 0 / 51% 100% no-repeat, radial-gradient(circle var(--notch) at 100% 50%, transparent 97%, var(--ink)) 100% 0 / 51% 100% no-repeat;
+	transition: transform var(--duration-ticket) var(--ease);
+}
+.ticket .main { padding: 18px 24px; display: flex; align-items: center; }
+.ticket .stub { padding: 0 18px; display: grid; place-items: center; font: 500 12px/1.2 var(--font-mono); letter-spacing: .06em; border-inline-start: 2px dashed color-mix(in srgb, var(--ink), transparent 65%); }
+.ticket:hover { transform: rotate(-2deg) translateY(-2px); }
+.link-arrow { font-weight: 500; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 6px; }
+
+.kicker { font: 500 12px/1 var(--font-mono); letter-spacing: .12em; opacity: .6; display: block; margin-block-end: 14px; }
+.ledger { margin-block-start: 56px; border-block-start: 2px solid var(--fg); }
+.line { display: grid; gap: 10px 32px; padding-block: 32px; border-block-end: 1px solid color-mix(in oklab, var(--fg), transparent 75%); }
+@media (min-width: 900px) { .line { grid-template-columns: 2.2fr 1.6fr 2.6fr auto; align-items: baseline; } }
+.line .ticket { justify-self: start; }
+.line .name { font: 700 clamp(1.5rem, 1.1rem + 1.4vw, 2.3rem)/1.1 var(--font-display); }
+.line .name sup { font: 500 11px var(--font-mono); letter-spacing: .1em; color: var(--coral); vertical-align: top; margin-inline-start: 8px; }
+.line .price { font: 900 clamp(2rem, 1.3rem + 2.4vw, 3.4rem)/1 var(--font-display); letter-spacing: -.02em; }
+.line .price small { font: 500 .875rem/1.3 var(--font-sans); display: block; letter-spacing: 0; opacity: .7; margin-block-start: 6px; }
+.line .what { opacity: .8; max-inline-size: 44ch; }
+
+.ticket { border: 0; padding: 0; }
+.ticket-small { --notch: 7px; font-size: .875rem; }
+.ticket-small .main { padding: 11px 16px; }
+.ticket:disabled { cursor: not-allowed; }
+.log-line { font: 500 12px/1 var(--font-mono); letter-spacing: .06em; color: var(--wire); }
+.field { display: grid; gap: 10px; font-weight: 500; }
+.input { inline-size: 100%; min-inline-size: 0; padding: 14px 0; background: none; color: inherit; border: 0; border-block-end: 1px solid var(--fg); border-radius: 0; font: inherit; }
+.input::placeholder { color: inherit; opacity: .6; }
+:focus-visible { outline: 2px solid var(--fg); outline-offset: 4px; }
+.ticket:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--ink); }
+@media (prefers-reduced-motion: reduce) {
+ .ticket, .mark b, .links a { transition: none; }
+ .ticket:hover, .mark:hover b { transform: none; }
+}
+.primitives-sample { padding: 32px var(--gutter); display: grid; gap: 26px; }
+.primitives-sample h1 { font: 900 var(--text-h2)/1 var(--font-display); letter-spacing: -.02em; }
+.primitives-sample .ledger { margin-block-start: 0; }
+.sample-underside { --n: 1; --bg: var(--night); --fg: var(--paper); padding: 32px; background: var(--bg); color: var(--fg); }
