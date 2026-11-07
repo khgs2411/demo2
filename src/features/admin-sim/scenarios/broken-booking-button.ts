@@ -9,7 +9,8 @@ export const brokenBookingButton = {
 	defect: {
 		selector: ".booking-cta",
 		descriptionKey: "scenarios.brokenBookingButton.defect",
-		brokenStyle: { transform: "translateX(46%)", clipPath: "inset(0 52% 0 0)" },
+		brokenStyle: { transform: "translate(46%, 14px) rotate(4deg)", clipPath: "inset(0 52% 0 0)" },
+		ltrBrokenStyle: { transform: "translate(-46%, 14px) rotate(-4deg)", clipPath: "inset(0 0 0 52%)" },
 		fixedStyle: { transform: "none", clipPath: "none" },
 	},
 	ticket: {
@@ -35,7 +36,7 @@ export const brokenBookingButton = {
 	},
 	// Include clipping in the CSS fix so the streamed diff really repairs both defect styles.
 	diff: { file: "src/pages/home.tsx", lines: [
-		"- .booking-cta { transform: translateX(46%); clip-path: inset(0 52% 0 0); }",
+		"- .booking-cta { transform: translate(46%, 14px) rotate(4deg); clip-path: inset(0 52% 0 0); }",
 		"+ .booking-cta { transform: none; clip-path: none; }",
 	] },
 	fixedRender: { bookingButtonFixed: true },

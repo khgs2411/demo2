@@ -38,7 +38,9 @@ describe("broken booking button scenario", () => {
 			sheet.insertRule(scenario.diff.lines.filter((line) => !line.startsWith(excluded)).map((line) => line.slice(1)).join("\n"));
 			const rule = sheet.cssRules[0] as CSSStyleRule;
 			expect(rule.selectorText).toBe(scenario.defect.selector);
-			expect(rule.style.getPropertyValue("transform")).toBe(scenario.defect[variant].transform);
+			const transform = document.createElement("span").style;
+			transform.transform = scenario.defect[variant].transform;
+			expect(rule.style.getPropertyValue("transform")).toBe(transform.transform);
 			const expectedStyle = document.createElement("span").style;
 			expectedStyle.clipPath = scenario.defect[variant].clipPath;
 			expect(rule.style.getPropertyValue("clip-path")).toBe(expectedStyle.clipPath);

@@ -9,7 +9,7 @@ export interface SimulationScenario {
 	bookingLabelKey: string;
 	disclaimerKey: string;
 	elapsedLabelKey: string;
-	defect: { selector: string; descriptionKey: string; brokenStyle: CSSProperties; fixedStyle: CSSProperties };
+	defect: { selector: string; descriptionKey: string; brokenStyle: CSSProperties; ltrBrokenStyle: CSSProperties; fixedStyle: CSSProperties };
 	ticket: {
 		id: string; number: string; type: "issue" | "feature_request";
 		titleKey: string; descriptionKey: string;

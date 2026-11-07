@@ -96,7 +96,7 @@ export const he = {
 			"claimed": "agent ▸ claimed #214",
 			"reading": "reading src/pages/home.tsx",
 			"found": "found: .booking-cta translateX(46%) on ≤ 390px",
-			"removed": "- .booking-cta { transform: translateX(46%); clip-path: inset(0 52% 0 0); }",
+			"removed": "- .booking-cta { transform: translate(46%, 14px) rotate(4deg); clip-path: inset(0 52% 0 0); }",
 			"added": "+ .booking-cta { transform: none; clip-path: none; }",
 			"tests": "tests ▸ 48 passed",
 			"build": "build ▸ vite build ✓",
