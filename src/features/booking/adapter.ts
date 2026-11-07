@@ -1,11 +1,11 @@
 import { useProductContext, type ClassKitClient, type ClassSummary } from "@class-kit/react";
 import { getBookingOptions } from "../packages";
 import type { BookingEvent, BookingOperation, BookingSelection, BookingSlot, BookingState, PackageId } from "./machine";
-import { clearBookingRedirect, saveBookingRedirect } from "./redirect";
+import { clearBookingRedirect, saveBookingRedirect, saveAccountRedirect, clearAccountRedirect } from "./redirect";
 import type { RequestsEvent } from "./requests-machine";
 
 export type BookingSdk = {
-	auth: Pick<ClassKitClient["auth"], "signIn" | "signUp" | "getSession" | "signInWithGoogle">;
+	auth: Pick<ClassKitClient["auth"], "signIn" | "signUp" | "getSession" | "signInWithGoogle" | "signOut">;
 	profile: Pick<ClassKitClient["profile"], "update">;
 	classes: Pick<ClassKitClient["classes"], "list" | "register" | "cancelRegistration">;
 };
@@ -50,10 +50,13 @@ export function createBookingAdapter(client: BookingSdk | null, refreshProductCo
 		}
 	}
 
-	async function signInWithGoogle(state: BookingState): Promise<BookingEvent> {
+	async function signInWithGoogle(state?: BookingState): Promise<BookingEvent> {
 		if (!client) return failure("auth");
-		if (!saveBookingRedirect(state)) {
+		if (state) clearAccountRedirect();
+		else clearBookingRedirect();
+		if (!(state ? saveBookingRedirect(state) : saveAccountRedirect())) {
 			clearBookingRedirect();
+			clearAccountRedirect();
 			return { type: "operation_failed", operation: "auth", reason: "redirect_storage" };
 		}
 		try {
@@ -63,6 +66,7 @@ export function createBookingAdapter(client: BookingSdk | null, refreshProductCo
 			// A rejected SDK promise is also a failed redirect initiation.
 		}
 		clearBookingRedirect();
+		clearAccountRedirect();
 		return failure("auth");
 	}
 
@@ -132,13 +136,20 @@ export function createBookingAdapter(client: BookingSdk | null, refreshProductCo
 
 	async function cancelRequest(registrationId: string, range: BookingRange): Promise<readonly RequestsEvent[]> {
 		let failed = false;
+		let completed: RequestsEvent | null = null;
 		try {
 			if (!client) return [{ type: "failed" }];
-			failed = Boolean((await client.classes.cancelRegistration(registrationId)).error);
+			const response = await client.classes.cancelRegistration(registrationId);
+			failed = Boolean(response.error);
+			if (response.data) completed = { type: "cancel_completed", registration: { id: response.data.registration_id, classId: response.data.registration.class_id, status: response.data.status } };
 		} catch {
 			failed = true;
 		}
-		return [...(failed ? [{ type: "cancel_failed" } as const] : []), await listRequests(range)];
+		return [...(failed ? [{ type: "cancel_failed" } as const] : completed ? [completed] : []), await listRequests(range)];
+	}
+
+	async function signOut(): Promise<boolean> {
+		try { return client ? !(await client.auth.signOut()).error : false; } catch { return false; }
 	}
 
 	return {
@@ -150,5 +161,6 @@ export function createBookingAdapter(client: BookingSdk | null, refreshProductCo
 		requestRegistration,
 		listRequests,
 		cancelRequest,
+		signOut,
 	};
 }

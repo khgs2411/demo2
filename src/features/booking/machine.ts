@@ -49,6 +49,7 @@ export type BookingEvent =
 	| { type: "slot_chosen"; slotId: string }
 	| { type: "submit_requested" }
 	| { type: "registration_requested"; registration: BookingRegistration }
+	| { type: "registration_updated"; registration: BookingRegistration }
 	| { type: "slot_full" }
 	| { type: "unauthenticated" }
 	| { type: "redirect_restored"; selection: BookingSelection; profileUserId: string | null; userId: string }
@@ -68,6 +69,9 @@ export function transition(state: BookingState, event: BookingEvent): BookingSta
 		return { step: "needs_account", selection: state.selection };
 	}
 	if (state.step === "failed") return event.type === "retry_requested" ? state.resume : state;
+	if (state.step === "requested" && event.type === "registration_updated" && event.registration.id === state.registration.id) {
+		return event.registration.status === state.registration.status ? state : { ...state, registration: event.registration };
+	}
 	if (event.type === "operation_failed") {
 		const operation = state.step === "completing_profile" ? "profile"
 			: state.step === "choosing_slot" ? "slots"

@@ -12,6 +12,7 @@ function mockSdk() {
 			signIn: vi.fn<BookingSdk["auth"]["signIn"]>().mockResolvedValue({ error: null }),
 			signUp: vi.fn<BookingSdk["auth"]["signUp"]>().mockResolvedValue({ error: null }),
 			signInWithGoogle: vi.fn<BookingSdk["auth"]["signInWithGoogle"]>().mockResolvedValue({ error: null }),
+			signOut: vi.fn<BookingSdk["auth"]["signOut"]>().mockResolvedValue({ error: null }),
 			getSession: vi.fn<BookingSdk["auth"]["getSession"]>().mockResolvedValue({
 				access_token: "test", refresh_token: "test", token_type: "bearer", expires_in: 3600,
 				user: { id: "visitor", app_metadata: {}, user_metadata: {}, aud: "authenticated", created_at: "2026-11-07" },
@@ -253,7 +254,7 @@ describe("my meeting requests", () => {
 	it("refreshes after successful cancellation, with one mutation", async () => {
 		sdk.classes.cancelRegistration.mockResolvedValueOnce({ data: { ...registered, status: "cancelled" }, error: null });
 		sdk.classes.list.mockResolvedValueOnce({ data: { classes: [] }, error: null });
-		expect(await adapter.cancelRequest("request-1", range)).toEqual([{ type: "loaded", requests: [] }]);
+		expect(await adapter.cancelRequest("request-1", range)).toEqual([{ type:"cancel_completed", registration:{ id:"request-1", classId:"slot-1", status:"cancelled" } }, { type: "loaded", requests: [] }]);
 		expect(sdk.classes.cancelRegistration).toHaveBeenCalledExactlyOnceWith("request-1");
 	});
 	it("refreshes on a cancellation race without replaying it", async () => {

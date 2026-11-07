@@ -1,17 +1,18 @@
-import type { BookingSlot } from "./machine";
+import type { BookingRegistration, BookingSlot } from "./machine";
 
 export type MeetingRequest = BookingSlot & { name: string };
 export type RequestsState =
 	| { step: "loading" }
 	| { step: "signed_out" }
 	| { step: "failed" }
-	| { step: "ready"; requests: readonly MeetingRequest[]; cancellingId: string | null; cancellationFailed: boolean };
+	| { step: "ready"; requests: readonly MeetingRequest[]; cancellingId: string | null; cancellationFailed: boolean; lastCancellation?: BookingRegistration };
 export type RequestsEvent =
 	| { type: "loading" }
 	| { type: "signed_out" }
 	| { type: "failed" }
 	| { type: "loaded"; requests: readonly MeetingRequest[] }
 	| { type: "cancel_started"; registrationId: string }
+	| { type: "cancel_completed"; registration: BookingRegistration }
 	| { type: "cancel_failed" };
 
 export function requestsTransition(state: RequestsState, event: RequestsEvent): RequestsState {
@@ -22,7 +23,9 @@ export function requestsTransition(state: RequestsState, event: RequestsEvent): 
 		case "loaded": return {
 			step: "ready", requests: event.requests, cancellingId: null,
 			cancellationFailed: state.step === "ready" && state.cancellationFailed,
+			...(state.step === "ready" && state.lastCancellation ? { lastCancellation: state.lastCancellation } : {}),
 		};
+		case "cancel_completed": return state.step === "ready" ? { ...state, cancellingId: null, lastCancellation: event.registration } : state;
 		case "cancel_failed": return state.step === "ready" ? { ...state, cancellingId: null, cancellationFailed: true } : state;
 		case "cancel_started":
 			return state.step === "ready" && state.cancellingId === null && state.requests.some(request =>

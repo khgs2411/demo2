@@ -9,6 +9,7 @@ import { PackageStep } from "./package-step";
 import { AccountStep } from "./account-step";
 import { ProfileStep } from "./profile-step";
 import { SlotStep } from "./slot-step";
+import { RequestedStep } from "./requested-step";
 import { SummaryTicket } from "./summary-ticket";
 import "./booking.css";
 
@@ -43,9 +44,7 @@ export function BookingPage({ packageId }: { packageId?: string }) {
 						onPassword={(...args) => void flow.auth(...args)} onGoogle={() => void flow.google()} onBack={() => flow.send({ type:"restarted" })} />}
 					{view.step === "completing_profile" && <ProfileStep profile={profile} onChange={setProfile} onSubmit={() => void flow.saveProfile(profile)} busy={Boolean(view.saving)} />}
 					{(view.step === "choosing_slot" || view.step === "submitting") && <SlotStep flow={flow} timeZone={timeZone} />}
-					{view.step === "requested" && <><h1 tabIndex={-1}>{t("dTitle")}</h1><p className="lede">{t("dLede")}</p>
-						<ol className="next-list">{["n1","n2","n3"].map((key,index) => <li key={key}><span>0{index + 1}</span><span>{t(key)}</span></li>)}</ol>
-						<div className="done-actions"><Ticket href="#/account" stub={`№ ${view.registration.id}`}>{t("myRequests")}</Ticket></div></>}
+					{view.step === "requested" && <RequestedStep flow={flow} />}
 				</>}
 			</div>
 		</section>

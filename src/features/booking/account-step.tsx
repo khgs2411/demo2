@@ -3,13 +3,14 @@ import { useTranslation } from "react-i18next";
 import { Input } from "../../ui/input";
 import { Ticket } from "../../ui/ticket";
 
-export function AccountStep({ product, loading, busy, onPassword, onGoogle, onBack }: {
+export function AccountStep({ product, loading, busy, onPassword, onGoogle, onBack, initialSignIn = false }: {
 	product: { auth_mode: string; email_password_enabled: boolean; google_oauth_enabled: boolean } | null;
 	loading: boolean; busy: boolean; onPassword: (method: "signIn" | "signUp", email: string, password: string) => void;
 	onGoogle: () => void; onBack?: () => void;
+	initialSignIn?: boolean;
 }) {
 	const { t } = useTranslation("booking");
-	const [signingIn, setSigningIn] = useState(false);
+	const [signingIn, setSigningIn] = useState(initialSignIn);
 	const canSignUp = product?.auth_mode === "open";
 	const signIn = signingIn || !canSignUp;
 	function submit(event: FormEvent<HTMLFormElement>) {

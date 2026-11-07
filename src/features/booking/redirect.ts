@@ -71,3 +71,18 @@ export function readBookingChoice(): BookingSelection | null {
 		return isIntent(value) ? value.selection : null;
 	} catch { return null; }
 }
+
+const accountRedirectKey = "demo2-account-redirect";
+export function saveAccountRedirect(): boolean {
+	try { window.sessionStorage.setItem(accountRedirectKey, "account"); return true; } catch { return false; }
+}
+export function clearAccountRedirect(): void {
+	try { window.sessionStorage.removeItem(accountRedirectKey); } catch { /* Storage may have become unavailable. */ }
+}
+export function consumeAccountRedirect(): boolean {
+	try {
+		const saved = window.sessionStorage.getItem(accountRedirectKey) === "account";
+		clearAccountRedirect();
+		return saved;
+	} catch { return false; }
+}
