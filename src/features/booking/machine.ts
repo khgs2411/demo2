@@ -38,6 +38,7 @@ export type BookingState =
 export type BookingEvent =
 	| { type: "package_chosen"; packageId: PackageId; addonInterests: readonly AddonId[] }
 	| { type: "auth_started"; method: "sign_up" | "sign_in" | "google" }
+	| { type: "auth_redirect_started" }
 	| { type: "signed_in"; userId: string }
 	| { type: "profile_saved" }
 	| { type: "booking_not_open" }
@@ -48,6 +49,7 @@ export type BookingEvent =
 	| { type: "registration_requested"; registration: BookingRegistration }
 	| { type: "slot_full" }
 	| { type: "unauthenticated" }
+	| { type: "redirect_restored"; selection: BookingSelection; profileUserId: string | null; userId: string }
 	| { type: "operation_failed"; operation: BookingOperation; reason: FailureReason }
 	| { type: "retry_requested" }
 	| { type: "restarted" };
@@ -78,6 +80,11 @@ export function transition(state: BookingState, event: BookingEvent): BookingSta
 		return { step: "failed", operation: event.operation, reason: event.reason, resume };
 	}
 	if (state.step === "choosing_package") {
+		if (event.type === "redirect_restored") {
+			return event.profileUserId === event.userId
+				? chooseSlot(event.selection, event.userId)
+				: { step: "completing_profile", selection: event.selection, userId: event.userId };
+		}
 		return event.type === "package_chosen" ? {
 			step: "needs_account", selection: { packageId: event.packageId, addonInterests: [...event.addonInterests], slotId: null },
 		} : state;

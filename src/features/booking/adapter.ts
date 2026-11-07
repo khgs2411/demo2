@@ -1,9 +1,10 @@
 import type { ClassKitClient, ClassSummary } from "@class-kit/react";
 import { getBookingOptions } from "../packages";
-import type { BookingEvent, BookingOperation, BookingSelection, BookingSlot, PackageId } from "./machine";
+import type { BookingEvent, BookingOperation, BookingSelection, BookingSlot, BookingState, PackageId } from "./machine";
+import { clearBookingRedirect, saveBookingRedirect } from "./redirect";
 
 export type BookingSdk = {
-	auth: Pick<ClassKitClient["auth"], "signIn" | "signUp" | "getSession">;
+	auth: Pick<ClassKitClient["auth"], "signIn" | "signUp" | "getSession" | "signInWithGoogle">;
 	profile: Pick<ClassKitClient["profile"], "update">;
 	classes: Pick<ClassKitClient["classes"], "list" | "register">;
 };
@@ -42,6 +43,22 @@ export function createBookingAdapter(client: BookingSdk | null, refreshProductCo
 		} catch {
 			return failure("auth");
 		}
+	}
+
+	async function signInWithGoogle(state: BookingState): Promise<BookingEvent> {
+		if (!client) return failure("auth");
+		if (!saveBookingRedirect(state)) {
+			clearBookingRedirect();
+			return { type: "operation_failed", operation: "auth", reason: "redirect_storage" };
+		}
+		try {
+			const response = await client.auth.signInWithGoogle();
+			if (!response.error) return { type: "auth_redirect_started" };
+		} catch {
+			// A rejected SDK promise is also a failed redirect initiation.
+		}
+		clearBookingRedirect();
+		return failure("auth");
 	}
 
 	async function saveProfile(profile: BookingProfile, selection: BookingSelection): Promise<BookingEvent> {
@@ -99,6 +116,7 @@ export function createBookingAdapter(client: BookingSdk | null, refreshProductCo
 	return {
 		signIn: (email: string, password: string) => passwordAuth("signIn", email, password),
 		signUp: (email: string, password: string) => passwordAuth("signUp", email, password),
+		signInWithGoogle,
 		saveProfile,
 		loadSlots,
 		requestRegistration,

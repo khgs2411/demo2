@@ -176,6 +176,15 @@ export const en = {
 	booking: {
 		title: "Book a business meeting",
 		placeholder: "You will be able to request a business meeting here.",
+		messages: {
+			booking_not_open: "Booking is not open yet. Please check back later.",
+			slot_full: "That time is full. Please choose another time.",
+			auth_failed: "We could not sign you in. Please try again.",
+			profile_failed: "Your details could not be saved. Please try again.",
+			slots_failed: "Meeting times could not be loaded. Please try again.",
+			registration_failed: "We could not verify your meeting request. Refresh the times before trying again.",
+			redirect_storage: "Your booking choice could not be saved for Google sign-in. Please use email or allow session storage and try again.",
+		},
 		account: { title: "My requests", placeholder: "Your meeting requests will appear here." },
 	},
 };

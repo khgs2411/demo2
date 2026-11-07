@@ -2,12 +2,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createBookingAdapter, type BookingSdk } from "./adapter";
 import * as packages from "../packages";
 import { initialState, transition } from "./machine";
+import { bookingRedirectKey, restoreBookingRedirect } from "./redirect";
 
 function mockSdk() {
 	return {
 		auth: {
 			signIn: vi.fn<BookingSdk["auth"]["signIn"]>().mockResolvedValue({ error: null }),
 			signUp: vi.fn<BookingSdk["auth"]["signUp"]>().mockResolvedValue({ error: null }),
+			signInWithGoogle: vi.fn<BookingSdk["auth"]["signInWithGoogle"]>().mockResolvedValue({ error: null }),
 			getSession: vi.fn<BookingSdk["auth"]["getSession"]>().mockResolvedValue({
 				access_token: "test", refresh_token: "test", token_type: "bearer", expires_in: 3600,
 				user: { id: "visitor", app_metadata: {}, user_metadata: {}, aud: "authenticated", created_at: "2026-11-07" },
@@ -174,5 +176,43 @@ describe("booking slot SDK adapter", () => {
 		state = transition(state, { type: "submit_requested" });
 		for (const event of await adapter.requestRegistration("slot-1", "system", range)) state = transition(state, event);
 		expect(state).toMatchObject({ step: "requested", registration: { id: "request-1", status: "pending" } });
+	});
+});
+
+describe("booking Google redirect", () => {
+	beforeEach(() => { sessionStorage.clear(); });
+
+	it("persists the choice before the SDK can redirect and leaves session/context loading to ProductProvider", async () => {
+		const state = transition(initialState, { type: "package_chosen", packageId: "system", addonInterests: ["agent-voice"] });
+		sdk.auth.signInWithGoogle.mockImplementationOnce(async () => {
+			expect(JSON.parse(sessionStorage.getItem(bookingRedirectKey)!)).toMatchObject({ selection: { packageId: "system", addonInterests: ["agent-voice"] } });
+			return { error: null };
+		});
+		expect(await adapter.signInWithGoogle(state)).toEqual({ type: "auth_redirect_started" });
+		expect(sdk.auth.signInWithGoogle).toHaveBeenCalledOnce();
+		expect(refresh).not.toHaveBeenCalled();
+		expect(sdk.auth.getSession).not.toHaveBeenCalled();
+		expect(restoreBookingRedirect("visitor")).toMatchObject({ type: "redirect_restored", selection: { packageId: "system" } });
+	});
+
+	it("clears saved intent when Google fails before redirecting", async () => {
+		const state = transition(initialState, { type: "package_chosen", packageId: "site", addonInterests: [] });
+		sdk.auth.signInWithGoogle.mockResolvedValueOnce({ error: "Google redirect is not configured" });
+		expect(await adapter.signInWithGoogle(state)).toEqual({ type: "operation_failed", operation: "auth", reason: "generic" });
+		expect(restoreBookingRedirect("visitor")).toBeNull();
+	});
+
+	it("blocks OAuth if session storage cannot preserve the choice", async () => {
+		const state = transition(initialState, { type: "package_chosen", packageId: "system", addonInterests: [] });
+		vi.spyOn(Storage.prototype, "setItem").mockImplementationOnce(() => { throw new Error("storage denied"); });
+		expect(await adapter.signInWithGoogle(state)).toEqual({ type: "operation_failed", operation: "auth", reason: "redirect_storage" });
+		expect(sdk.auth.signInWithGoogle).not.toHaveBeenCalled();
+	});
+
+	it("clears saved intent on a thrown OAuth error", async () => {
+		const state = transition(initialState, { type: "package_chosen", packageId: "site", addonInterests: [] });
+		sdk.auth.signInWithGoogle.mockRejectedValueOnce(new Error("offline"));
+		expect(await adapter.signInWithGoogle(state)).toEqual({ type: "operation_failed", operation: "auth", reason: "generic" });
+		expect(restoreBookingRedirect("visitor")).toBeNull();
 	});
 });
