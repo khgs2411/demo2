@@ -75,6 +75,10 @@ export default function Scene(props: SceneProps) {
 				addEventListener("scroll", readScroll, { passive: true }); addEventListener("resize", resize); addEventListener("pointermove", pointer);
 				document.addEventListener("visibilitychange", visibility); canvas!.addEventListener("webglcontextlost", contextLost);
 				size.observe(canvas!); intersection.observe(canvas!);
+				// Paint before the observer's asynchronous first notification.
+				const bounds = canvas!.getBoundingClientRect();
+				intersects = bounds.bottom > 0 && bounds.top < innerHeight && bounds.right > 0 && bounds.left < innerWidth;
+				if (intersects && !document.hidden) frame(previous);
 			} catch (error) {
 				if (cancelled) return;
 				dispose(); callbacks.current.onError?.(error);

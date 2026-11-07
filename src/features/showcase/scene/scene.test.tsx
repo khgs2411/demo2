@@ -31,10 +31,31 @@ beforeEach(() => {
 });
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
-function mount(onError = vi.fn()) {
+function mount(onError = vi.fn(), onFrame = vi.fn()) {
 	const storyRef = createRef<HTMLElement>();
-	return render(<section ref={storyRef}><Scene storyRef={storyRef} onError={onError} /></section>);
+	return render(<section ref={storyRef}><Scene storyRef={storyRef} onError={onError} onFrame={onFrame} /></section>);
 }
+
+it.each([0, .5])("paints current progress %s before any scroll or intersection callback", async progress => {
+	vi.stubGlobal("innerWidth", 1440); vi.stubGlobal("innerHeight", 900);
+	const onFrame = vi.fn(), mounted = mount(vi.fn(), onFrame);
+	const canvas = mounted.container.querySelector("canvas")!, story = mounted.container.querySelector("section")!;
+	vi.spyOn(canvas, "getBoundingClientRect").mockReturnValue(new DOMRect(0, 0, 1425, 900));
+	Object.defineProperties(canvas, { clientWidth: { value: 1425 }, clientHeight: { value: 900 } });
+	Object.defineProperty(story, "offsetHeight", { value: 3240 });
+	vi.spyOn(story, "getBoundingClientRect").mockReturnValue(new DOMRect(0, -2340 * progress, 1425, 3240));
+	await act(async () => {});
+	expect(fake.resize).toHaveBeenCalledWith(1425, 900);
+	expect(fake.render).toHaveBeenCalledWith(expect.objectContaining({ angle: progress === 0 ? 0 : Math.PI }), 0, 0, 0, 0);
+	expect(onFrame).toHaveBeenCalledWith(progress, expect.any(Object));
+	expect(pending.size).toBe(1);
+	act(() => {
+		const [id, callback] = [...pending.entries()][0]; pending.delete(id); callback(16);
+	});
+	expect(fake.render).toHaveBeenCalledTimes(2);
+	act(() => intersection([{ isIntersecting: false }]));
+	expect(pending.size).toBe(0);
+});
 
 it("renders only while intersecting and cancels work and disposes on unmount", async () => {
 	const mounted = mount();
