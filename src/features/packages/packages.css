@@ -64,7 +64,14 @@
 	.package-comparison th, .package-comparison td { padding-inline-end: 32px; }
 }
 @media (max-width: 899px) {
-	.package-comparison thead { display: none; }
+	.package-comparison thead {
+		position: absolute;
+		inline-size: 1px;
+		block-size: 1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
+	}
 	.package-comparison, .package-comparison tbody { display: block; }
 	.package-comparison tr { display: grid; gap: 10px; padding-block: 24px; }
 	.package-comparison th, .package-comparison td { display: block; padding: 0; }
