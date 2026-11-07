@@ -59,8 +59,9 @@ export type Timeline = ReturnType<typeof timeline>;
 export function getCameraLayout(width: number, height: number, direction: "rtl" | "ltr") {
 	const side = direction === "rtl" ? 1 : -1;
 	const desktop = width >= 900;
+	const distance = desktop ? 17 : 14 + (height / width) * 6;
 	const room: Record<typeof chapterAnchors[number], [number, number]> = desktop
-		? { top: [0, -0.15], bottom: [0, 0.13], start: [0.19 * side, 0], end: [-0.19 * side, 0] }
+		? { top: [0, -0.28], bottom: [0, 0.13], start: [0.19 * side, 0], end: [-0.19 * side, 0] }
 		: { top: [0, -0.2], bottom: [0, 0.12], start: [0, -0.2], end: [0, -0.2] };
-	return { distance: desktop ? 17 : 14 + (height / width) * 6, room };
+	return { distance, topDistance: desktop ? 20 : distance, room };
 }

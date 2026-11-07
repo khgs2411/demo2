@@ -22,6 +22,10 @@ Import `ShowcaseScene` from `features/showcase/scene` inside a React
   chapter, including mirrored desktop start/end anchors and the mobile top
   fallback. Its progress-based lead switches at the gap midpoints: 0.115,
   0.365, 0.535 and 0.80. The page should not add another world offset.
+- The first visible mount paints immediately at the current scroll progress,
+  before the initial `IntersectionObserver` notification. Subsequent frames
+  follow viewport intersection and document visibility. The camera starts at
+  that progress's framing target; later anchor changes glide normally.
 - The scene uses `NoToneMapping` and writes its background hex to root
   `--bg` every frame so the canvas, halos and header share the same colour.
   The story clears this inline colour on fallback and unmount, restoring the
@@ -47,6 +51,30 @@ into `/tmp/demo2-showcase-validation-build`. Its manifest distinguishes static
 imports from dynamic imports. The ordinary app now exercises the lazy scene import through the home story.
 The command writes the import-graph check to `artifacts/showcase/build.json`.
 The `artifacts/showcase/` folder is ignored generated output and is not committed.
+
+## Desktop top-anchor clearance
+
+The live-home overlap correction uses a desktop top-anchor view offset of
+`[0, -0.28]` and camera distance `20`, instead of `-0.15` and `17`. Distance
+glides with the existing view-offset damping. Other anchors retain distance
+`17`; mobile targets are unchanged. This is an authorized adjustment from the
+mockup's top-anchor framing to clear the chapter 0 actions and chapter 4.
+
+The selected framing was checked by projecting the actual topside geometry
+at rest, with t = 0 and neutral pointer, using the scene's camera. Canvas
+widths 1265 and 1425 account for the reported 15px desktop scrollbar. The
+installed font metrics give two lines for the English front paragraph and
+one for Hebrew; the two-line paragraph is the conservative case below.
+
+| Viewport | Chapter 0 actions end, from CSS | Projected world top at p = 0 | Projected world top at p = 1 |
+| --- | --- | --- | --- |
+| 1280×800 | 420px | 436.9px | 469.5px |
+| 1440×900 | 435.2px | 491.5px | 528.2px |
+
+Chapter 4 is shorter than chapter 0. These are geometry/font calculations,
+not browser layout measurements. Browser tools still report an unavailable
+host and native Chrome returns `cgWindowNotFound`, so fresh-load rendering
+and the live visual clearance at both sizes still need browser confirmation.
 
 ## Browser checks and screenshots
 
@@ -114,5 +142,5 @@ now port those corrections. Local tests cover disjoint chapter windows,
 midpoint camera lead, tone-mapping configuration, background hex values and
 cleanup, along with fallback selection and catalog-backed booking targets.
 These tests do not constitute a browser visual check of the corrected scene.
-Liad owns rendering `public/poster-*.webp` from the corrected scene; the assets
-are left unchanged by this correction.
+Liad added `public/poster-*.webp` in commit `149a5ec`; those assets are left
+unchanged by the first-paint and framing corrections.

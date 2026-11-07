@@ -3,6 +3,8 @@ import { afterEach, expect, it, vi } from "vitest";
 import { createScene } from "./renderer";
 import { timeline } from "./timeline";
 
+const inspection = vi.hoisted(() => ({ camera: undefined as THREE.PerspectiveCamera | undefined }));
+
 // Exercise colour handling without creating a GPU context or running postprocessing.
 vi.mock("three", async importOriginal => ({
 	...await importOriginal<typeof import("three")>(),
@@ -10,13 +12,15 @@ vi.mock("three", async importOriginal => ({
 		shadowMap = { enabled: false, type: 0 };
 		toneMapping = 0;
 		setPixelRatio() {}
+		setSize() {}
 		dispose() {}
 	},
 }));
 vi.mock("three/examples/jsm/postprocessing/EffectComposer.js", () => ({
 	EffectComposer: class {
 		passes: { dispose(): void }[] = [];
-		addPass(pass: { dispose(): void }) { this.passes.push(pass); }
+		addPass(pass: { dispose(): void; camera?: THREE.PerspectiveCamera }) { this.passes.push(pass); if (pass.camera) inspection.camera = pass.camera; }
+		setSize() {}
 		render() {}
 		dispose() {}
 	},
@@ -41,4 +45,14 @@ it("writes the canvas background hex to the page on every frame", () => {
 		view.render(timeline(progress, 0), 0, 1 / 60);
 		expect(document.documentElement.style.getPropertyValue("--bg")).toBe(hex);
 	}
+});
+
+it.each([0, .5])("starts the camera at progress %s's target on its first paint", progress => {
+	view = createScene(document.createElement("canvas"), labels, "rtl");
+	view.resize(1425, 900);
+	view.render(timeline(progress, 0), 0, 0);
+	const camera = inspection.camera!;
+	expect(camera.position.z).toBeCloseTo(progress === 0 ? 20 : 16.1);
+	expect(camera.view!.offsetX).toBeCloseTo(progress === 0 ? 0 : -.19 * 1425);
+	expect(camera.view!.offsetY).toBeCloseTo(progress === 0 ? -.28 * 900 : 0);
 });

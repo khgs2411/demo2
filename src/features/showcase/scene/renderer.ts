@@ -28,7 +28,8 @@ export function createScene(canvas: HTMLCanvasElement, labels: SceneLabels, dire
 	const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), .1, .6, .88);
 	composer.addPass(bloom);
 	composer.addPass(new OutputPass());
-	const room = { x: 0, y: -.15 };
+	const room = { x: 0, y: 0, distance: 0 };
+	let positioned = false;
 	let width = 1, height = 1, layout = getCameraLayout(width, height, direction);
 	let disposed = false;
 	function dispose() {
@@ -57,10 +58,16 @@ export function createScene(canvas: HTMLCanvasElement, labels: SceneLabels, dire
 				document.documentElement.style.setProperty("--bg", "#" + background.getHexString());
 				hemi.intensity = frame.hemisphereIntensity; sun.intensity = frame.sunIntensity; rim.intensity = frame.rimIntensity;
 				bloom.strength = frame.bloomStrength;
-				camera.position.set(0, frame.cameraY, layout.distance - frame.cameraDolly);
-				camera.lookAt(0, frame.cameraLookY, 0);
 				const [rx, ry] = layout.room[frame.anchor], k = 1 - Math.pow(.02, dt);
-				room.x += (rx - room.x) * k; room.y += (ry - room.y) * k;
+				const distance = frame.anchor === "top" ? layout.topDistance : layout.distance;
+				if (!positioned) {
+					room.x = rx; room.y = ry; room.distance = distance; positioned = true;
+				} else {
+					room.x += (rx - room.x) * k; room.y += (ry - room.y) * k;
+					room.distance += (distance - room.distance) * k;
+				}
+				camera.position.set(0, frame.cameraY, room.distance - frame.cameraDolly);
+				camera.lookAt(0, frame.cameraLookY, 0);
 				camera.setViewOffset(width, height, room.x * width, room.y * height, width, height);
 				composer.render(dt);
 			},

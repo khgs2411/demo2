@@ -72,14 +72,22 @@ describe("the approved diorama timeline", () => {
 			expect(timeline(p, 0).anchor).toBe(anchors[index + 1]);
 		});
 	});
-	it("keeps the mockup camera distances and mirrored anchor offsets", () => {
+	it("keeps the side-camera distance, mirrored anchors and mobile framing", () => {
 		const rtl = getCameraLayout(1440, 900, "rtl");
 		expect(rtl.distance).toBe(17);
-		expect(rtl.room).toEqual({ top: [0, -0.15], bottom: [0, 0.13], start: [0.19, 0], end: [-0.19, 0] });
+		expect(rtl.room).toEqual({ top: [0, -0.28], bottom: [0, 0.13], start: [0.19, 0], end: [-0.19, 0] });
 		expect(getCameraLayout(1440, 900, "ltr").room.start).toEqual([-0.19, 0]);
 		const phone = getCameraLayout(375, 812, "rtl");
 		expect(phone.distance).toBe(14 + (812 / 375) * 6);
 		expect(phone.room.start).toEqual(phone.room.top);
 		expect(phone.room.end).toEqual(phone.room.top);
+		expect(phone.room.top).toEqual([0, -0.2]);
+		expect(phone.topDistance).toBe(phone.distance);
+	});
+	it.each([[1280, 800], [1440, 900]])("reserves room above the storefront at %sx%s", (width, height) => {
+		const layout = getCameraLayout(width, height, "rtl");
+		expect(layout.room.top).toEqual([0, -0.28]);
+		expect(layout.topDistance).toBe(20);
+		expect(layout.distance).toBe(17);
 	});
 });
