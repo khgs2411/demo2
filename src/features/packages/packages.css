@@ -1,0 +1,26 @@
+.shell-content > main.packages-page {
+	--n: 0;
+	--bg: var(--paper);
+	--fg: var(--ink);
+	display: block;
+	max-inline-size: 1280px;
+	margin-inline: auto;
+	padding: clamp(80px, 12vw, 160px) var(--gutter);
+	background: var(--bg);
+	color: var(--fg);
+	font-weight: 500;
+}
+.shell-content .packages-page h1 {
+	font: 900 var(--text-h2)/1 var(--font-display);
+	letter-spacing: -.02em;
+	max-inline-size: 16ch;
+	overflow-wrap: normal;
+}
+.packages-page .line > * { min-inline-size: 0; }
+.packages-page .line h2 { font: inherit; }
+.packages-page .line .what, .packages-page .line .price small { opacity: 1; }
+.package-recommended {
+	display: block;
+	margin-block-start: 10px;
+	font: 500 .875rem/1.3 var(--font-sans);
+}
