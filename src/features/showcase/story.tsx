@@ -19,13 +19,14 @@ export function Story() {
 	const onFrame = useCallback((progress: number, frame: Timeline) => {
 		document.documentElement.style.setProperty("--n", String(frame.night));
 		storyRef.current?.style.setProperty("--p", String(progress));
+		const lead = frame.chapterOpacities.indexOf(Math.max(...frame.chapterOpacities));
 		chaptersRef.current?.querySelectorAll<HTMLElement>(".chapter").forEach((chapter, i) => {
 			const opacity = frame.chapterOpacities[i];
 			chapter.style.opacity = String(opacity);
 			chapter.style.transform = `translateY(${(1 - opacity) * 26}px)`;
 			chapter.style.pointerEvents = opacity > .5 ? "auto" : "none";
-			chapter.toggleAttribute("inert", opacity <= .5);
-			chapter.setAttribute("aria-hidden", String(opacity <= .5));
+			chapter.toggleAttribute("inert", i !== lead);
+			chapter.setAttribute("aria-hidden", String(i !== lead));
 		});
 		if (logRef.current) logRef.current.value = frame.log;
 	}, []);

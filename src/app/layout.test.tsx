@@ -1,9 +1,10 @@
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
-import { afterEach, expect, it } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { App } from "./app";
 import { i18n } from "../i18n";
 
-afterEach(() => cleanup());
+beforeEach(() => vi.stubGlobal("matchMedia", () => ({ matches: true, addEventListener() {}, removeEventListener() {} })));
+afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 it.each(["he", "en"])("connects the header, mobile ticket and footer in %s", async (language) => {
 	await i18n.changeLanguage(language);

@@ -46,6 +46,8 @@ it("uses the approved anchors, continuous opacities, log and inert inactive chap
 	chapters.forEach((chapter, index) => expect(Number(chapter.style.opacity)).toBeCloseTo(timeline(.5, 0).chapterOpacities[index], 6));
 	expect(chapters[0].hasAttribute("inert")).toBe(true);
 	expect(chapters[0].getAttribute("aria-hidden")).toBe("true");
+	expect(chapters[2].getAttribute("aria-hidden")).toBe("false");
+	expect(chapters[2].hasAttribute("inert")).toBe(false);
 	expect(document.documentElement.style.getPropertyValue("--n")).toBe("1");
 	expect(container.querySelector(".showcase-log")!.textContent).toBe("agent ▸ fixing: sign mount");
 	unmount();

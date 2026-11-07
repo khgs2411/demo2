@@ -1,9 +1,10 @@
 import { cleanup, render, screen, act } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Routes } from "./routes";
 import "../i18n";
 
-afterEach(() => cleanup());
+beforeEach(() => vi.stubGlobal("matchMedia", () => ({ matches: true, addEventListener() {}, removeEventListener() {} })));
+afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 describe("route placeholders", () => {
 	it.each([

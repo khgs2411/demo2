@@ -4,12 +4,14 @@ import { App } from "./app";
 import { i18n } from "../i18n";
 
 beforeEach(async () => {
+	vi.stubGlobal("matchMedia", () => ({ matches: true, addEventListener() {}, removeEventListener() {} }));
 	await i18n.changeLanguage("he");
 });
 
 afterEach(() => {
 	cleanup();
 	vi.restoreAllMocks();
+	vi.unstubAllGlobals();
 });
 
 it.each(["#/", "#/packages", "#/demo", "#/book", "#/book/system", "#/account"])(

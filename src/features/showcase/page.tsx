@@ -1,6 +1,6 @@
-import { useTranslation } from "react-i18next";
+import { Story } from "./story";
+import { OffersTeaser } from "./offers-teaser";
 
 export function ShowcasePage() {
-	const { t } = useTranslation("showcase");
-	return <main data-module="showcase"><h1>{t("title")}</h1><p>{t("placeholder")}</p></main>;
+	return <main data-module="showcase" className="showcase-page"><Story /><OffersTeaser /></main>;
 }
