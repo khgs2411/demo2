@@ -78,7 +78,7 @@ a { color: inherit; }
 .primitives-sample .ledger { margin-block-start: 0; }
 .sample-underside { --n: 1; --bg: var(--night); --fg: var(--paper); padding: 32px; background: var(--bg); color: var(--fg); }
 
-.topline { position: fixed; inset-block-start: 0; inset-inline: 0; z-index: 10; display: flex; align-items: center; gap: 28px; padding: 18px var(--gutter); color: var(--fg); }
+.topline { position: fixed; inset-block-start: 0; inset-inline: 0; z-index: 10; display: flex; align-items: center; gap: 28px; padding: 18px var(--gutter); color: var(--fg); background: var(--bg); }
 .mark { white-space: nowrap; display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 600; }
 .mark b { inline-size: 30px; block-size: 30px; display: grid; place-items: center; background: var(--fg); color: var(--bg); font: 900 20px/1 var(--font-display); transition: transform var(--duration-flip) var(--ease); }
 .mark:hover b { transform: rotateX(180deg); }
