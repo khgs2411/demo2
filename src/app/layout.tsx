@@ -10,7 +10,7 @@ export function Layout({ children }: { children: ReactNode }) {
 	const route = useRoute();
 	// The walkthrough owns the compact demonstration frame shown in its reference.
 	if (route?.page === "admin-sim") return <>{children}</>;
-	return <><Header /><div className="shell-content">{children}</div><TicketDock />
+	return <><Header /><div className="shell-content">{children}</div>{route?.page !== "booking" && <TicketDock />}
 		<footer className="footer"><p>{t("description")}</p><TextLink href="#/account">{t("myRequests")}</TextLink></footer>
 	</>;
 }
