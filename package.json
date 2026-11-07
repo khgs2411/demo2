@@ -6,7 +6,8 @@
 	"scripts": {
 		"dev": "vite",
 		"build": "tsc -p tsconfig.json && vite build",
-		"preview": "vite preview"
+		"preview": "vite preview",
+		"test": "vitest run"
 	},
 	"dependencies": {
 		"@class-kit/react": "git+ssh://git@github.com/khgs2411/class-kit-sdk.git#v0.1.23",
@@ -23,8 +24,11 @@
 		"vite": "^8.0.12"
 	},
 	"devDependencies": {
+		"@testing-library/react": "^16.3.3",
 		"@types/node": "^24.13.2",
 		"@types/react": "^19.2.17",
-		"@types/react-dom": "^19.2.3"
+		"@types/react-dom": "^19.2.3",
+		"jsdom": "^31.0.0",
+		"vitest": "^5.1.0"
 	}
 }
