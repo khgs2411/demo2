@@ -5,8 +5,8 @@ import { brokenBookingButton as scenario } from "./scenarios/broken-booking-butt
 import { useSimulation } from "./use-simulation";
 import type { SimStep } from "./machine";
 
-const timedSteps = ["ticket_submitted", "agent_triaging", "agent_fixing", "deploying"] as const;
-const deployMs = scenario.deployStages.reduce((sum, stage) => sum + stage.durationMs, 0);
+const timedSteps = ["agent_fixing", "deploying"] as const;
+const deployMs = scenario.timing.scanStartMs + scenario.timing.scanDurationMs;
 let media: { matches: boolean; addEventListener: ReturnType<typeof vi.fn>; removeEventListener: ReturnType<typeof vi.fn> };
 
 beforeEach(() => {
@@ -38,20 +38,20 @@ describe("simulation effects", () => {
 		expect(vi.getTimerCount()).toBe(0);
 		act(() => { result.current.dispatch({ type: "ticket_submitted", ticketId: scenario.ticket.id }); });
 		expect(result.current.state.step).toBe("ticket_submitted");
-		advance(scenario.timing.ticketSubmittedMs);
-		expect(result.current.state.step).toBe("agent_triaging");
-		advance(scenario.timing.agentTriagingMs);
+		act(() => { vi.runAllTimers(); });
+		expect(result.current.state.step).toBe("ticket_submitted");
+		act(() => { result.current.dispatch({ type: "next_requested" }); });
 		expect(result.current.state).toEqual({ step: "agent_fixing", ticketId: scenario.ticket.id, progress: 0 });
-		for (let line = 1; line <= scenario.diff.lines.length; line++) {
+		for (let line = 1; line < scenario.logs.agent.length; line++) {
 			advance(scenario.timing.fixLineMs);
-			if (line < scenario.diff.lines.length) {
-				expect(result.current.state).toEqual({ step: "agent_fixing", ticketId: scenario.ticket.id, progress: line / scenario.diff.lines.length });
-			}
+			expect(result.current.state).toEqual({ step: "agent_fixing", ticketId: scenario.ticket.id, progress: line / (scenario.logs.agent.length - 1) });
 		}
+		expect(vi.getTimerCount()).toBe(0);
+		act(() => { result.current.dispatch({ type: "next_requested" }); });
 		expect(result.current.state.step).toBe("deploying");
-		advance(scenario.deployStages[0].durationMs);
-		expect(result.current.state.step).toBe("deploying");
-		advance(scenario.deployStages[1].durationMs);
+		advance(deployMs);
+		expect(result.current.state).toEqual({ step: "deploying", ticketId: scenario.ticket.id, finished: true });
+		act(() => { result.current.dispatch({ type: "next_requested" }); });
 		expect(result.current.state).toEqual({ step: "live", ticketId: scenario.ticket.id });
 		expect(vi.getTimerCount()).toBe(0);
 		expect(fetch).not.toHaveBeenCalled();
@@ -88,9 +88,9 @@ describe("simulation effects", () => {
 		advance(scenario.timing.fixLineMs / 2);
 		expect(result.current.state).toHaveProperty("progress", 0);
 		advance(scenario.timing.fixLineMs / 2);
-		expect(result.current.state).toHaveProperty("progress", 1 / scenario.diff.lines.length);
+		expect(result.current.state).toHaveProperty("progress", 1 / (scenario.logs.agent.length - 1));
 		act(() => { result.current.dispatch({ type: "back_requested" }); });
-		expect(vi.getTimerCount()).toBe(1);
+		expect(vi.getTimerCount()).toBe(0);
 		act(() => { select("live"); });
 		expect(vi.getTimerCount()).toBe(0);
 		act(() => { vi.runAllTimers(); });
@@ -103,7 +103,7 @@ describe("simulation effects", () => {
 		act(() => { result.current.dispatch({ type: "next_requested" }); });
 		expect(result.current.state.step).toBe("ticket_drafting");
 		act(() => { result.current.dispatch({ type: "ticket_submitted", ticketId: scenario.ticket.id }); });
-		for (const step of ["agent_triaging", "agent_fixing", "deploying", "live"]) {
+		for (const step of ["agent_fixing", "deploying", "live"]) {
 			expect(vi.getTimerCount()).toBe(0);
 			act(() => { result.current.dispatch({ type: "next_requested" }); });
 			expect(result.current.state.step).toBe(step);
@@ -127,8 +127,8 @@ describe("simulation effects", () => {
 		expect(vi.getTimerCount()).toBe(0);
 	});
 
-	it("uses the supplied scenario timing and diff length rather than hard-coded progress", () => {
-		const custom = { ...scenario, timing: { ...scenario.timing, fixLineMs: scenario.timing.fixLineMs * 2 }, diff: { ...scenario.diff, lines: [" first", " second"] } };
+	it("uses the supplied scenario timing and log length rather than hard-coded progress", () => {
+		const custom = { ...scenario, timing: { ...scenario.timing, fixLineMs: scenario.timing.fixLineMs * 2 }, logs: { ...scenario.logs, agent: scenario.logs.agent.slice(0, 3) } };
 		const { result } = renderHook(() => useSimulation(custom));
 		act(() => { result.current.dispatch({ type: "step_selected", step: "agent_fixing", ticketId: custom.ticket.id }); });
 		advance(scenario.timing.fixLineMs);
@@ -136,8 +136,12 @@ describe("simulation effects", () => {
 		advance(scenario.timing.fixLineMs);
 		expect(result.current.state).toHaveProperty("progress", 0.5);
 		advance(custom.timing.fixLineMs);
+		expect(result.current.state).toHaveProperty("progress", 1);
+		act(() => { result.current.dispatch({ type: "next_requested" }); });
 		expect(result.current.state.step).toBe("deploying");
 		advance(deployMs);
+		expect(result.current.state).toHaveProperty("finished", true);
+		act(() => { result.current.dispatch({ type: "next_requested" }); });
 		expect(result.current.state.step).toBe("live");
 	});
 

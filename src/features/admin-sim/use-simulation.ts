@@ -10,37 +10,21 @@ export function useSimulation(scenario: SimulationScenario = brokenBookingButton
 	const reducedMotion = useReducedMotion();
 
 	useEffect(() => {
-		// Reduced motion is visitor-paced: Next still goes through the pure machine.
+		// Each beat waits for Next, as in the reference. Only its effects run on a clock.
 		if (reducedMotion) return;
 		let event: SimEvent;
 		let delay: number;
-		switch (state.step) {
-			case "ticket_submitted":
-				event = { type: "agent_assigned" };
-				delay = scenario.timing.ticketSubmittedMs;
-				break;
-			case "agent_triaging":
-				event = { type: "fix_started" };
-				delay = scenario.timing.agentTriagingMs;
-				break;
-			case "agent_fixing":
-				if (state.progress === 1) {
-					dispatch({ type: "fix_completed" });
-					return;
-				}
-				event = { type: "fix_progressed", progress: (Math.round(state.progress * scenario.diff.lines.length) + 1) / scenario.diff.lines.length };
-				delay = scenario.timing.fixLineMs;
-				break;
-			case "deploying":
-				event = { type: "deploy_finished" };
-				delay = scenario.deployStages.reduce((sum, stage) => sum + stage.durationMs, 0);
-				break;
-			default:
-				return;
-		}
+		if (state.step === "agent_fixing" && state.progress < 1) {
+			const intervals = scenario.logs.agent.length - 1;
+			event = { type: "fix_progressed", progress: (Math.round(state.progress * intervals) + 1) / intervals };
+			delay = scenario.timing.fixLineMs;
+		} else if (state.step === "deploying" && !state.finished) {
+			event = { type: "deploy_finished" };
+			delay = scenario.timing.scanStartMs + scenario.timing.scanDurationMs;
+		} else return;
 		const timer = setTimeout(() => dispatch(event), delay);
 		return () => clearTimeout(timer);
 	}, [state, scenario, reducedMotion]);
 
-	return { state, dispatch, scenario };
+	return { state, dispatch, scenario, reducedMotion };
 }
