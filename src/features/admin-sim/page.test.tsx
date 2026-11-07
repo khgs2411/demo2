@@ -53,22 +53,28 @@ it("supports back, beat skipping, keyboard tabs and restart without leaking time
 	click("Restart");
 	expect(screen.getByRole("heading", { level: 1 }).textContent).toBe(i18n.t(scenario.beats.bug.titleKey, { ns: "admin-sim" }));
 	expect(vi.getTimerCount()).toBe(0);
+	click("03 Inbox");
+	expect(document.querySelector(".sim-fly")).not.toBeNull();
+	click("Restart");
+	expect(document.querySelector(".sim-fly")).toBeNull();
+	expect(vi.getTimerCount()).toBe(0);
 	click("04 Agent");
 	expect(vi.getTimerCount()).toBe(1);
 	click("Restart");
 	expect(vi.getTimerCount()).toBe(0);
 });
 
-it("leaving and returning to the route restarts the walkthrough", async () => {
+it.each(["03 Inbox", "04 Agent"])("leaving and returning during %s restarts the walkthrough", async (beat) => {
 	await i18n.changeLanguage("en");
 	window.history.replaceState(null, "", "#/demo");
 	render(<App />);
-	click("04 Agent");
+	click(beat);
 	expect(vi.getTimerCount()).toBe(1);
 	act(() => { window.location.hash = "#/packages"; window.dispatchEvent(new HashChangeEvent("hashchange")); });
 	// jsdom's hashchange task is not a simulation timer.
 	act(() => { vi.runAllTimers(); });
 	expect(vi.getTimerCount()).toBe(0);
+	expect(document.querySelector(".sim-fly")).toBeNull();
 	act(() => { window.location.hash = "#/demo"; window.dispatchEvent(new HashChangeEvent("hashchange")); });
 	act(() => { vi.runAllTimers(); });
 	expect(screen.getByRole("heading", { level: 1 }).textContent).toBe(i18n.t(scenario.beats.bug.titleKey, { ns: "admin-sim" }));
@@ -84,6 +90,7 @@ it("validates required request text and carries edited content into the local bo
 	fireEvent.change(screen.getByLabelText("Title"), { target: { value: "Please repair my button" } });
 	fireEvent.change(screen.getByLabelText("Type"), { target: { value: "feature_request" } });
 	click("Submit");
+	act(() => { vi.advanceTimersByTime(scenario.timing.flightMs); });
 	expect(screen.getByText("Please repair my button")).toBeDefined();
 	expect(screen.getByRole("log").textContent).toContain("type: feature_request");
 });

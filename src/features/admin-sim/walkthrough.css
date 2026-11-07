@@ -83,8 +83,8 @@
 .sim-card.agent { background: var(--wire); }
 .sim-card.done { background: var(--paper); }
 .sim-drone { display: inline-grid; place-items: center; inline-size: 26px; block-size: 26px; border-radius: 50%; background: var(--paper); box-shadow: 0 0 0 3px var(--wire), 0 0 18px var(--wire); color: var(--night); font: 700 11px var(--font-mono); flex-shrink: 0; }
-.sim-card.arriving { animation: sim-arrive var(--ease) both; }
-@keyframes sim-arrive { from { opacity: 0; transform: translateY(-28px) scale(1.1); } to { opacity: 1; transform: none; } }
+.sim-ghost { opacity: 0; }
+.sim-fly { position: fixed; z-index: 50; pointer-events: none; transition: transform var(--flight-motion) var(--ease), opacity var(--flight-motion); }
 .sim-log { font: 400 .86rem/1.75 var(--font-mono); direction: ltr; text-align: start; min-block-size: 9.5em; overflow-wrap: anywhere; }
 .sim-log div { opacity: 0; transform: translateY(6px); animation: sim-in var(--sim-log-duration) var(--ease) forwards; white-space: pre-wrap; }
 .sim-log .ok, .sim-log .add { color: var(--wire); }

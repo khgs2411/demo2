@@ -19,7 +19,7 @@ export function AgentPanel({ scenario, state, reducedMotion, draft }: AgentPanel
 		<div className="sim-board">
 			{(["open", "doing", "done"] as const).map((key) => <section className="sim-lane" role="group" aria-label={t(key)} key={key}>
 				<h3>{t(key)}</h3>
-				{lane === key && <span className={`sim-card ${agent ? "agent" : key === "done" ? "done" : "arriving"}`} style={{ animationDuration: `${scenario.timing.flightMs}ms` }}>
+				{lane === key && <span className={`sim-card ${agent ? "agent" : key === "done" ? "done" : ""}`}>
 					{agent && <span className="sim-drone">{t("agentMark")}</span>}{title}<b>{`#${scenario.ticket.number}`}</b>
 				</span>}
 			</section>)}

@@ -41,6 +41,6 @@ export const brokenBookingButton = {
 	] },
 	fixedRender: { bookingButtonFixed: true },
 	// BEATS/render()/type()/flyTo() in the approved admin-sim.html, in milliseconds.
-	timing: { characterMs: 28, inboxLogMs: 420, fixLineMs: 520, deployLogMs: 700, scanStartMs: 2400, scanDurationMs: 1600, stageFillMs: 600, flightMs: 920 },
+	timing: { characterMs: 28, inboxLogMs: 420, fixLineMs: 520, deployLogMs: 700, scanStartMs: 2400, scanDurationMs: 1600, stageFillMs: 600, flightMs: 920, flightMotionMs: 900 },
 	deployStages: [{ labelKey: "ship.build", startMs: 400 }, { labelKey: "ship.test", startMs: 1100 }, { labelKey: "ship.deploy", startMs: 1800 }],
 } satisfies SimulationScenario;
