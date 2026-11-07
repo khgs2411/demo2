@@ -42,3 +42,69 @@ describe("booking account and profile flow", () => {
 		expect(transition(state, { type: "retry_requested" })).toBe(state);
 	});
 });
+
+const slot = {
+	id: "slot-1", startsAt: "2026-11-10T09:00:00Z", canRegister: true,
+	canCancelRegistration: false, userRegistrationState: null,
+};
+const loading: BookingState = {
+	step: "choosing_slot", selection, userId: "visitor", slots: [], availability: "loading", notice: null,
+};
+const ready: BookingState = { ...loading, slots: [slot], availability: "ready" };
+const selected: BookingState = { ...ready, selection: { ...selection, slotId: slot.id } };
+const submitting: BookingState = { ...selected, step: "submitting" };
+const registration = { id: "request-1", classId: slot.id, status: "pending" } as const;
+
+describe("booking slot selection and request", () => {
+	it("keeps a null template at the slot step as booking not open", () => {
+		const closed = transition(loading, { type: "booking_not_open" });
+		expect(closed).toEqual({ ...loading, availability: "not_open" });
+		expect(transition(closed, { type: "slot_chosen", slotId: slot.id })).toBe(closed);
+		expect(transition(closed, { type: "submit_requested" })).toBe(closed);
+	});
+
+	it("requires a loaded backend slot and explicit submission", () => {
+		expect(transition(loading, { type: "slot_chosen", slotId: slot.id })).toBe(loading);
+		expect(transition(loading, { type: "slots_loaded", slots: [slot] })).toEqual(ready);
+		expect(transition(ready, { type: "slot_chosen", slotId: slot.id })).toEqual(selected);
+		expect(transition(ready, { type: "submit_requested" })).toBe(ready);
+		expect(transition(selected, { type: "submit_requested" })).toEqual(submitting);
+		expect(transition(submitting, { type: "submit_requested" })).toBe(submitting);
+		expect(transition(submitting, { type: "registration_requested", registration })).toEqual({
+			step: "requested", selection: selected.selection, userId: "visitor", registration,
+		});
+	});
+
+	it("does not select missing slots or ones the backend marks unavailable", () => {
+		expect(transition(ready, { type: "slot_chosen", slotId: "missing" })).toBe(ready);
+		const unavailable: BookingState = { ...ready, slots: [{ ...slot, canRegister: false }] };
+		expect(transition(unavailable, { type: "slot_chosen", slotId: slot.id })).toBe(unavailable);
+	});
+
+	it("returns a full slot to a refreshed list with a message, without replay", () => {
+		const full = transition(submitting, { type: "slot_full" });
+		expect(full).toEqual({ ...loading, notice: "slot_full" });
+		const refreshed = transition(full, { type: "slots_loaded", slots: [] });
+		expect(refreshed).toEqual({ ...ready, slots: [], notice: "slot_full" });
+		expect(transition(refreshed, { type: "submit_requested" })).toBe(refreshed);
+	});
+
+	it("retries generic registration errors by loading slots, never submitting", () => {
+		const failed = transition(submitting, { type: "operation_failed", operation: "registration", reason: "generic" });
+		expect(failed.step).toBe("failed");
+		expect(transition(failed, { type: "retry_requested" })).toEqual(loading);
+	});
+
+	it("retains the choice when reauthentication is required and requires profile completion", () => {
+		const expired = transition(submitting, { type: "unauthenticated" });
+		expect(expired).toEqual({ step: "needs_account", selection: selected.selection });
+		expect(transition(expired, { type: "signed_in", userId: "next-visitor" })).toEqual({
+			step: "completing_profile", selection: selected.selection, userId: "next-visitor",
+		});
+	});
+
+	it("drops a stale selected slot when reloading or changing the visible range", () => {
+		expect(transition(selected, { type: "slots_loaded", slots: [] })).toEqual({ ...ready, slots: [] });
+		expect(transition(selected, { type: "slots_refresh_requested" })).toEqual(loading);
+	});
+});
