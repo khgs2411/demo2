@@ -71,7 +71,7 @@ describe("booking slot selection and request", () => {
 		expect(transition(selected, { type: "submit_requested" })).toEqual(submitting);
 		expect(transition(submitting, { type: "submit_requested" })).toBe(submitting);
 		expect(transition(submitting, { type: "registration_requested", registration })).toEqual({
-			step: "requested", selection: selected.selection, userId: "visitor", registration,
+			step: "requested", selection: selected.selection, userId: "visitor", registration, slot,
 		});
 	});
 
@@ -112,7 +112,7 @@ describe("booking slot selection and request", () => {
 describe("booking transition table", () => {
 	const signingIn: BookingState = { ...account, step: "signing_in" };
 	const signingUp: BookingState = { ...account, step: "signing_up" };
-	const requested: BookingState = { step: "requested", selection: selected.selection, userId: "visitor", registration };
+	const requested: BookingState = { step: "requested", selection: selected.selection, userId: "visitor", registration, slot };
 	const authFailure: BookingState = { step: "failed", operation: "auth", reason: "generic", resume: account };
 	const profileFailure: BookingState = { step: "failed", operation: "profile", reason: "generic", resume: profile };
 	const slotsFailure: BookingState = { step: "failed", operation: "slots", reason: "generic", resume: loading };

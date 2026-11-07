@@ -1,3 +1,4 @@
+@keyframes booking-rise { from { opacity: 0; transform: translateY(10px); } }
 .shell-content > main.booking-page { display: grid; justify-content: normal; padding-block-start: 96px; }
 .booking-page {
  --n: 0; --bg: var(--paper); --fg: var(--ink); --rule: color-mix(in srgb, var(--ink), transparent 82%);
@@ -19,8 +20,8 @@
 h1 { font: 900 clamp(2.4rem, 1.2rem + 3.6vw, 4.4rem)/.95 var(--font-display); letter-spacing: -.02em; max-inline-size: 14ch; }
 .lede { margin-block: 14px 34px; max-inline-size: 46ch; opacity: .78; }
 .step { display: none; }
-.step.shown { display: block; animation: rise var(--duration-flip) var(--ease); }
-@keyframes rise { from { opacity: 0; transform: translateY(10px); } }
+.step.shown { display: block; animation: booking-rise var(--duration-flip) var(--ease); }
+
 .actions { display: flex; align-items: center; gap: 22px; margin-block-start: 34px; flex-wrap: wrap; }
 
 /* package step: ledger rows with a radio, same rules as #/packages */

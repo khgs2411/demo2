@@ -32,7 +32,7 @@ export function useRoute(): Route | null {
 	const hash = useSyncExternalStore(subscribe, () => window.location.hash);
 	const route = parseHash(hash);
 	useEffect(() => {
-		if (route?.page === "showcase" && hash !== "#/") {
+		if (route?.page === "showcase" && hash !== "#/" && window.location.hash === hash) {
 			window.history.replaceState(window.history.state, "", "#/");
 		}
 	}, [hash, route?.page]);

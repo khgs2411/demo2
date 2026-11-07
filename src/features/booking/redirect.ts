@@ -56,3 +56,18 @@ export function clearBookingRedirect(storage?: RedirectStorage): void {
 		// Storage can be unavailable even when OAuth itself is available.
 	}
 }
+
+export function hasBookingRedirect(): boolean {
+	try { return window.sessionStorage.getItem(bookingRedirectKey) !== null; } catch { return false; }
+}
+
+const choiceKey = "demo2-booking-choice";
+export function saveBookingChoice(selection: BookingSelection): void {
+	try { window.sessionStorage.setItem(choiceKey, JSON.stringify({ selection, profileUserId: null })); } catch { /* Choice persistence is optional outside OAuth. */ }
+}
+export function readBookingChoice(): BookingSelection | null {
+	try {
+		const value: unknown = JSON.parse(window.sessionStorage.getItem(choiceKey) ?? "null");
+		return isIntent(value) ? value.selection : null;
+	} catch { return null; }
+}
