@@ -1,0 +1,80 @@
+.shell-content > main.packages-page {
+	--n: 0;
+	--bg: var(--paper);
+	--fg: var(--ink);
+	display: block;
+	max-inline-size: 1280px;
+	margin-inline: auto;
+	padding: clamp(80px, 12vw, 160px) var(--gutter);
+	background: var(--bg);
+	color: var(--fg);
+	font-weight: 500;
+}
+.shell-content .packages-page h1 {
+	font: 900 var(--text-h2)/1 var(--font-display);
+	letter-spacing: -.02em;
+	max-inline-size: 16ch;
+	overflow-wrap: normal;
+}
+.packages-page .line > * { min-inline-size: 0; }
+.packages-page .line h2 { font: inherit; }
+.packages-page .line .what, .packages-page .line .price small { opacity: 1; }
+.package-recommended {
+	display: block;
+	margin-block-start: 10px;
+	font: 500 .875rem/1.3 var(--font-sans);
+}
+.package-addons {
+	margin-block-start: 36px;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px 28px;
+	align-items: baseline;
+	font-size: .875rem;
+}
+.package-addons h2 { font: 600 .875rem/1.3 var(--font-sans); }
+.package-addons ul { display: contents; list-style: none; padding: 0; }
+.package-section { margin-block-start: 80px; }
+.package-section > h2 { font: 900 var(--text-h2)/1 var(--font-display); letter-spacing: -.02em; }
+.package-comparison, .package-disclosures {
+	margin-block-start: 32px;
+	border-block-start: 2px solid var(--fg);
+}
+.package-comparison { inline-size: 100%; border-collapse: collapse; text-align: start; table-layout: fixed; }
+.package-comparison th, .package-comparison td { text-align: start; padding: 24px 0; vertical-align: baseline; }
+.package-comparison th { font-weight: 600; }
+.package-comparison tr, .package-disclosures details { border-block-end: 1px solid color-mix(in oklab, var(--fg), transparent 75%); }
+.package-comparison th small { display: block; margin-block-start: 6px; font-size: .875rem; font-weight: 500; }
+.comparison-package { display: none; }
+.package-disclosures summary {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 28px;
+	padding-block: 24px;
+	list-style: none;
+	cursor: pointer;
+	font: 700 clamp(1.5rem, 1.1rem + 1.4vw, 2.3rem)/1.1 var(--font-display);
+}
+.package-disclosures summary::-webkit-details-marker { display: none; }
+.package-disclosures summary::after { content: "+"; flex-shrink: 0; }
+.package-disclosures details[open] summary::after { content: "−"; }
+.package-disclosures p { max-inline-size: 64ch; padding-block-end: 24px; }
+@media (min-width: 900px) {
+	.package-comparison th, .package-comparison td { padding-inline-end: 32px; }
+}
+@media (max-width: 899px) {
+	.package-comparison thead {
+		position: absolute;
+		inline-size: 1px;
+		block-size: 1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
+	}
+	.package-comparison, .package-comparison tbody { display: block; }
+	.package-comparison tr { display: grid; gap: 10px; padding-block: 24px; }
+	.package-comparison th, .package-comparison td { display: block; padding: 0; }
+	.package-comparison td { display: flex; justify-content: space-between; gap: 28px; }
+	.comparison-package { display: inline; }
+}
