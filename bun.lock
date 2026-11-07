@@ -6,6 +6,10 @@
       "name": "class-kit-demo2",
       "dependencies": {
         "@class-kit/react": "git+ssh://git@github.com/khgs2411/class-kit-sdk.git#v0.1.23",
+        "@fontsource/frank-ruhl-libre": "^5.3.0",
+        "@fontsource/ibm-plex-mono": "^5.3.0",
+        "@fontsource/ibm-plex-sans": "^5.3.0",
+        "@fontsource/ibm-plex-sans-hebrew": "^5.3.0",
         "@tailwindcss/vite": "^4.3.0",
         "@vitejs/plugin-react": "^6.0.1",
         "framer-motion": "^12.40.0",
@@ -38,6 +42,14 @@
     "@class-kit/react": ["@class-kit/react@git+ssh://git@github.com/khgs2411/class-kit-sdk.git#a158bc588f5ec3421788475ccab2c5c2cb47ce9f", { "peerDependencies": { "@supabase/supabase-js": "^2.106.1", "react": "^19.2.6", "react-dom": "^19.2.6" } }, "a158bc588f5ec3421788475ccab2c5c2cb47ce9f"],
 
     "@exodus/bytes": ["@exodus/bytes@1.16.0", "", { "peerDependencies": { "@noble/hashes": "^1.8.0 || ^2.0.0" }, "optionalPeers": ["@noble/hashes"] }, "sha512-IcpW84uEn3N7ETtNZMlxKhfl6Pec8rUNGOTBtWbK1FKhJxIFAptZyVrvVRVBimAJxJCgc3PxepxkdWWG4DVzfA=="],
+
+    "@fontsource/frank-ruhl-libre": ["@fontsource/frank-ruhl-libre@5.3.0", "", {}, "sha512-t9cbVzyuEJZGYafP01s7FQ1KAkh/Fs2nakfPzZpPY8BtfvGlZxQRxXAqJ/qluyfZXilpqw0Hk+GlYiWfmSSRTg=="],
+
+    "@fontsource/ibm-plex-mono": ["@fontsource/ibm-plex-mono@5.3.0", "", {}, "sha512-eTgnZjZEGk1QtD3ZstF+Vclo2HLAni8YMy34/DxllwZvyz1lR/1RF/xTiAquOBO7MvqBx8D2Ig2WCPMVfdZu7Q=="],
+
+    "@fontsource/ibm-plex-sans": ["@fontsource/ibm-plex-sans@5.3.0", "", {}, "sha512-CbE4CbbEEZJX860XyUiRpsksXIQR8Rp2XDva2VO53NJox9tVNtusrysd2x5YkUEY3ErQ66W1IiiQL8/wihhw5w=="],
+
+    "@fontsource/ibm-plex-sans-hebrew": ["@fontsource/ibm-plex-sans-hebrew@5.3.0", "", {}, "sha512-6sYM3VzG65AnG1jul3dl+H8eBWYfx6Rqzm7946VNBIXx/ArU1NR5ZKdFx80EDehVqdbPsLOpP1fjImQFjVMopg=="],
 
     "@jridgewell/gen-mapping": ["@jridgewell/gen-mapping@0.3.13", "", { "dependencies": { "@jridgewell/sourcemap-codec": "^1.5.0", "@jridgewell/trace-mapping": "^0.3.24" } }, "sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA=="],
 
