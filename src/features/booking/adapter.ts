@@ -1,12 +1,13 @@
-import type { ClassKitClient, ClassSummary } from "@class-kit/react";
+import { useProductContext, type ClassKitClient, type ClassSummary } from "@class-kit/react";
 import { getBookingOptions } from "../packages";
 import type { BookingEvent, BookingOperation, BookingSelection, BookingSlot, BookingState, PackageId } from "./machine";
 import { clearBookingRedirect, saveBookingRedirect } from "./redirect";
+import type { RequestsEvent } from "./requests-machine";
 
 export type BookingSdk = {
 	auth: Pick<ClassKitClient["auth"], "signIn" | "signUp" | "getSession" | "signInWithGoogle">;
 	profile: Pick<ClassKitClient["profile"], "update">;
-	classes: Pick<ClassKitClient["classes"], "list" | "register">;
+	classes: Pick<ClassKitClient["classes"], "list" | "register" | "cancelRegistration">;
 };
 export type BookingRange = { start: string; end: string };
 export type BookingProfile = {
@@ -15,6 +16,10 @@ export type BookingProfile = {
 	businessName: string;
 	websiteUrl?: string;
 };
+
+export function useBookingContext() {
+	return useProductContext();
+}
 
 function failure(operation: BookingOperation): BookingEvent {
 	return { type: "operation_failed", operation, reason: "generic" };
@@ -113,6 +118,29 @@ export function createBookingAdapter(client: BookingSdk | null, refreshProductCo
 		}
 	}
 
+	async function listRequests(range: BookingRange): Promise<RequestsEvent> {
+		try {
+			if (!client) return { type: "failed" };
+			const response = await client.classes.list({ range });
+			if (response.error) return { type: response.error.code === "unauthorized" ? "signed_out" : "failed" };
+			return { type: "loaded", requests: response.data.classes.filter(slot => slot.userRegistrationState)
+				.map(slot => ({ ...mapSlot(slot), name: slot.name })) };
+		} catch {
+			return { type: "failed" };
+		}
+	}
+
+	async function cancelRequest(registrationId: string, range: BookingRange): Promise<readonly RequestsEvent[]> {
+		let failed = false;
+		try {
+			if (!client) return [{ type: "failed" }];
+			failed = Boolean((await client.classes.cancelRegistration(registrationId)).error);
+		} catch {
+			failed = true;
+		}
+		return [...(failed ? [{ type: "cancel_failed" } as const] : []), await listRequests(range)];
+	}
+
 	return {
 		signIn: (email: string, password: string) => passwordAuth("signIn", email, password),
 		signUp: (email: string, password: string) => passwordAuth("signUp", email, password),
@@ -120,5 +148,7 @@ export function createBookingAdapter(client: BookingSdk | null, refreshProductCo
 		saveProfile,
 		loadSlots,
 		requestRegistration,
+		listRequests,
+		cancelRequest,
 	};
 }

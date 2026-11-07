@@ -4,6 +4,8 @@ import * as packages from "../packages";
 import { initialState, transition } from "./machine";
 import { bookingRedirectKey, restoreBookingRedirect } from "./redirect";
 
+vi.mock("@class-kit/react", () => ({ useProductContext: vi.fn() }));
+
 function mockSdk() {
 	return {
 		auth: {
@@ -19,6 +21,7 @@ function mockSdk() {
 		classes: {
 			list: vi.fn<BookingSdk["classes"]["list"]>(),
 			register: vi.fn<BookingSdk["classes"]["register"]>(),
+			cancelRegistration: vi.fn<BookingSdk["classes"]["cancelRegistration"]>(),
 		},
 	};
 }
@@ -238,5 +241,31 @@ describe("booking Google redirect", () => {
 		sdk.auth.signInWithGoogle.mockRejectedValueOnce(new Error("offline"));
 		expect(await adapter.signInWithGoogle(state)).toEqual({ type: "operation_failed", operation: "auth", reason: "generic" });
 		expect(restoreBookingRedirect("visitor")).toBeNull();
+	});
+});
+
+describe("my meeting requests", () => {
+	it.each(["pending", "approved", "rejected", "cancelled"] as const)("projects a backend %s request and skips unregistered classes", async status => {
+		sdk.classes.list.mockResolvedValueOnce({ data: { classes: [sdkSlot, { ...sdkSlot, userRegistrationState: { id: "request-1", status }, canCancelRegistration: status === "pending" }] }, error: null });
+		expect(await adapter.listRequests(range)).toEqual({ type: "loaded", requests: [{ ...projectedSlot, name: sdkSlot.name, userRegistrationState: { id: "request-1", status }, canCancelRegistration: status === "pending" }] });
+		expect(sdk.classes.list).toHaveBeenCalledWith({ range });
+	});
+	it("refreshes after successful cancellation, with one mutation", async () => {
+		sdk.classes.cancelRegistration.mockResolvedValueOnce({ data: { ...registered, status: "cancelled" }, error: null });
+		sdk.classes.list.mockResolvedValueOnce({ data: { classes: [] }, error: null });
+		expect(await adapter.cancelRequest("request-1", range)).toEqual([{ type: "loaded", requests: [] }]);
+		expect(sdk.classes.cancelRegistration).toHaveBeenCalledExactlyOnceWith("request-1");
+	});
+	it("refreshes on a cancellation race without replaying it", async () => {
+		sdk.classes.cancelRegistration.mockResolvedValueOnce({ data: null, error: { code: "bad_request", message: "Cancellation is closed for this class." } });
+		sdk.classes.list.mockResolvedValueOnce({ data: { classes: [] }, error: null });
+		expect(await adapter.cancelRequest("request-1", range)).toEqual([{ type: "cancel_failed" }, { type: "loaded", requests: [] }]);
+		expect(sdk.classes.cancelRegistration).toHaveBeenCalledOnce();
+	});
+	it("handles expired sessions and generic reads", async () => {
+		sdk.classes.list.mockResolvedValueOnce({ data: null, error: { code: "unauthorized", message: "Expired" } });
+		expect(await adapter.listRequests(range)).toEqual({ type: "signed_out" });
+		sdk.classes.list.mockRejectedValueOnce(new Error("offline"));
+		expect(await adapter.listRequests(range)).toEqual({ type: "failed" });
 	});
 });
