@@ -3,15 +3,20 @@ import { PackagesPage } from "../features/packages/page";
 import { AdminSimPage } from "../features/admin-sim/page";
 import { BookingPage } from "../features/booking/page";
 import { AccountPage } from "../features/booking/account-page";
+import { BookingReturn } from "../features/booking/booking-return";
 import { useRoute } from "./router";
 
 export function Routes() {
+	return <><BookingReturn /><RoutePage /></>;
+}
+
+function RoutePage() {
 	const route = useRoute();
 	switch (route?.page) {
 		case "showcase": return <ShowcasePage />;
 		case "packages": return <PackagesPage />;
 		case "admin-sim": return <AdminSimPage />;
-		case "booking": return <BookingPage />;
+		case "booking": return <BookingPage key={route.packageId ?? "book"} packageId={route.packageId} />;
 		case "account": return <AccountPage />;
 		default: return null;
 	}
