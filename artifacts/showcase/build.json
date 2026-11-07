@@ -1,0 +1,16 @@
+{
+  "scope": "Isolated validation entry plus the unchanged production home placeholder; task 11 owns home assembly",
+  "threeExcludedFromStaticImports": true,
+  "entries": {
+    "index.html": [
+      "assets/app-BIEtMZWK.js",
+      "assets/src-CRMQfhs6.js",
+      "assets/useTranslation-BsbHyMRt.js"
+    ],
+    "showcase-scene.html": [
+      "assets/validation-J0wWXT7v.js",
+      "assets/src-CRMQfhs6.js"
+    ]
+  },
+  "scene": "assets/scene-fGNEZCU2.js"
+}
