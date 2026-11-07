@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { he } from "../../i18n/he";
 import { en } from "../../i18n/en";
 import { catalog } from "./catalog";
-import { getBookingPackages, getHeadlineOffers } from "./index";
+import { getBookingOptions, getHeadlineOffers } from "./index";
 
 describe("package catalog", () => {
 	it("contains exactly the five specified offers with unique ids and pending templates", () => {
@@ -16,7 +16,8 @@ describe("package catalog", () => {
 
 	it("exposes only base offers for headlines and bookable meetings", () => {
 		expect(getHeadlineOffers().map(({ id }) => id)).toEqual(["site", "system"]);
-		expect(getBookingPackages().map(({ id }) => id)).toEqual(["site", "system"]);
+		expect(getBookingOptions().packages.map(({ id }) => id)).toEqual(["site", "system"]);
+		expect(getBookingOptions().addons.map(({ id }) => id)).toEqual(["agent-whatsapp", "agent-social", "agent-voice"]);
 	});
 
 	it.each([he, en])("resolves all catalog copy in each language", (language) => {
