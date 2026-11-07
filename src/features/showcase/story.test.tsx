@@ -50,6 +50,8 @@ it("uses the approved anchors, continuous opacities, log and inert inactive chap
 	expect(chapters[2].hasAttribute("inert")).toBe(false);
 	expect(document.documentElement.style.getPropertyValue("--n")).toBe("1");
 	expect(container.querySelector(".showcase-log")!.textContent).toBe("agent ▸ fixing: sign mount");
+	act(() => scene.props!.onFrame!(.135, timeline(.135, 0)));
+	expect(chapters.every(chapter => chapter.hasAttribute("inert") && chapter.getAttribute("aria-hidden") === "true")).toBe(true);
 	unmount();
 	expect(document.documentElement.style.getPropertyValue("--n")).toBe("0");
 });

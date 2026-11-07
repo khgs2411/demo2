@@ -22,11 +22,12 @@ export function Story() {
 		const lead = frame.chapterOpacities.indexOf(Math.max(...frame.chapterOpacities));
 		chaptersRef.current?.querySelectorAll<HTMLElement>(".chapter").forEach((chapter, i) => {
 			const opacity = frame.chapterOpacities[i];
+			const inactive = i !== lead || opacity === 0;
 			chapter.style.opacity = String(opacity);
 			chapter.style.transform = `translateY(${(1 - opacity) * 26}px)`;
 			chapter.style.pointerEvents = opacity > .5 ? "auto" : "none";
-			chapter.toggleAttribute("inert", i !== lead);
-			chapter.setAttribute("aria-hidden", String(i !== lead));
+			chapter.toggleAttribute("inert", inactive);
+			chapter.setAttribute("aria-hidden", String(inactive));
 		});
 		if (logRef.current) logRef.current.value = frame.log;
 	}, []);
