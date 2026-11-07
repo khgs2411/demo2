@@ -16,7 +16,24 @@ export const he = {
 	},
 	showcase: { title: "ברוכים הבאים", placeholder: "היכרות עם השירותים שלנו תופיע כאן." },
 	packages: { title: "חבילות", placeholder: "החבילות שלנו יופיעו כאן." },
-	"admin-sim": { title: "הדגמה", placeholder: "הדגמת המערכת תופיע כאן." },
+	"admin-sim": {
+		title: "הדגמה",
+		placeholder: "הדגמת המערכת תופיע כאן.",
+		demoNotice: "זו הדגמה מתוסרטת: לא נשלחת בקשה אמיתית ולא מתבצע שינוי באתר אמיתי.",
+		demoTiming: "זמן הדגמה: {{elapsed}}",
+		scenarios: {
+			brokenBookingButton: {
+				siteName: "סטודיו אורביט",
+				bookingLabel: "הרשמה לשיעור",
+				defect: "כפתור ההרשמה נחתך בטלפון.",
+				ticketTitle: "תיקון כפתור ההרשמה בנייד",
+				ticketDescription: "כפתור ההרשמה חורג מגבולות המסך בטלפון שלי. בבקשה הציגו את הכפתור במלואו כדי שמבקרים יוכלו להירשם לשיעור.",
+				screenshotAlt: "צילום מסך להדגמה של כפתור הרשמה שחורג מגבולות אתר הסטודיו בטלפון.",
+				build: "בניית אתר ההדגמה",
+				deploy: "פריסת התיקון בהדגמה",
+			},
+		},
+	},
 	booking: {
 		title: "קביעת פגישה עסקית",
 		placeholder: "בקשת פגישה עסקית תתאפשר כאן.",

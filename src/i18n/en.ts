@@ -16,7 +16,24 @@ export const en = {
 	},
 	showcase: { title: "Welcome", placeholder: "An introduction to our services will appear here." },
 	packages: { title: "Packages", placeholder: "Our packages will appear here." },
-	"admin-sim": { title: "Demo", placeholder: "A demonstration of the system will appear here." },
+	"admin-sim": {
+		title: "Demo",
+		placeholder: "A demonstration of the system will appear here.",
+		demoNotice: "A scripted demonstration: no real ticket is submitted and no real site is changed.",
+		demoTiming: "Demo timing: {{elapsed}}",
+		scenarios: {
+			brokenBookingButton: {
+				siteName: "Orbit Studio",
+				bookingLabel: "Book a class",
+				defect: "The booking button is cut off on a phone.",
+				ticketTitle: "Fix the booking button on mobile",
+				ticketDescription: "The booking button extends beyond the screen on my phone. Please make the whole button visible so visitors can book a class.",
+				screenshotAlt: "Demo screenshot of the booking button extending beyond the studio site on a phone.",
+				build: "Build the demo site",
+				deploy: "Deploy the demo fix",
+			},
+		},
+	},
 	booking: {
 		title: "Book a business meeting",
 		placeholder: "You will be able to request a business meeting here.",
