@@ -41,9 +41,6 @@ describe("broken booking button scenario", () => {
 			const transform = document.createElement("span").style;
 			transform.transform = scenario.defect[variant].transform;
 			expect(rule.style.getPropertyValue("transform")).toBe(transform.transform);
-			const expectedStyle = document.createElement("span").style;
-			expectedStyle.clipPath = scenario.defect[variant].clipPath;
-			expect(rule.style.getPropertyValue("clip-path")).toBe(expectedStyle.clipPath);
 		}
 	});
 

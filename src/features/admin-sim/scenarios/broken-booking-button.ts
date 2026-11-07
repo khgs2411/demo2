@@ -9,9 +9,9 @@ export const brokenBookingButton = {
 	defect: {
 		selector: ".booking-cta",
 		descriptionKey: "scenarios.brokenBookingButton.defect",
-		brokenStyle: { transform: "translate(46%, 14px) rotate(4deg)", clipPath: "inset(0 52% 0 0)" },
-		ltrBrokenStyle: { transform: "translate(-46%, 14px) rotate(-4deg)", clipPath: "inset(0 0 0 52%)" },
-		fixedStyle: { transform: "none", clipPath: "none" },
+		brokenStyle: { transform: "translateX(58%)" },
+		ltrBrokenStyle: { transform: "translateX(-58%)" },
+		fixedStyle: { transform: "none" },
 	},
 	ticket: {
 		id: "demo-broken-booking-button", number: "214", type: "issue",
@@ -34,10 +34,10 @@ export const brokenBookingButton = {
 		deploy: [{ tone: "dim", textKey: "logs.build" }, { tone: "dim", textKey: "logs.test" }, { tone: "ok", textKey: "logs.deployed" }],
 		done: [{ tone: "ok", textKey: "logs.done" }],
 	},
-	// Include clipping in the CSS fix so the streamed diff really repairs both defect styles.
+	// The streamed diff is the actual CSS change between the broken and fixed button.
 	diff: { file: "src/pages/home.tsx", lines: [
-		"- .booking-cta { transform: translate(46%, 14px) rotate(4deg); clip-path: inset(0 52% 0 0); }",
-		"+ .booking-cta { transform: none; clip-path: none; }",
+		"- .booking-cta { transform: translateX(58%); }",
+		"+ .booking-cta { transform: none; }",
 	] },
 	fixedRender: { bookingButtonFixed: true },
 	// BEATS/render()/type()/flyTo() in the approved admin-sim.html, in milliseconds.

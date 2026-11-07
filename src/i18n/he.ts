@@ -15,7 +15,7 @@ export const he = {
 		languageSwitchLabel: "מעבר לאנגלית",
 	},
 	showcase: {
-		scene: { studio: "סטודיו נועה", open: "פתוח", customers: "לקוחות", bookings: "פגישות", requests: "בקשות" },
+		scene: { studio: "סטודיו שקד", open: "פתוח", customers: "לקוחות", bookings: "פגישות", requests: "בקשות" },
 		storyLabel: "הסיפור", bookMeeting: "קביעת פגישה", chooseTime: "לבחור מועד", seeItWork: "לראות את זה עובד",
 		posterTopside: "חזית הסטודיו על משטח הקרקע", posterUnderside: "ClassKit, צינורות המידע וסוכן ה-AI מתחת לסטודיו",
 		chapters: {
@@ -145,14 +145,14 @@ export const he = {
 		},
 		"logs": {
 			"idle": "agent ▸ idle · waiting for requests",
-			"received": "inbox ▸ request #214 from noya_website",
+			"received": "inbox ▸ request #214 from studio-shaked",
 			"context": "type: {{type}} · context: / (home)",
-			"cardCreated": "→ card created on board 'noya — requests'",
+			"cardCreated": "→ card created on board 'studio-shaked — requests'",
 			"claimed": "agent ▸ claimed #214",
 			"reading": "reading src/pages/home.tsx",
-			"found": "found: .booking-cta translateX(46%) on ≤ 390px",
-			"removed": "- .booking-cta { transform: translate(46%, 14px) rotate(4deg); clip-path: inset(0 52% 0 0); }",
-			"added": "+ .booking-cta { transform: none; clip-path: none; }",
+			"found": "found: .booking-cta pushed off screen on ≤ 390px",
+			"removed": "- .booking-cta { transform: translateX(58%); }",
+			"added": "+ .booking-cta { transform: none; }",
 			"tests": "tests ▸ 48 passed",
 			"build": "build ▸ vite build ✓",
 			"test": "test ▸ 48 passed ✓",
@@ -161,15 +161,17 @@ export const he = {
 		},
 		"scenarios": {
 			"brokenBookingButton": {
-				"siteName": "סטודיו נועה",
+				"siteName": "סטודיו שקד",
 				"siteNav": "שיעורים · מערכת · צור קשר",
 				"siteTitle": "כוח שמרגישים מחוץ לסטודיו.",
 				"siteBody": "שיעורי כוח בקבוצות קטנות. בוחרים שעה, נרשמים, מגיעים.",
 				"bookingLabel": "להרשמה לשיעור",
+				"faultNote": "הכפתור בורח מהמסך. לקוחות לא מצליחות להירשם.",
+				"fixedNote": "הכפתור במקום. ההרשמה עובדת.",
 				"defect": "כפתור ההרשמה חתוך במובייל",
 				"ticketTitle": "כפתור ההרשמה חתוך במובייל",
 				"ticketDescription": "הכפתור בעמוד הבית יוצא מהמסך, אי אפשר להירשם.",
-				"screenshotAlt": "צילום מסך להדגמה של כפתור ההרשמה החתוך באתר סטודיו נועה."
+				"screenshotAlt": "צילום מסך להדגמה של כפתור ההרשמה החתוך באתר סטודיו שקד."
 			}
 		}
 	},

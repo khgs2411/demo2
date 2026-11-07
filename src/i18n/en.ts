@@ -15,7 +15,7 @@ export const en = {
 		languageSwitchLabel: "Switch to Hebrew",
 	},
 	showcase: {
-		scene: { studio: "Noa Studio", open: "Open", customers: "Customers", bookings: "Bookings", requests: "Requests" },
+		scene: { studio: "Shaked Studio", open: "Open", customers: "Customers", bookings: "Bookings", requests: "Requests" },
 		storyLabel: "The story", bookMeeting: "Book a meeting", chooseTime: "Choose a time", seeItWork: "See it work",
 		posterTopside: "The studio storefront on its slab of ground", posterUnderside: "ClassKit, data pipes and the AI agent beneath the studio",
 		chapters: {
@@ -145,14 +145,14 @@ export const en = {
 		},
 		"logs": {
 			"idle": "agent ▸ idle · waiting for requests",
-			"received": "inbox ▸ request #214 from noya_website",
+			"received": "inbox ▸ request #214 from studio-shaked",
 			"context": "type: {{type}} · context: / (home)",
-			"cardCreated": "→ card created on board 'noya — requests'",
+			"cardCreated": "→ card created on board 'studio-shaked — requests'",
 			"claimed": "agent ▸ claimed #214",
 			"reading": "reading src/pages/home.tsx",
-			"found": "found: .booking-cta translateX(46%) on ≤ 390px",
-			"removed": "- .booking-cta { transform: translate(46%, 14px) rotate(4deg); clip-path: inset(0 52% 0 0); }",
-			"added": "+ .booking-cta { transform: none; clip-path: none; }",
+			"found": "found: .booking-cta pushed off screen on ≤ 390px",
+			"removed": "- .booking-cta { transform: translateX(58%); }",
+			"added": "+ .booking-cta { transform: none; }",
 			"tests": "tests ▸ 48 passed",
 			"build": "build ▸ vite build ✓",
 			"test": "test ▸ 48 passed ✓",
@@ -161,15 +161,17 @@ export const en = {
 		},
 		"scenarios": {
 			"brokenBookingButton": {
-				"siteName": "Noya Studio",
+				"siteName": "Shaked Studio",
 				"siteNav": "Classes · Schedule · Contact",
 				"siteTitle": "Strength you feel beyond the studio.",
 				"siteBody": "Small-group strength classes. Choose a time, book, show up.",
 				"bookingLabel": "Book a class",
+				"faultNote": "The button runs off the screen. Clients can't book.",
+				"fixedNote": "The button is back. Booking works.",
 				"defect": "The booking button is cut off on mobile",
 				"ticketTitle": "The booking button is cut off on mobile",
 				"ticketDescription": "The button on the home page goes off screen. It is impossible to book.",
-				"screenshotAlt": "Demo screenshot of the clipped booking button on the Noya Studio site."
+				"screenshotAlt": "Demo screenshot of the clipped booking button on the Shaked Studio site."
 			}
 		}
 	},

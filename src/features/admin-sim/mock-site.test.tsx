@@ -24,7 +24,6 @@ it("renders the deployed fix and lets the visitor compare the actual before/afte
 	render(<MockSite scenario={scenario} step="live" onOpenTicket={() => {}} />);
 	const button = screen.getByRole("button", { name: "Book a class" });
 	expect(button.style.transform).toBe("none");
-	expect(button.style.clipPath).toBe("none");
 	const slider = screen.getByRole("slider", { name: "Before and after comparison" });
 	expect((slider as HTMLInputElement).value).toBe("100");
 	fireEvent.change(slider, { target: { value: "25" } });
