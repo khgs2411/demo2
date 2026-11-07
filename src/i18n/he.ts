@@ -1,9 +1,17 @@
 export const he = {
 	shell: {
+		brandMark: "T",
+		navigation: "ראשי",
+		howItWorks: "איך זה עובד",
+		liveDemo: "הדגמה חיה",
+		packages: "חבילות",
+		bookMeeting: "קביעת פגישה",
+		ticketNumber: "№ 01",
+		myRequests: "הבקשות שלי",
 		brand: "Topsyde Studios",
 		sample: { kicker: "TOPSIDE", meeting: "פגישה עסקית", request: "בקשה", name: "שם", log: "agent ▸ idle", book: "קביעת פגישה", demo: "לראות את זה עובד", ticketNumber: "№ 01" },
 		description: "בניית אתרים ומערכות עם ClassKit. בחרו חבילה וקבעו פגישה עסקית.",
-		languageSwitch: "English",
+		languageSwitch: "EN",
 		languageSwitchLabel: "מעבר לאנגלית",
 	},
 	showcase: { title: "ברוכים הבאים", placeholder: "היכרות עם השירותים שלנו תופיע כאן." },

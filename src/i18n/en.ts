@@ -1,9 +1,17 @@
 export const en = {
 	shell: {
+		brandMark: "T",
+		navigation: "Main navigation",
+		howItWorks: "How it works",
+		liveDemo: "Live demo",
+		packages: "Packages",
+		bookMeeting: "Book a meeting",
+		ticketNumber: "№ 01",
+		myRequests: "My requests",
 		brand: "Topsyde Studios",
 		sample: { kicker: "TOPSIDE", meeting: "Business meeting", request: "Request", name: "Name", log: "agent ▸ idle", book: "Book a meeting", demo: "See it work", ticketNumber: "№ 01" },
 		description: "Websites and systems built with ClassKit. Choose a package and book a business meeting.",
-		languageSwitch: "עברית",
+		languageSwitch: "עב",
 		languageSwitchLabel: "Switch to Hebrew",
 	},
 	showcase: { title: "Welcome", placeholder: "An introduction to our services will appear here." },

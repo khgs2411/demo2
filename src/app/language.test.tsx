@@ -26,7 +26,7 @@ it.each(["#/", "#/packages", "#/demo", "#/book", "#/book/system", "#/account"])(
 		expect(document.documentElement.dir).toBe("ltr");
 		expect(localStorage.getItem("demo2-showcase-language")).toBe("en");
 		expect(screen.getByRole("main").textContent).not.toBe(hebrew);
-		expect(screen.getByRole("button", { name: "Switch to Hebrew" }).textContent).toBe("עברית");
+		expect(screen.getByRole("button", { name: "Switch to Hebrew" }).textContent).toBe("עב");
 		await act(async () => fireEvent.click(screen.getByRole("button", { name: "Switch to Hebrew" })));
 		expect(document.documentElement.lang).toBe("he");
 		expect(document.documentElement.dir).toBe("rtl");
