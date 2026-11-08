@@ -7,7 +7,6 @@ import { TextLink } from "../../ui/text-link";
 import { chapterAnchors } from "./scene/timeline";
 
 const beats = ["front", "flip", "system", "agent", "book"] as const;
-const kickers = ["TOPSIDE", "↻", "UNDERSIDE", "AGENT", "LIVE"];
 export const posterTopside = `${import.meta.env.BASE_URL}poster-topside.webp`;
 export const posterUnderside = `${import.meta.env.BASE_URL}poster-underside.webp`;
 
@@ -21,7 +20,7 @@ export function Chapters({ staticStory = false, ref }: { staticStory?: boolean; 
 			return <section key={beat} className="chapter" data-c={index} data-at={chapterAnchors[index]}
 				inert={inactive} aria-hidden={inactive ? true : undefined}
 				style={staticStory ? undefined : { opacity: index === 0 ? 1 : 0 }}>
-				<Kicker>{kickers[index]}</Kicker>
+				<Kicker>{t(`chapters.${beat}.kicker`)}</Kicker>
 				<Heading>{t(`chapters.${beat}.lead`)}<br />{t(`chapters.${beat}.bridge`)}<span className={topside ? "u-coral" : index === 1 ? undefined : "u-wire"}>{t(`chapters.${beat}.end`)}</span></Heading>
 				<p>{t(`chapters.${beat}.body`)}</p>
 				{topside && <div className="act">

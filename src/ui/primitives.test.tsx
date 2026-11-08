@@ -17,7 +17,7 @@ it.each(["rtl", "ltr"])("renders the primitives with native semantics in %s", (d
 		<Ticket stub="№ 01" onClick={onClick}>Book</Ticket>
 		<Ticket stub="№ 02" href="#/book/system">System</Ticket>
 		<TextLink href="#/demo">Demo</TextLink>
-		<Kicker>TOPSIDE</Kicker><LogLine>agent ▸ idle</LogLine>
+		<Kicker>ClassKit</Kicker><LogLine>agent ▸ idle</LogLine>
 		<LedgerRow name="Meeting" price="Request" details="Details"><TextLink href="#/book">Book</TextLink></LedgerRow>
 		<Input label="Email" type="email" required />
 	</div>);
