@@ -1,15 +1,6 @@
 import { expect, it, vi } from "vitest";
 import { createStudioAdapter } from "./adapter";
-import type { ManagementRegistrationSummary } from "@class-kit/react";
-
-export function registration(id: string, createdAt: string, startsAt: string): ManagementRegistrationSummary {
-	return { id, classId: `slot-${id}`, customerId: `customer-${id}`, userId: null,
-		status: "pending", registrationStatus: "pending", createdAt, updatedAt: createdAt,
-		membershipGrantId: null, stockConsumed: 0, approvedAt: null, cancelledAt: null,
-		cancelledByUserId: null, initiatedByUserId: null, approvedByUserId: null, registrationOrigin: "self",
-		customer: { id: `customer-${id}`, userId: null, status: "active", displayName: "Dana", contactEmail: "dana@example.com", phoneNumber: "0501234567" },
-		user: null, class: { id: `slot-${id}`, name: "Business website", startsAt, temporalStatus: "upcoming", registrationOpen: true } };
-}
+import { registration } from "./fixtures";
 
 it("loads all requests oldest first and upcoming meetings by slot start, without request-date filters", async () => {
 	const older = registration("old", "2026-01-01", "2026-11-17T09:00:00Z");
