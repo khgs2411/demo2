@@ -1,0 +1,17 @@
+.shell-content > main.studio-page { grid-template-columns: minmax(0, 1fr); }
+.studio-page {
+	> section { min-inline-size: 0; }
+	section[aria-labelledby] { margin-block-start: 40px; }
+	h2 { font: 700 1.7rem/1.2 var(--font-display); margin-block-end: 18px; }
+	.studio-meetings { list-style: none; padding: 0; border-block-start: 2px solid var(--ink); }
+	.studio-meetings > li { padding-block: 24px; border-block-end: 1px solid var(--rule); }
+	.studio-meetings dl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px 24px; }
+	.studio-meetings dt { font: 500 11px/1.4 var(--font-mono); margin-block-end: 4px; }
+	.studio-meetings dd { margin: 0; overflow-wrap: anywhere; }
+	.studio-meetings form { margin-block-start: 20px; }
+	.studio-meetings fieldset { display: flex; align-items: end; flex-wrap: wrap; gap: 24px; }
+	.studio-meetings .field { flex: 1 1 240px; max-inline-size: 460px; min-inline-size: 0; }
+	.studio-meetings input { inline-size: 100%; min-inline-size: 0; }
+	.studio-meetings .actions { margin: 0; }
+	@media (max-width: 719px) { .studio-meetings dl { grid-template-columns: minmax(0, 1fr); gap: 14px; } }
+}

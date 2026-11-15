@@ -31,7 +31,8 @@ it("keeps SDK access and feature imports within their module boundaries", () => 
 			const targetFeature = target.match(/^features\/([^/]+)(?:\/|$)/)?.[1];
 			// Packages exposes the headline offers and booking selector through its public entry.
 			const packagesExport = target === "features/packages" || target === "features/packages/index";
-			if (feature && targetFeature && feature !== targetFeature && !packagesExport) {
+			const bookingExport = feature === "studio" && (target === "features/booking" || target === "features/booking/index");
+			if (feature && targetFeature && feature !== targetFeature && !packagesExport && !bookingExport) {
 				violations.push(`${path}: cross-feature import ${specifier}`);
 			}
 		}

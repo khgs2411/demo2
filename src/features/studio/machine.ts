@@ -12,7 +12,7 @@ export type StudioEvent =
 	| { type: "decision_started"; id: string }
 	| { type: "decision_succeeded" }
 	| { type: "decision_failed" | "load_failed" | "auth_failed"; error: StudioError }
-	| { type: "retry_requested" | "auth_started" | "auth_finished" };
+	| { type: "retry_requested" | "auth_started" | "auth_finished" | "auth_redirect_started" };
 
 export function transition(state: StudioState, event: StudioEvent): StudioState {
 	switch (event.type) {
@@ -24,7 +24,8 @@ export function transition(state: StudioState, event: StudioEvent): StudioState 
 			? { step:"ready", pending:event.pending, upcoming:event.upcoming, busy:false, error:null, decidingId:null } : state;
 		case "decision_started": return state.step === "ready" && !state.busy && state.pending.some(row => row.id === event.id)
 			? { ...state, busy:true, decidingId:event.id, error:null } : state;
-		case "decision_succeeded": return state;
+		case "decision_succeeded":
+		case "auth_redirect_started": return state;
 		case "decision_failed": return state.step === "ready" && state.busy ? { ...state, busy:false, decidingId:null, error:event.error } : state;
 		case "load_failed": return state.step === "loading" || state.step === "ready" ? {
 			step: event.error.code === "forbidden" ? "not_manager" : event.error.code === "unauthorized" ? "signed_out" : "failed", busy:false, error:event.error,

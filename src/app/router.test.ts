@@ -9,6 +9,7 @@ describe("hash routes", () => {
 		["#/book", { page: "booking" }],
 		["#/book/system", { page: "booking", packageId: "system" }],
 		["#/account", { page: "account" }],
+		["#/studio", { page: "studio" }],
 	])("resolves %s", (hash, route) => {
 		expect(parseHash(hash)).toEqual(route);
 	});

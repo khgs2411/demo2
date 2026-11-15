@@ -1,3 +1,5 @@
+import { StudioPage } from "../features/studio/page";
+import { StudioReturn } from "../features/studio/studio-return";
 import { ShowcasePage } from "../features/showcase/page";
 import { PackagesPage } from "../features/packages/page";
 import { AdminSimPage } from "../features/admin-sim/page";
@@ -7,7 +9,7 @@ import { BookingReturn } from "../features/booking/booking-return";
 import { useRoute } from "./router";
 
 export function Routes() {
-	return <><BookingReturn /><RoutePage /></>;
+	return <><StudioReturn /><BookingReturn /><RoutePage /></>;
 }
 
 function RoutePage() {
@@ -17,6 +19,7 @@ function RoutePage() {
 		case "packages": return <PackagesPage />;
 		case "admin-sim": return <AdminSimPage />;
 		case "booking": return <BookingPage key={route.packageId ?? "book"} packageId={route.packageId} />;
+		case "studio": return <StudioPage />;
 		case "account": return <AccountPage />;
 		default: return null;
 	}

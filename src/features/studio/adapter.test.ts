@@ -1,5 +1,5 @@
 import { expect, it, vi } from "vitest";
-import { createStudioAdapter } from "./adapter";
+import { createStudioAdapter, createStudioAuthAdapter } from "./adapter";
 import { registration } from "./fixtures";
 
 it("loads all requests oldest first and upcoming meetings by slot start, without request-date filters", async () => {
@@ -38,4 +38,47 @@ it.each(["approve", "reject"] as const)("does not replay %s on forbidden, unauth
 		expect(await adapter.decide("r", action)).toEqual({ type:"decision_failed", error: "code" in error ? error : {code:"network",message:null} });
 		expect(operation).toHaveBeenCalledOnce();
 	}
+});
+
+it("signs in and signs out through the SDK and refreshes product access", async () => {
+	const signIn = vi.fn().mockResolvedValue({error:null});
+	const signOut = vi.fn().mockResolvedValue({error:null});
+	const refresh = vi.fn().mockResolvedValue(undefined);
+	const adapter = createStudioAuthAdapter({signIn,signOut,signInWithGoogle:vi.fn()},refresh);
+	expect(await adapter.signIn("manager@example.com","secret")).toEqual({type:"auth_finished"});
+	expect(signIn).toHaveBeenCalledWith("manager@example.com","secret");
+	expect(await adapter.signOut()).toEqual({type:"access_resolved",access:"signed_out"});
+	expect(refresh).toHaveBeenCalledTimes(2);
+});
+
+it.each(["signIn","signOut"] as const)("maps %s auth and network failures without refreshing access", async method => {
+	for (const error of ["Invalid credentials", new TypeError("offline")]) {
+		const operation = vi.fn().mockImplementation(() => typeof error === "string" ? Promise.resolve({error}) : Promise.reject(error));
+		const refresh = vi.fn();
+		const adapter = createStudioAuthAdapter({signIn:operation,signOut:operation,signInWithGoogle:vi.fn()},refresh);
+		expect(await adapter[method]("email","password")).toEqual({type:"auth_failed",error:typeof error === "string" ? {code:"auth",message:error} : {code:"network",message:null}});
+		expect(refresh).not.toHaveBeenCalled();
+	}
+});
+
+it("stores the studio return target before Google starts and removes it if the redirect fails", async () => {
+	sessionStorage.clear();
+	const signInWithGoogle = vi.fn().mockImplementation(async () => {
+		expect(sessionStorage.getItem("demo2-studio-redirect")).toBe("#/studio");
+		return {error:null};
+	});
+	const adapter = createStudioAuthAdapter({signIn:vi.fn(),signOut:vi.fn(),signInWithGoogle},vi.fn());
+	expect(await adapter.signInWithGoogle()).toEqual({type:"auth_redirect_started"});
+	signInWithGoogle.mockRejectedValueOnce(new TypeError("offline"));
+	expect(await adapter.signInWithGoogle()).toEqual({type:"auth_failed",error:{code:"network",message:null}});
+	expect(sessionStorage.getItem("demo2-studio-redirect")).toBeNull();
+});
+it("does not begin OAuth if the return target cannot be stored", async () => {
+	const signInWithGoogle = vi.fn();
+	const storage = vi.spyOn(Storage.prototype,"setItem").mockImplementation(() => { throw new Error("blocked"); });
+	try {
+		const adapter = createStudioAuthAdapter({signIn:vi.fn(),signOut:vi.fn(),signInWithGoogle},vi.fn());
+		expect(await adapter.signInWithGoogle()).toEqual({type:"auth_failed",error:{code:"redirect_storage",message:null}});
+		expect(signInWithGoogle).not.toHaveBeenCalled();
+	} finally { storage.mockRestore(); }
 });

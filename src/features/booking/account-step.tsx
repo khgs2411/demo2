@@ -3,15 +3,15 @@ import { useTranslation } from "react-i18next";
 import { Input } from "../../ui/input";
 import { Ticket } from "../../ui/ticket";
 
-export function AccountStep({ product, loading, busy, onPassword, onGoogle, onBack, initialSignIn = false }: {
+export function AccountStep({ product, loading, busy, onPassword, onGoogle, onBack, initialSignIn = false, signInOnly = false, title, description }: {
 	product: { auth_mode: string; email_password_enabled: boolean; google_oauth_enabled: boolean } | null;
 	loading: boolean; busy: boolean; onPassword: (method: "signIn" | "signUp", email: string, password: string) => void;
 	onGoogle: () => void; onBack?: () => void;
-	initialSignIn?: boolean;
+	initialSignIn?: boolean; signInOnly?: boolean; title?: string; description?: string;
 }) {
 	const { t } = useTranslation("booking");
 	const [signingIn, setSigningIn] = useState(initialSignIn);
-	const canSignUp = product?.auth_mode === "open";
+	const canSignUp = !signInOnly && product?.auth_mode === "open";
 	const signIn = signingIn || !canSignUp;
 	function submit(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault();
@@ -19,7 +19,7 @@ export function AccountStep({ product, loading, busy, onPassword, onGoogle, onBa
 		onPassword(signIn ? "signIn" : "signUp", String(form.get("email")), String(form.get("password")));
 	}
 	return <>
-		<h1 tabIndex={-1}>{t("aTitle")}</h1><p className="lede">{t("aLede")}</p>
+		<h1 tabIndex={-1}>{title ?? t("aTitle")}</h1><p className="lede">{description ?? t("aLede")}</p>
 		{loading ? <p role="status">{t("loading")}</p> : <>
 			{product?.google_oauth_enabled && <Ticket stub="" className="booking-google" disabled={busy} onClick={onGoogle}>
 				<svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true">
