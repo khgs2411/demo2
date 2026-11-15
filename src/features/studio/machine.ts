@@ -4,11 +4,11 @@ import type { StudioError } from "./adapter";
 type Activity = { busy?: boolean; error?: StudioError | null };
 export type StudioState = Activity & (
 	| { step: "loading" | "signed_out" | "not_manager" | "failed" }
-	| { step: "ready"; pending: readonly ManagementRegistrationSummary[]; upcoming: readonly ManagementRegistrationSummary[]; decidingId: string | null }
+	| { step: "ready"; pending: readonly ManagementRegistrationSummary[]; upcoming: readonly ManagementRegistrationSummary[]; history: readonly ManagementRegistrationSummary[]; decidingId: string | null }
 );
 export type StudioEvent =
 	| { type: "access_resolved"; access: "signed_out" | "not_manager" | "manager" }
-	| { type: "lists_loaded"; pending: readonly ManagementRegistrationSummary[]; upcoming: readonly ManagementRegistrationSummary[] }
+	| { type: "lists_loaded"; pending: readonly ManagementRegistrationSummary[]; upcoming: readonly ManagementRegistrationSummary[]; history: readonly ManagementRegistrationSummary[] }
 	| { type: "decision_started"; id: string }
 	| { type: "decision_succeeded" }
 	| { type: "decision_failed" | "load_failed" | "auth_failed"; error: StudioError }
@@ -21,7 +21,7 @@ export function transition(state: StudioState, event: StudioEvent): StudioState 
 		case "auth_failed": return { ...state, busy:false, error:event.error };
 		case "access_resolved": return { step: event.access === "manager" ? "loading" : event.access, busy: false, error: null };
 		case "lists_loaded": return state.step === "loading" || state.step === "ready"
-			? { step:"ready", pending:event.pending, upcoming:event.upcoming, busy:false, error:null, decidingId:null } : state;
+			? { step:"ready", pending:event.pending, upcoming:event.upcoming, history:event.history, busy:false, error:null, decidingId:null } : state;
 		case "decision_started": return state.step === "ready" && !state.busy && state.pending.some(row => row.id === event.id)
 			? { ...state, busy:true, decidingId:event.id, error:null } : state;
 		case "decision_succeeded":

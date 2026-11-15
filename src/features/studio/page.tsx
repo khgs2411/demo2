@@ -27,6 +27,7 @@ function StudioSession({ context, access }: { context: ReturnType<typeof useProd
 			{state.step === "ready" && <>
 				<section aria-labelledby="studio-pending"><h2 id="studio-pending">{t("pending")}</h2>{state.pending.length ? <MeetingList rows={state.pending} busy={state.busy} onDecide={(id, action, reason) => void decide(id, action, reason)} /> : <p>{t("noPending")}</p>}</section>
 				<section aria-labelledby="studio-upcoming"><h2 id="studio-upcoming">{t("upcoming")}</h2>{state.upcoming.length ? <MeetingList rows={state.upcoming} /> : <p>{t("noUpcoming")}</p>}</section>
+				<section aria-labelledby="studio-history"><h2 id="studio-history">{t("history")}</h2>{state.history.length ? <MeetingList rows={state.history} showStatus /> : <p>{t("noHistory")}</p>}</section>
 			</>}
 			{context.session && <div className="actions"><Ticket stub="" className="booking-link" disabled={state.busy} onClick={() => void signOut()}>{t("signOut")}</Ticket></div>}
 		</>}

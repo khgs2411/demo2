@@ -10,6 +10,7 @@ vi.mock("@class-kit/react", () => ({ useProductContext: vi.fn() }));
 let context: ReturnType<typeof useProductContext>;
 const listPending = vi.fn();
 const listRegistered = vi.fn();
+const listHistory = vi.fn();
 const approve = vi.fn();
 const reject = vi.fn();
 const signIn = vi.fn();
@@ -18,12 +19,13 @@ const signInWithGoogle = vi.fn();
 beforeEach(async () => {
 	vi.resetAllMocks(); sessionStorage.clear();
 	context = {
-		client: { management: { registrations: {listPending,listRegistered,approve,reject} }, auth: {signIn,signOut,signInWithGoogle} } as unknown as NonNullable<ReturnType<typeof useProductContext>["client"]>,
+		client: { management: { registrations: {listPending,listRegistered,listHistory,approve,reject} }, auth: {signIn,signOut,signInWithGoogle} } as unknown as NonNullable<ReturnType<typeof useProductContext>["client"]>,
 		productKey:"demo", product:{product_key:"demo",name:"Demo",auth_mode:"open",email_password_enabled:true,google_oauth_enabled:true,auth_redirects:[]},
 		productUser:null, productAccess:null, capabilities:{permissions:[],dashboard:{can_enter:false,can_manage_classes:false,can_manage_roles:false,can_manage_users:false,can_manage_auth_mode:false,can_read_customers:false,can_read_memberships:false}},
 		session:null,loading:false,error:null,refreshProductContext:vi.fn().mockResolvedValue(undefined),signIn:vi.fn(),signOut:vi.fn(),signUp:vi.fn(),signInWithGoogle:vi.fn(),
 	};
 	vi.mocked(useProductContext).mockImplementation(() => context);
+	listHistory.mockResolvedValue({registrations:[]});
 	listPending.mockResolvedValue({registrations:[]}); listRegistered.mockResolvedValue({registrations:[]});
 	await i18n.changeLanguage("en");
 });
@@ -76,11 +78,12 @@ it.each(["he","en"])("shows customer contact, package and local start without an
 	expect(document.querySelector('time[datetime="2099-11-17T09:00:00Z"]')?.textContent).toBe(new Intl.DateTimeFormat(language === "he" ? "he-IL" : "en-GB",{dateStyle:"medium",timeStyle:"short"}).format(new Date("2099-11-17T09:00:00Z")));
 });
 
-it.each(["approve","reject"] as const)("waits for %s and refetches both lists, without duplicate submissions or optimistic moves", async action => {
+it.each(["approve","reject"] as const)("waits for %s and refetches all lists, without duplicate submissions or optimistic moves", async action => {
 	signedIn(); context.capabilities.permissions = ["registrations.manage"];
 	const row = registration("r","2026-11-01","2099-11-17");
 	listPending.mockResolvedValueOnce({registrations:[row]}).mockResolvedValue({registrations:[]});
 	listRegistered.mockResolvedValueOnce({registrations:[]}).mockResolvedValue({registrations:action === "approve" ? [row] : []});
+	listHistory.mockResolvedValueOnce({registrations:[]}).mockResolvedValue({registrations:action === "reject" ? [{...row,status:"rejected",registrationStatus:"rejected"}] : []});
 	let finish!: () => void;
 	(action === "approve" ? approve : reject).mockImplementation(() => new Promise(resolve => { finish = () => resolve({registration:row}); }));
 	render(<StudioPage />);
@@ -92,10 +95,10 @@ it.each(["approve","reject"] as const)("waits for %s and refetches both lists, w
 	expect(action === "approve" ? approve : reject).toHaveBeenCalledOnce();
 	await act(async () => finish());
 	await screen.findByText("No requests waiting.");
-	expect(listPending).toHaveBeenCalledTimes(2); expect(listRegistered).toHaveBeenCalledTimes(2);
+	expect(listPending).toHaveBeenCalledTimes(2); expect(listRegistered).toHaveBeenCalledTimes(2); expect(listHistory).toHaveBeenCalledTimes(2);
 	expect(screen.queryByRole("button",{name:"Approve"})).toBeNull();
 	if (action === "approve") expect(screen.getByText("Dana")).toBeDefined();
-	else expect(reject).toHaveBeenCalledWith("r",{reason:"Another day please"});
+	else { expect(reject).toHaveBeenCalledWith("r",{reason:"Another day please"}); expect(screen.getByText("Declined")).toBeDefined(); }
 });
 
 it.each(["forbidden","unauthorized","network"])("keeps the row and shows a decision error without replay (%s)", async code => {
@@ -175,4 +178,21 @@ it("keeps the access notice and reports sign-out failure", async () => {
 	fireEvent.click(screen.getByRole("button",{name:"Sign out"}));
 	await screen.findByText("Sign-out failed");
 	expect(screen.getByText("This page is for the studio manager.")).toBeDefined();
+});
+
+it.each(["he", "en"])("renders stored rejected and cancelled decisions in a read-only History section (%s)", async language => {
+ await i18n.changeLanguage(language);
+ signedIn(); context.capabilities.permissions = ["registrations.manage"];
+ const row = registration("declined", "2026-11-01", "2026-11-05");
+ listHistory.mockResolvedValue({registrations:[
+  {...row,status:"rejected",registrationStatus:"rejected"},
+  {...row,id:"cancelled",status:"rejected",registrationStatus:"cancelled"},
+ ]});
+ render(<StudioPage />);
+ const section = await screen.findByRole("region", {name: language === "he" ? "היסטוריה" : "History"});
+ expect(section.textContent).toContain(i18n.t("rejected", {ns:"booking"}));
+ expect(section.textContent).toContain(i18n.t("cancelled", {ns:"booking"}));
+ expect(section.querySelectorAll("li")).toHaveLength(2);
+ expect(section.querySelector("button")).toBeNull();
+ expect(listHistory).toHaveBeenCalledWith();
 });

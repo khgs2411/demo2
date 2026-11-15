@@ -2,7 +2,7 @@ import { clearBookingRedirect, clearAccountRedirect } from "../booking";
 import { studioRedirectKey, clearStudioRedirect } from "./redirect";
 import type { ClassKitClient } from "@class-kit/react";
 
-export type StudioRegistrations = Pick<ClassKitClient["management"]["registrations"], "listPending" | "listRegistered" | "approve" | "reject">;
+export type StudioRegistrations = Pick<ClassKitClient["management"]["registrations"], "listPending" | "listRegistered" | "listHistory" | "approve" | "reject">;
 
 export type StudioError = { code: string; message: string | null };
 function mapError(error: unknown): StudioError {
@@ -15,7 +15,10 @@ export function createStudioAdapter(registrations: StudioRegistrations) {
 	async function load(now: Date) {
 		try {
 			const [pending, registered] = await Promise.all([registrations.listPending(), registrations.listRegistered()]);
+			// Pending reads can reject stale requests; history must include those decisions.
+			const history = await registrations.listHistory();
 			return { type: "lists_loaded" as const,
+				history: history.registrations,
 				pending: [...pending.registrations].sort((a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt)),
 				upcoming: registered.registrations.filter(row => row.class && Date.parse(row.class.startsAt) > now.getTime())
 					.sort((a, b) => Date.parse(a.class!.startsAt) - Date.parse(b.class!.startsAt)),

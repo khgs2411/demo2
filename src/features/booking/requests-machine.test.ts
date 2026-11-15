@@ -23,3 +23,11 @@ it("retains the backend cancellation receipt if the follow-up read fails", () =>
 	const completed = requestsTransition(ready, {type:"cancel_completed",registration});
 	expect(requestsTransition(completed,{type:"failed"})).toEqual({step:"failed",lastCancellation:registration});
 });
+
+it("keeps separate historical requests for one class and respects their cancellation hints", () => {
+ const requests = ["rejected", "pending", "cancelled", "approved"].map(status => ({...request,canCancelRegistration:status === "pending",userRegistrationState:{id:status,status:status as "rejected" | "pending" | "cancelled" | "approved"}}));
+ const state = requestsTransition({step:"loading"},{type:"loaded",requests});
+ expect(state).toMatchObject({step:"ready",requests});
+ for (const registrationId of ["rejected", "cancelled", "approved"]) expect(requestsTransition(state,{type:"cancel_started",registrationId})).toBe(state);
+ expect(requestsTransition(state,{type:"cancel_started",registrationId:"pending"})).toMatchObject({cancellingId:"pending"});
+});

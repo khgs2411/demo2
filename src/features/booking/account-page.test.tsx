@@ -22,7 +22,7 @@ beforeEach(async () => {
 afterEach(cleanup);
 it.each(["he","en"])("renders all backend statuses and only allowed cancellation controls in %s", async language => {
 	await i18n.changeLanguage(language);
-	listRequests.mockResolvedValueOnce({type:"loaded",requests:["pending","approved","rejected","cancelled"].map(status => ({...request,id:status,canCancelRegistration:status==="pending",userRegistrationState:{id:status,status}}))});
+	listRequests.mockResolvedValueOnce({type:"loaded",requests:["pending","approved","rejected","cancelled"].map(status => ({...request,canCancelRegistration:status==="pending",userRegistrationState:{id:status,status}}))});
 	render(<AccountPage />);
 	for (const status of ["pending","approved","rejected","cancelled"]) expect(await screen.findByText(i18n.t(status,{ns:"booking"}))).toBeDefined();
 	expect(screen.getAllByRole("button",{name:i18n.t("cancel",{ns:"booking"})})).toHaveLength(1);

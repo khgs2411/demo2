@@ -4,7 +4,7 @@ import { Ticket } from "../../ui/ticket";
 import { Input } from "../../ui/input";
 
 type Decide = (id: string, action: "approve" | "reject", reason?: string) => void;
-export function MeetingList({ rows, busy, onDecide }: { rows: readonly ManagementRegistrationSummary[]; busy?: boolean; onDecide?: Decide }) {
+export function MeetingList({ rows, busy, onDecide, showStatus }: { rows: readonly ManagementRegistrationSummary[]; busy?: boolean; onDecide?: Decide; showStatus?: boolean }) {
 	const { t, i18n } = useTranslation("studio");
 	const dates = new Intl.DateTimeFormat(i18n.language === "he" ? "he-IL" : "en-GB", {dateStyle:"medium",timeStyle:"short"});
 	function date(value: string) { return <time dateTime={value}>{dates.format(new Date(value))}</time>; }
@@ -16,6 +16,7 @@ export function MeetingList({ rows, busy, onDecide }: { rows: readonly Managemen
 			<div><dt>{t("package")}</dt><dd>{row.class?.name ?? t("unavailable")}</dd></div>
 			<div><dt>{t("startsAt")}</dt><dd>{row.class ? date(row.class.startsAt) : t("unavailable")}</dd></div>
 			<div><dt>{t("requestedAt")}</dt><dd>{date(row.createdAt)}</dd></div>
+			{showStatus && <div><dt>{t("status")}</dt><dd>{t(row.registrationStatus, { ns: "booking" })}</dd></div>}
 		</dl>
 		{onDecide && <form onSubmit={event => {
 			event.preventDefault();

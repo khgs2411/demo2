@@ -20,6 +20,7 @@ function mockSdk() {
 		},
 		profile: { update: vi.fn<BookingSdk["profile"]["update"]>() },
 		classes: {
+			listMyRegistrations: vi.fn<BookingSdk["classes"]["listMyRegistrations"]>(),
 			list: vi.fn<BookingSdk["classes"]["list"]>(),
 			register: vi.fn<BookingSdk["classes"]["register"]>(),
 			cancelRegistration: vi.fn<BookingSdk["classes"]["cancelRegistration"]>(),
@@ -246,27 +247,27 @@ describe("booking Google redirect", () => {
 });
 
 describe("my meeting requests", () => {
-	it.each(["pending", "approved", "rejected", "cancelled"] as const)("projects a backend %s request and skips unregistered classes", async status => {
-		sdk.classes.list.mockResolvedValueOnce({ data: { classes: [sdkSlot, { ...sdkSlot, userRegistrationState: { id: "request-1", status }, canCancelRegistration: status === "pending" }] }, error: null });
-		expect(await adapter.listRequests(range)).toEqual({ type: "loaded", requests: [{ ...projectedSlot, name: sdkSlot.name, userRegistrationState: { id: "request-1", status }, canCancelRegistration: status === "pending" }] });
-		expect(sdk.classes.list).toHaveBeenCalledWith({ range });
+	it.each(["pending", "approved", "rejected", "cancelled"] as const)("projects a backend %s registration history row", async status => {
+		sdk.classes.listMyRegistrations.mockResolvedValueOnce({ data: { registrations: [{ id: "request-1", classId: sdkSlot.id, status, createdAt: "2026-11-01T00:00:00Z", approvedAt: null, rejectedAt: null, cancelledAt: null, canCancel: status === "pending", class: { id: sdkSlot.id, name: sdkSlot.name, startsAt: sdkSlot.startsAt, endsAt: sdkSlot.endsAt, lifecycleStatus: "created", templateId: null } }] }, error: null });
+		expect(await adapter.listRequests(range)).toEqual({ type: "loaded", requests: [{ ...projectedSlot, canRegister: false, name: sdkSlot.name, userRegistrationState: { id: "request-1", status }, canCancelRegistration: status === "pending" }] });
+		expect(sdk.classes.listMyRegistrations).toHaveBeenCalledWith({ range });
 	});
 	it("refreshes after successful cancellation, with one mutation", async () => {
 		sdk.classes.cancelRegistration.mockResolvedValueOnce({ data: { ...registered, status: "cancelled" }, error: null });
-		sdk.classes.list.mockResolvedValueOnce({ data: { classes: [] }, error: null });
+		sdk.classes.listMyRegistrations.mockResolvedValueOnce({ data: { registrations: [] }, error: null });
 		expect(await adapter.cancelRequest("request-1", range)).toEqual([{ type:"cancel_completed", registration:{ id:"request-1", classId:"slot-1", status:"cancelled" } }, { type: "loaded", requests: [] }]);
 		expect(sdk.classes.cancelRegistration).toHaveBeenCalledExactlyOnceWith("request-1");
 	});
 	it("refreshes on a cancellation race without replaying it", async () => {
 		sdk.classes.cancelRegistration.mockResolvedValueOnce({ data: null, error: { code: "bad_request", message: "Cancellation is closed for this class." } });
-		sdk.classes.list.mockResolvedValueOnce({ data: { classes: [] }, error: null });
+		sdk.classes.listMyRegistrations.mockResolvedValueOnce({ data: { registrations: [] }, error: null });
 		expect(await adapter.cancelRequest("request-1", range)).toEqual([{ type: "cancel_failed" }, { type: "loaded", requests: [] }]);
 		expect(sdk.classes.cancelRegistration).toHaveBeenCalledOnce();
 	});
 	it("handles expired sessions and generic reads", async () => {
-		sdk.classes.list.mockResolvedValueOnce({ data: null, error: { code: "unauthorized", message: "Expired" } });
+		sdk.classes.listMyRegistrations.mockResolvedValueOnce({ data: null, error: { code: "unauthorized", message: "Expired" } });
 		expect(await adapter.listRequests(range)).toEqual({ type: "signed_out" });
-		sdk.classes.list.mockRejectedValueOnce(new Error("offline"));
+		sdk.classes.listMyRegistrations.mockRejectedValueOnce(new Error("offline"));
 		expect(await adapter.listRequests(range)).toEqual({ type: "failed" });
 	});
 });
@@ -287,7 +288,7 @@ it("maps sign-out errors without claiming the session ended", async () => {
 });
 it("refreshes after a thrown cancellation error with no automatic retry", async () => {
 	sdk.classes.cancelRegistration.mockRejectedValueOnce(new Error("offline"));
-	sdk.classes.list.mockResolvedValueOnce({data:{classes:[]},error:null});
+	sdk.classes.listMyRegistrations.mockResolvedValueOnce({data:{registrations:[]},error:null});
 	expect(await adapter.cancelRequest("request-1",range)).toEqual([{type:"cancel_failed"},{type:"loaded",requests:[]}]);
 	expect(sdk.classes.cancelRegistration).toHaveBeenCalledOnce();
 });

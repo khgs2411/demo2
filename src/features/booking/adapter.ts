@@ -7,7 +7,7 @@ import type { RequestsEvent } from "./requests-machine";
 export type BookingSdk = {
 	auth: Pick<ClassKitClient["auth"], "signIn" | "signUp" | "getSession" | "signInWithGoogle" | "signOut">;
 	profile: Pick<ClassKitClient["profile"], "update">;
-	classes: Pick<ClassKitClient["classes"], "list" | "register" | "cancelRegistration">;
+	classes: Pick<ClassKitClient["classes"], "list" | "listMyRegistrations" | "register" | "cancelRegistration">;
 };
 export type BookingRange = { start: string; end: string };
 export type BookingProfile = {
@@ -125,10 +125,13 @@ export function createBookingAdapter(client: BookingSdk | null, refreshProductCo
 	async function listRequests(range: BookingRange): Promise<RequestsEvent> {
 		try {
 			if (!client) return { type: "failed" };
-			const response = await client.classes.list({ range });
+			const response = await client.classes.listMyRegistrations({ range });
 			if (response.error) return { type: response.error.code === "unauthorized" ? "signed_out" : "failed" };
-			return { type: "loaded", requests: response.data.classes.filter(slot => slot.userRegistrationState)
-				.map(slot => ({ ...mapSlot(slot), name: slot.name })) };
+			return { type: "loaded", requests: response.data.registrations.map(registration => ({
+				id: registration.classId, name: registration.class.name, startsAt: registration.class.startsAt,
+				canRegister: false, canCancelRegistration: registration.canCancel,
+				userRegistrationState: { id: registration.id, status: registration.status },
+			})) };
 		} catch {
 			return { type: "failed" };
 		}
