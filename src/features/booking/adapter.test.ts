@@ -106,6 +106,13 @@ const registered = {
 	registration: { id: "request-1", class_id: "slot-1", customer_id: "customer-1", user_id: "visitor", status: "pending" },
 } as const;
 
+function withoutTemplates() {
+	const options = packages.getBookingOptions();
+	vi.spyOn(packages, "getBookingOptions").mockReturnValue({
+		...options, packages: options.packages.map((entry) => ({ ...entry, templateId: null })),
+	});
+}
+
 function provideTemplate() {
 	const options = packages.getBookingOptions();
 	vi.spyOn(packages, "getBookingOptions").mockReturnValue({
@@ -114,7 +121,8 @@ function provideTemplate() {
 }
 
 describe("booking slot SDK adapter", () => {
-	it.each(["site", "system"] as const)("treats the actual null %s template as booking not open without an SDK call", async (packageId) => {
+	it.each(["site", "system"] as const)("treats a null %s template as booking not open without an SDK call", async (packageId) => {
+		withoutTemplates();
 		expect(await adapter.loadSlots(packageId, range)).toEqual({ type: "booking_not_open" });
 		expect(sdk.classes.list).not.toHaveBeenCalled();
 	});

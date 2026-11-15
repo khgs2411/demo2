@@ -5,10 +5,10 @@ import { catalog } from "./catalog";
 import { getBookingOptions, getHeadlineOffers } from "./index";
 
 describe("package catalog", () => {
-	it("contains exactly the five specified offers with unique ids and pending templates", () => {
+	it("contains exactly the five specified offers with unique ids; only base offers are bookable", () => {
 		expect(catalog.map(({ id }) => id)).toEqual(["site", "system", "agent-whatsapp", "agent-social", "agent-voice"]);
 		expect(new Set(catalog.map(({ id }) => id)).size).toBe(catalog.length);
-		for (const entry of catalog) expect(entry.templateId).toBeNull();
+		for (const entry of catalog) expect(entry.templateId === null).toBe(entry.kind === "addon");
 		expect(catalog.filter(({ kind }) => kind === "addon").map(({ id }) => id))
 			.toEqual(["agent-whatsapp", "agent-social", "agent-voice"]);
 		expect(catalog.filter(({ recommended }) => recommended).map(({ id }) => id)).toEqual(["system"]);

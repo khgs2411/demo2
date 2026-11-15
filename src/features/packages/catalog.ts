@@ -9,12 +9,12 @@ export type PackageEntry = {
 
 export const catalog: readonly PackageEntry[] = [
 	{
-		id: "site", kind: "base", templateId: null,
+		id: "site", kind: "base", templateId: "eb0b18b4-41b5-4ca9-b21f-1518c52e420a",
 		priceKey: "offers.site.price",
 		featureKeys: ["features.setup", "features.design", "features.build", "features.hosting"],
 	},
 	{
-		id: "system", kind: "base", templateId: null, recommended: true,
+		id: "system", kind: "base", templateId: "89d2e7fd-ed6c-488f-b7ed-eb765ad7f8bb", recommended: true,
 		priceKey: "offers.system.price",
 		featureKeys: ["features.site", "features.support", "features.customers", "features.appointments", "features.roles", "features.documents", "features.changes", "features.updates"],
 	},

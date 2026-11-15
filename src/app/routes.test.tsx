@@ -4,6 +4,7 @@ import { Routes } from "./routes";
 import "../i18n";
 import { makeBookingContext } from "../features/booking/context-fixture";
 import { saveBookingRedirect } from "../features/booking/redirect";
+import * as packages from "../features/packages";
 import type { useBookingContext } from "../features/booking/adapter";
 
 let bookingContext: ReturnType<typeof useBookingContext>;
@@ -54,6 +55,8 @@ describe("route placeholders", () => {
 });
 
 it("restores booking after the provider receives an OAuth session without a hashchange", async () => {
+	const options = packages.getBookingOptions();
+	vi.spyOn(packages, "getBookingOptions").mockReturnValue({ ...options, packages: options.packages.map((entry) => ({ ...entry, templateId: null })) });
 	window.history.replaceState(null, "", "#access_token=test");
 	saveBookingRedirect({ step:"choosing_slot", selection:{packageId:"system", addonInterests:[], slotId:"saved"}, userId:"visitor", slots:[], availability:"loading", notice:null });
 	bookingContext.loading = true;
