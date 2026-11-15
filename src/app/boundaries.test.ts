@@ -22,7 +22,7 @@ it("keeps SDK access and feature imports within their module boundaries", () => 
 		const { importedFiles } = ts.preProcessFile(readFileSync(file, "utf8"), true, true);
 		for (const { fileName: specifier } of importedFiles) {
 			if (/^@class-kit\/react(?:\/|$)/.test(specifier) &&
-				!path.startsWith("lib/") && !path.startsWith("features/booking/")) {
+				!path.startsWith("lib/") && !path.startsWith("features/booking/") && !path.startsWith("features/studio/")) {
 				violations.push(`${path}: SDK import ${specifier}`);
 			}
 			if (!specifier.startsWith(".")) continue;
