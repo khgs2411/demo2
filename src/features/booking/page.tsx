@@ -59,7 +59,7 @@ export function BookingPage({ packageId }: { packageId?: string }) {
 				<span aria-hidden="true">0{index + 1}</span><span>{t(key)}</span>
 			</li>)}</ol>
 			<div className="step shown" key={isSignup ? "signup_details" : view.step} aria-busy={view.step === "recovering_session" || view.step === "signing_in" || view.step === "signing_up" || view.step === "submitting" || view.step === "sending" || view.step === "signing_in_for_signup" || profileBusy}>
-				{context.sessionErrorCode === "session_revoked" && state.step === "failed" ? <p role="status">{t("loading")}</p> : state.step === "failed" ? <><h1 tabIndex={-1}>{t(stepIndex === 1 ? "aTitle" : stepIndex === 2 ? "prTitle" : "sTitle")}</h1>
+				{state.step === "failed" ? <><h1 tabIndex={-1}>{t(stepIndex === 1 ? "aTitle" : stepIndex === 2 ? "prTitle" : "sTitle")}</h1>
 					<p role="alert" className="notice error">{t(`messages.${state.reason === "redirect_storage" ? "redirect_storage" : `${state.operation}_failed`}`)}</p>
 					<Ticket stub="↻" onClick={() => flow.send({ type:"retry_requested" })}>{t("retry")}</Ticket></> : <>
 					{view.step === "choosing_package" && <PackageStep selection={draft} onChange={setDraft} onContinue={() => flow.choosePackage(draft)} />}

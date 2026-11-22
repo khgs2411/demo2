@@ -59,7 +59,7 @@ it("does not restart failed Google recovery until the revocation clears", () => 
 	const revoked = { type: "session_revoked", selection } as const;
 	const recovering = transition(selected, revoked);
 	expect(recovering).toEqual({ step: "recovering_session", selection: selected.selection });
-	const failed = transition(recovering, { type: "operation_failed", operation: "auth", reason: "generic" });
+	const failed = transition(recovering, { type: "session_recovery_failed" });
 	expect(failed).toEqual({ step: "session_recovery_failed", selection: selected.selection });
 	expect(transition(failed, revoked)).toBe(failed);
 	expect(transition(transition(failed, { type: "session_revocation_cleared" }), revoked)).toEqual(recovering);
@@ -172,6 +172,7 @@ describe("booking transition table", () => {
 		guestChosen: { ...chosen, guest: true },
 		revoked: { type: "session_revoked", selection },
 		revocationCleared: { type: "session_revocation_cleared" },
+		recoveryFailed: { type: "session_recovery_failed" },
 		accountBack: { type: "account_back" },
 		guestSlots: { type: "guest_slots_requested" },
 		signupOpened: { type: "signup_opened" },
@@ -294,7 +295,7 @@ describe("booking transition table", () => {
 			profileSaveStarted: { ...profileForRequest, saving: true },
 			profileSaved: submitting, profileFailed: { ...profileFailure, resume: profileForRequest },
 		},
-		recovery: { authFailed: recoveryFailure },
+		recovery: { recoveryFailed: recoveryFailure },
 		recoveryFailure: { revocationCleared: account, accountBack: initialState, signIn: signingIn, signUp: signingIn, google: signingIn },
 		passwordShown: { passwordSaved: passwordShown.next },
 		signInAfterSignup: {

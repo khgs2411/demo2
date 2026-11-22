@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from "react";
 import { createBookingAdapter, useBookingContext } from "./adapter";
 import { initialState, transition, type BookingEvent, type BookingState, type BookingProfile, type BookingSelection, type SignupDraft } from "./machine";
 import { restoreBookingRedirect } from "./redirect";
@@ -11,7 +11,7 @@ export function useBooking(locale: string, draft: BookingSelection) {
 	const [range, setRange] = useState(() => weekRange(new Date()));
 	const current = useRef(state);
 	const mounted = useRef(true);
-	const locked = useRef(false);
+	const inFlight = useRef<Promise<void> | null>(null);
 	const autoSession = useRef(false);
 	const recoveryStarted = useRef(false);
 	const latestDraft = useRef(draft);
@@ -47,8 +47,8 @@ export function useBooking(locale: string, draft: BookingSelection) {
 	}, [context.loading, context.session, guestAvailable, state.step, send]);
 	const revoked = context.sessionErrorCode === "session_revoked";
 	const recovering = state.step === "recovering_session" ? state : null;
-	useEffect(() => { latestDraft.current = draft; }, [draft]);
-	useEffect(() => {
+	useLayoutEffect(() => { latestDraft.current = draft; }, [draft]);
+	useLayoutEffect(() => {
 		if (revoked === wasRevoked.current) return;
 		wasRevoked.current = revoked;
 		send(revoked ? { type: "session_revoked", selection: latestDraft.current } : { type: "session_revocation_cleared" });
@@ -60,7 +60,14 @@ export function useBooking(locale: string, draft: BookingSelection) {
 		}
 		if (recoveryStarted.current) return;
 		recoveryStarted.current = true;
-		void adapter.signInWithGoogle(recovering).then(event => { if (mounted.current) send(event); });
+		void (async () => {
+			await inFlight.current;
+			if (!mounted.current || current.current.step !== "recovering_session") return;
+			const outcome = await adapter.signInWithGoogle(recovering);
+			if (!mounted.current || current.current.step !== "recovering_session" || outcome.type !== "operation_failed") return;
+			send({ type: "session_recovery_failed" });
+			if (!wasRevoked.current) send({ type: "session_revocation_cleared" });
+		})();
 	}, [adapter, recovering, send]);
 
 	const profileUserId = state.step === "completing_profile" && state.prefill === undefined ? state.userId : null;
@@ -98,15 +105,16 @@ export function useBooking(locale: string, draft: BookingSelection) {
 		});
 	}, [adapter, range, submission, send]);
 
-	async function run(started: BookingEvent, operation: () => Promise<BookingEvent | readonly BookingEvent[]>) {
-		if (locked.current) return;
-		locked.current = true;
+	function run(started: BookingEvent, operation: () => Promise<BookingEvent | readonly BookingEvent[]>) {
+		if (inFlight.current) return;
 		send(started);
-		try {
-			const result = await operation();
+		const pending = Promise.resolve().then(operation).then(result => {
 			if (mounted.current) for (const event of Array.isArray(result) ? result : [result]) send(event);
-		} finally { locked.current = false; }
+		}).finally(() => { inFlight.current = null; });
+		inFlight.current = pending;
+		return pending;
 	}
+
 	return {
 		state, context, adapter, range, send,
 		signup(draft: SignupDraft) {

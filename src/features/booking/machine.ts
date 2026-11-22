@@ -89,6 +89,7 @@ export type BookingEvent =
 	| { type: "auth_redirect_started" }
 	| { type: "session_revoked"; selection?: BookingSelection }
 	| { type: "session_revocation_cleared" }
+	| { type: "session_recovery_failed" }
 	| { type: "account_back" }
 	| { type: "guest_slots_requested" }
 	| { type: "signed_in"; userId: string }
@@ -156,7 +157,7 @@ export function transition(state: BookingState, event: BookingEvent): BookingSta
 		return selection ? { step: "recovering_session", selection } : state;
 	}
 	if (state.step === "recovering_session") {
-		return event.type === "operation_failed" && event.operation === "auth"
+		return event.type === "session_recovery_failed"
 			? { step: "session_recovery_failed", selection: state.selection } : state;
 	}
 	if (state.step === "session_recovery_failed") {

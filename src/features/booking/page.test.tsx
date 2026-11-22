@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { i18n } from "../../i18n";
 import { BookingPage } from "./page";
+import type { BookingEvent } from "./machine";
 import * as adapterModule from "./adapter";
 import { makeBookingContext } from "./context-fixture";
 import { saveBookingRedirect, saveBookingAuthRedirect } from "./redirect";
@@ -337,4 +338,37 @@ it.each([undefined, { id: "r", classId: "s", status: "pending" }])("shows accoun
 	fireEvent.click(screen.getByRole("button", { name: "Back" }));
 	expect(await screen.findByRole("button", { name: /\d{2}:\d{2}/, pressed: true })).toBeDefined();
 	expect(screen.queryByText("abcD ef")).toBeNull();
+});
+
+it("offers a visible retry if manual sign-in fails after automatic Google recovery", async () => {
+	fakeAdapter.signInWithGoogle.mockResolvedValueOnce({ type: "operation_failed", operation: "auth", reason: "generic" });
+	fakeAdapter.signIn.mockResolvedValueOnce({ type: "operation_failed", operation: "auth", reason: "generic" });
+	const page = render(<BookingPage />);
+	context = { ...context, sessionErrorCode: "session_revoked" };
+	page.rerender(<BookingPage />);
+	const signIn = () => screen.getByRole("button", { name: "Sign in" }) as HTMLButtonElement;
+	await waitFor(() => expect(signIn().disabled).toBe(false));
+	fireEvent.change(screen.getByLabelText("Email"), { target: { value: "test@example.com" } });
+	fireEvent.change(screen.getByLabelText("Password"), { target: { value: "wrong-password" } });
+	fireEvent.click(signIn());
+	expect((await screen.findByRole("alert")).textContent).toContain("We could not sign you in.");
+	fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+	expect(signIn().disabled).toBe(false);
+	expect(fakeAdapter.signInWithGoogle).toHaveBeenCalledOnce();
+});
+
+it("starts recovery only after an existing Google attempt settles", async () => {
+	let finishManual!: (event: BookingEvent) => void;
+	fakeAdapter.signInWithGoogle.mockReturnValueOnce(new Promise<BookingEvent>(resolve => { finishManual = resolve; }));
+	context = { ...context, product: { ...context.product!, auth_mode: "invite_only" } };
+	const page = render(<BookingPage />);
+	fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+	fireEvent.click(await screen.findByRole("button", { name: "Continue with Google" }));
+	await waitFor(() => expect(fakeAdapter.signInWithGoogle).toHaveBeenCalledOnce());
+	context = { ...context, sessionErrorCode: "session_revoked" };
+	page.rerender(<BookingPage />);
+	expect(fakeAdapter.signInWithGoogle).toHaveBeenCalledOnce();
+	finishManual({ type: "operation_failed", operation: "auth", reason: "generic" });
+	await waitFor(() => expect(fakeAdapter.signInWithGoogle).toHaveBeenCalledTimes(2));
+	expect(screen.queryByRole("alert")).toBeNull();
 });
