@@ -28,10 +28,11 @@ export function BookingPage({ packageId }: { packageId?: string }) {
 	const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 	const view = state.step === "failed" ? state.resume : state;
 	const prefill = view.step === "completing_profile" ? view.prefill : undefined;
-	const pendingContact = view.step === "completing_profile" ? view.pendingRequest?.contact : undefined;
+	const draftContact = view.step === "completing_profile"
+		? view.pendingRequest?.contact : { displayName: signup.displayName, phoneNumber: signup.phone };
 	const profile = editedProfile ?? {
-		displayName: prefill?.displayName || pendingContact?.displayName || signup.displayName,
-		phoneNumber: prefill?.phoneNumber || pendingContact?.phoneNumber || signup.phone,
+		displayName: prefill?.displayName || draftContact?.displayName || "",
+		phoneNumber: prefill?.phoneNumber || draftContact?.phoneNumber || "",
 		businessName: prefill?.businessName ?? "",
 		websiteUrl: prefill?.websiteUrl,
 	};

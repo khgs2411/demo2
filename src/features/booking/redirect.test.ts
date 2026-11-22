@@ -99,3 +99,17 @@ it("restores an issued receipt only for the matching email and keeps credentials
 	expect(transition(initialState, restored!)).toMatchObject({ step: "requested", registration: continuation.registration });
 	expect(await restoreBookingRedirect("visitor", "dana@example.com")).toBeNull();
 });
+
+it("persists the account-exists continuation without the signup name or phone", async () => {
+	const slot = { id: "slot-1", startsAt: "2026-12-08T09:00:00Z", canRegister: true, canCancelRegistration: false, userRegistrationState: null };
+	const contact = { displayName: "Draft name", phoneNumber: "0501234567" };
+	expect(await saveBookingAuthRedirect({
+		step: "signing_in_for_signup", selection, email: "dana@example.com", continuation: { kind: "book", slot, contact },
+	})).toBe(true);
+	const saved = sessionStorage.getItem(bookingRedirectKey)!;
+	expect(saved).not.toContain(contact.displayName);
+	expect(saved).not.toContain(contact.phoneNumber);
+	expect(JSON.parse(saved).continuation.next).toEqual({ kind: "book", slot });
+	const restored = await restoreBookingRedirect("visitor", "dana@example.com");
+	expect(restored?.continuation).toEqual({ kind: "book", slot });
+});

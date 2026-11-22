@@ -254,10 +254,11 @@ it("finishes an existing account request after the same email returns from Googl
 	});
 	context = { ...context, session: { access_token: "test", refresh_token: "test", token_type: "bearer", expires_in: 3600, user: { id: "visitor", email: "test@example.com", app_metadata: {}, user_metadata: {}, aud: "authenticated", created_at: "2026-11-07" } } };
 	fakeAdapter.requestRegistration.mockResolvedValueOnce([{ type: "registration_requested", registration: { id: "google-request", classId: "s", status: "pending" } }]);
-	fakeAdapter.loadProfile.mockResolvedValueOnce({ type: "profile_loaded", profile: { displayName: "Saved name", phoneNumber: "", businessName: "Studio" } });
+	fakeAdapter.loadProfile.mockResolvedValueOnce({ type: "profile_loaded", profile: { displayName: "Saved name", phoneNumber: "0507654321", businessName: "Studio" } });
 	render(<BookingPage />);
 	await screen.findByDisplayValue("Saved name");
-	expect(screen.getByDisplayValue("0501234567")).toBeDefined();
+	expect(screen.getByDisplayValue("0507654321")).toBeDefined();
+	expect(screen.queryByDisplayValue("0501234567")).toBeNull();
 	fireEvent.click(screen.getByRole("button", { name: "Continue" }));
 	await screen.findByText("Request sent.");
 	expect(fakeAdapter.requestRegistration).toHaveBeenCalledExactlyOnceWith("s", "system", weekRange(new Date(slot.startsAt)));

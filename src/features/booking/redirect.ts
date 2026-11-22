@@ -17,6 +17,10 @@ async function emailDigest(email: string): Promise<string> {
 	return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
 }
 
+function withoutDraftContact(next: SignupContinuation): SignupContinuation {
+	return next.kind === "book" ? { kind: next.kind, slot: next.slot } : next;
+}
+
 export async function saveBookingAuthRedirect(state: BookingState): Promise<boolean> {
 	try {
 		const emailHash = "continuation" in state && state.continuation && state.email
@@ -36,7 +40,7 @@ export function saveBookingRedirect(state: BookingState, storage?: RedirectStora
 		selection: state.selection,
 		profileUserId: state.step === "choosing_slot" || state.step === "submitting" ? state.userId : null,
 		...(signupSlot?.id === state.selection.slotId && { slotStartsAt: signupSlot.startsAt }),
-		...(next && emailHash && { continuation: { emailHash, next } }),
+		...(next && emailHash && { continuation: { emailHash, next: withoutDraftContact(next) } }),
 	};
 	try {
 		(storage ?? window.sessionStorage).setItem(bookingRedirectKey, JSON.stringify(intent));
@@ -55,7 +59,8 @@ function isContinuation(value: unknown, slotId: string | null): value is Redirec
 	if (!slotId || slot?.id !== slotId || typeof slot.startsAt !== "string" || !Number.isFinite(Date.parse(slot.startsAt))
 		|| typeof slot.canRegister !== "boolean" || typeof slot.canCancelRegistration !== "boolean" || slot.userRegistrationState !== null) return false;
 	if (next.kind === "choose_slot") return true;
-	if (next.kind === "book") return typeof next.contact?.displayName === "string" && typeof next.contact?.phoneNumber === "string";
+	if (next.kind === "book") return next.contact === undefined
+		|| (typeof next.contact?.displayName === "string" && typeof next.contact?.phoneNumber === "string");
 	const registration = next.registration;
 	return registration?.classId === slotId && typeof registration.id === "string" && registration.id.length > 0
 		&& ["pending", "approved", "rejected", "cancelled"].includes(registration.status);
@@ -94,7 +99,7 @@ export function restoreBookingRedirect(userId: string, email?: string, storage?:
 		const continuation = intent.continuation;
 		if (!continuation || !email) return restored;
 		return emailDigest(email).then(hash => hash === continuation.emailHash
-			? { ...restored, continuation: continuation.next } : restored, () => restored);
+			? { ...restored, continuation: withoutDraftContact(continuation.next) } : restored, () => restored);
 	} catch {
 		return null;
 	}

@@ -10,7 +10,7 @@ export type BookingSelection = {
 
 type BookingContact = Pick<BookingProfile, "displayName" | "phoneNumber">;
 export type SignupContinuation =
-	| { kind: "book"; slot: BookingSlot; contact: BookingContact }
+	| { kind: "book"; slot: BookingSlot; contact?: BookingContact }
 	| { kind: "show_request"; slot: BookingSlot; registration: BookingRegistration }
 	| { kind: "choose_slot"; slot: BookingSlot };
 type AccountState = {
@@ -27,7 +27,7 @@ type ResumingSignup = {
 };
 export type BookingProfile = { displayName: string; phoneNumber: string; businessName: string; websiteUrl?: string };
 type ProfileState = {
-	step: "completing_profile"; selection: BookingSelection; userId: string; saving?: boolean; prefill?: BookingProfile | null; pendingRequest?: { slot: BookingSlot; contact: BookingContact };
+	step: "completing_profile"; selection: BookingSelection; userId: string; saving?: boolean; prefill?: BookingProfile | null; pendingRequest?: { slot: BookingSlot; contact?: BookingContact };
 };
 export type SignupDraft = { displayName: string; email: string; phone: string };
 export type BookingTerms = { title: string; text: string; version: number; locale: string };
@@ -142,7 +142,7 @@ function chooseAnotherSlot(selection: BookingSelection, userId: string | null): 
 
 function afterSignIn(selection: BookingSelection, userId: string, continuation?: SignupContinuation): BookingState {
 	switch (continuation?.kind) {
-		case "book": return { step: "completing_profile", selection, userId, pendingRequest: { slot: continuation.slot, contact: continuation.contact } };
+		case "book": return { step: "completing_profile", selection, userId, pendingRequest: { slot: continuation.slot, ...(continuation.contact && { contact: continuation.contact }) } };
 		case "show_request": return { step: "requested", selection, userId, slot: continuation.slot, registration: continuation.registration };
 		case "choose_slot": return chooseAnotherSlot(selection, userId);
 		default: return { step: "completing_profile", selection, userId };
