@@ -18,6 +18,7 @@ export function useBooking(locale: string, draft: BookingSelection) {
 	const wasRevoked = useRef(false);
 	const latestSession = useRef(context.session);
 	const requestStarted = useRef<BookingState | null>(null);
+	// The registration sign-up API requires Google to be enabled.
 	const guestAvailable = context.product?.auth_mode === "open"
 		&& context.product.email_password_enabled && context.product.google_oauth_enabled;
 	const send = useCallback((event: BookingEvent) => {
