@@ -52,6 +52,7 @@ type PasswordState = {
 	selection: BookingSelection;
 	credentials: BookingCredentials;
 	next: AccountState | SlotState;
+	notice?: "registration_failed";
 };
 export type BookingSlot = {
 	id: string;
@@ -279,7 +280,10 @@ export function transition(state: BookingState, event: BookingEvent): BookingSta
 			case "signup_registered":
 				return event.registration.classId === state.selection.slotId
 					? { step: "requested", selection: state.selection, userId: event.userId, slot: state.slot, registration: event.registration, credentials: event.credentials }
-					: state;
+					: {
+						step: "signup_password", selection: state.selection, credentials: event.credentials, notice: "registration_failed",
+						next: chooseSlot({ ...state.selection, slotId: null }, event.userId),
+					};
 		}
 	}
 	if (state.step === "submitting") {

@@ -68,7 +68,9 @@ export function BookingPage({ packageId }: { packageId?: string }) {
 					{(view.step === "choosing_slot" || view.step === "submitting") && <SlotStep flow={flow} timeZone={timeZone} />}
 					{view.step === "signup_password" && <>
 						<h1 tabIndex={-1}>{t(view.next.step === "choosing_slot" ? "sTitle" : "signIn")}</h1>
-						<p className="lede">{t(view.next.step === "choosing_slot" ? "slotFull" : "signupMessages.sign_in_failed")}</p>
+						{view.notice
+							? <p className="notice error" role="alert">{t(`messages.${view.notice}`)}</p>
+							: <p className="lede">{t(view.next.step === "choosing_slot" ? "slotFull" : "signupMessages.sign_in_failed")}</p>}
 						<IssuedPassword credentials={view.credentials} />
 						<div className="actions"><Ticket stub="→" onClick={() => flow.send({ type: "password_saved" })}>{t("next")}</Ticket></div>
 					</>}

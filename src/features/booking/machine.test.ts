@@ -268,4 +268,13 @@ describe("signed-out booking recovery", () => {
 			step: "choosing_slot", userId: "visitor", notice: "slot_full", selection: { slotId: null },
 		});
 	});
+	it("keeps credentials when the receipt names a different class", () => {
+		const outcome = transition(pending, {
+			type: "signup_registered", userId: "visitor", credentials, registration: { ...registration, classId: "other-slot" },
+		});
+		expect(outcome).toMatchObject({ step: "signup_password", credentials, notice: "registration_failed" });
+		expect(transition(outcome, { type: "password_saved" })).toMatchObject({
+			step: "choosing_slot", userId: "visitor", selection: { slotId: null },
+		});
+	});
 });

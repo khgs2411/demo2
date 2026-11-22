@@ -304,3 +304,16 @@ it("does not retry failed Google recovery when the package draft changes", async
 	fireEvent.click(screen.getByRole("radio", { name: /Landing or product page/ }));
 	expect(fakeAdapter.signInWithGoogle).toHaveBeenCalledOnce();
 });
+
+it("shows a generic notice and the password if the signup receipt names the wrong time", async () => {
+	fakeAdapter.requestWithSignup.mockResolvedValueOnce({
+		type: "signup_registered", userId: "visitor", credentials: { password: "abcDef", formatted: "abcD ef" },
+		registration: { id: "wrong-receipt", classId: "other-slot", status: "pending" },
+	});
+	await openSignup();
+	fireEvent.click(screen.getByRole("checkbox", { name: "I accept the terms of service" }));
+	fireEvent.submit(screen.getByRole("button", { name: "Send request" }).closest("form")!);
+	await screen.findByText("abcD ef");
+	expect(screen.getByRole("alert").textContent).toContain("We could not verify your meeting request.");
+	expect(screen.queryByText("Request sent.")).toBeNull();
+});
