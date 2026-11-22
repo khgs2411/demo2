@@ -36,16 +36,18 @@ export function BookingPage({ packageId }: { packageId?: string }) {
 		websiteUrl: prefill?.websiteUrl,
 	};
 	const selection = "selection" in view ? view.selection : draft;
-	const guestSteps = view.step === "signup_details" || (view.step === "choosing_slot" && view.userId === null)
+	const isSignup = view.step === "signup_details" || view.step === "sending";
+	const guestSteps = isSignup || (view.step === "choosing_slot" && view.userId === null)
 		|| (view.step === "requested" && !!view.credentials) || view.step === "signup_password";
 	const stepLabels = guestSteps ? ["sPackage", "sSlot", "sProfile"] : ["sPackage", "sAccount", "sProfile", "sSlot"];
 	const isAccount = view.step === "needs_account" || view.step === "signing_up" || view.step === "signing_in"
-		|| view.step === "recovering_session" || view.step === "session_recovery_failed";
+		|| view.step === "recovering_session" || view.step === "session_recovery_failed"
+		|| view.step === "resuming_signup" || view.step === "signing_in_for_signup";
 	const stepIndex = guestSteps
-		? view.step === "choosing_slot" ? 1 : view.step === "signup_details" ? 2 : 3
+		? view.step === "choosing_slot" ? 1 : isSignup ? 2 : 3
 		: view.step === "choosing_package" ? 0 : isAccount ? 1 : view.step === "completing_profile" ? 2 : view.step === "requested" ? 4 : 3;
 	const profileBusy = view.step === "completing_profile" && (view.saving || (!editedProfile && prefill === undefined));
-	const slot = (view.step === "requested" || view.step === "signup_details") ? view.slot : (view.step === "choosing_slot" || view.step === "submitting") ? view.slots.find(slot => slot.id === view.selection.slotId) : undefined;
+	const slot = (view.step === "requested" || isSignup) ? view.slot : (view.step === "choosing_slot" || view.step === "submitting") ? view.slots.find(slot => slot.id === view.selection.slotId) : undefined;
 	useEffect(() => { main.current?.querySelector<HTMLElement>("h1")?.focus(); }, [view.step]);
 	useEffect(() => { saveBookingChoice(selection); }, [selection]);
 	return <main className="booking-page book" data-module="booking" ref={main}>
@@ -53,7 +55,7 @@ export function BookingPage({ packageId }: { packageId?: string }) {
 			<ol className={guestSteps ? "steps guest-steps" : "steps"} aria-label={t("ticketHead")}>{stepLabels.map((key, index) => <li key={key} className={index < stepIndex ? "done" : index === stepIndex ? "now" : ""} aria-current={index === stepIndex ? "step" : undefined}>
 				<span aria-hidden="true">0{index + 1}</span><span>{t(key)}</span>
 			</li>)}</ol>
-			<div className="step shown" key={view.step} aria-busy={view.step === "recovering_session" || view.step === "signing_in" || view.step === "signing_up" || view.step === "submitting" || (view.step === "signup_details" && view.busy) || profileBusy}>
+			<div className="step shown" key={isSignup ? "signup_details" : view.step} aria-busy={view.step === "recovering_session" || view.step === "signing_in" || view.step === "signing_up" || view.step === "submitting" || view.step === "sending" || view.step === "signing_in_for_signup" || profileBusy}>
 				{context.sessionErrorCode === "session_revoked" && state.step === "failed" ? <p role="status">{t("loading")}</p> : state.step === "failed" ? <><h1 tabIndex={-1}>{t(stepIndex === 1 ? "aTitle" : stepIndex === 2 ? "prTitle" : "sTitle")}</h1>
 					<p role="alert" className="notice error">{t(`messages.${state.reason === "redirect_storage" ? "redirect_storage" : `${state.operation}_failed`}`)}</p>
 					<Ticket stub="↻" onClick={() => flow.send({ type:"retry_requested" })}>{t("retry")}</Ticket></> : <>
@@ -62,10 +64,10 @@ export function BookingPage({ packageId }: { packageId?: string }) {
 						{"continuation" in view && view.continuation && <p role="alert" className="notice">
 							{t(view.continuation.kind === "book" ? "signupMessages.account_exists" : "signupMessages.account_created")}
 						</p>}
-						<AccountStep signInOnly email={"email" in view ? view.email : undefined} emailReadOnly={"continuation" in view && Boolean(view.continuation)} product={context.product} loading={context.loading} busy={view.step !== "needs_account" && view.step !== "session_recovery_failed"}
+						<AccountStep signInOnly email={"email" in view ? view.email : undefined} emailReadOnly={"continuation" in view && Boolean(view.continuation)} product={context.product} loading={context.loading} busy={view.step !== "needs_account" && view.step !== "resuming_signup" && view.step !== "session_recovery_failed"}
 						onPassword={(...args) => void flow.auth(...args)} onGoogle={() => void flow.google()} onBack={() => flow.send({ type:"account_back" })} />
 					</>}
-					{view.step === "signup_details" && <SignupStep flow={flow} draft={signup} onChange={setSignup} />}
+					{isSignup && <SignupStep flow={flow} draft={signup} onChange={setSignup} />}
 					{view.step === "completing_profile" && <ProfileStep profile={profile} onChange={setProfile} onSubmit={() => { setProfile(profile); void flow.saveProfile(profile); }} busy={Boolean(profileBusy)} />}
 					{(view.step === "choosing_slot" || view.step === "submitting") && <SlotStep flow={flow} timeZone={timeZone} />}
 					{view.step === "signup_password" && <>

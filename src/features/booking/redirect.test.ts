@@ -87,7 +87,7 @@ it("preserves the selected signup time across Google sign-in even when it is in 
 it("restores an issued receipt only for the matching email and keeps credentials out of the redirect", async () => {
 	const slot = { id: "slot-1", startsAt: "2026-12-08T09:00:00Z", canRegister: true, canCancelRegistration: false, userRegistrationState: null };
 	const continuation = { kind: "show_request", slot, registration: { id: "r", classId: "slot-1", status: "pending" } } as const;
-	const account = { step: "signing_in", selection, email: "dana@example.com", continuation } as const;
+	const account = { step: "signing_in_for_signup", selection, email: "dana@example.com", continuation } as const;
 	expect(await saveBookingAuthRedirect(account)).toBe(true);
 	expect(JSON.parse(sessionStorage.getItem(bookingRedirectKey)!).continuation).toEqual({
 		emailHash: "07e2f1394b0ea80e2adca010ea8318df697001a005ba7452720edda4b0ce57b3", next: continuation,

@@ -31,7 +31,7 @@ export function saveBookingRedirect(state: BookingState, storage?: RedirectStora
 	if (state.step === "choosing_package" || state.step === "requested" || state.step === "failed") return false;
 	const next = "continuation" in state ? state.continuation : undefined;
 	if (next && !emailHash) return false;
-	const signupSlot = next && "slot" in next ? next.slot : "signupSlot" in state ? state.signupSlot : undefined;
+	const signupSlot = next?.slot ?? ("signupSlot" in state ? state.signupSlot : undefined);
 	const intent: RedirectIntent = {
 		selection: state.selection,
 		profileUserId: state.step === "choosing_slot" || state.step === "submitting" ? state.userId : null,
@@ -50,11 +50,11 @@ function isContinuation(value: unknown, slotId: string | null): value is Redirec
 	if (!value || typeof value !== "object") return false;
 	const { emailHash, next } = value as Partial<RedirectContinuation>;
 	if (typeof emailHash !== "string" || !/^[a-f0-9]{64}$/.test(emailHash) || !next || typeof next !== "object") return false;
-	if (next.kind === "choose_slot") return true;
-	if (next.kind !== "book" && next.kind !== "show_request") return false;
+	if (next.kind !== "book" && next.kind !== "show_request" && next.kind !== "choose_slot") return false;
 	const slot = next.slot;
 	if (!slotId || slot?.id !== slotId || typeof slot.startsAt !== "string" || !Number.isFinite(Date.parse(slot.startsAt))
 		|| typeof slot.canRegister !== "boolean" || typeof slot.canCancelRegistration !== "boolean" || slot.userRegistrationState !== null) return false;
+	if (next.kind === "choose_slot") return true;
 	if (next.kind === "book") return typeof next.contact?.displayName === "string" && typeof next.contact?.phoneNumber === "string";
 	const registration = next.registration;
 	return registration?.classId === slotId && typeof registration.id === "string" && registration.id.length > 0

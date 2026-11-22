@@ -10,8 +10,12 @@ export function SignupStep({ flow, draft, onChange }: {
 }) {
 	const { t } = useTranslation("booking");
 	const state = flow.state;
-	if (state.step !== "signup_details") return null;
-	const { busy, notice, terms, accepted, loadingTerms } = state;
+	if (state.step !== "signup_details" && state.step !== "sending") return null;
+	const busy = state.step === "sending";
+	const { terms } = state;
+	const notice = busy ? null : state.notice;
+	const accepted = busy || state.accepted;
+	const loadingTerms = !busy && state.loadingTerms;
 	return <>
 		<h1 tabIndex={-1}>{t("signupTitle")}</h1>
 		<GoogleSignIn busy={busy} onGoogle={() => void flow.google(draft.email)} />

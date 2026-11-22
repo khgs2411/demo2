@@ -207,12 +207,12 @@ describe("signed-out booking recovery", () => {
 
 	it("requires acceptance of the displayed terms before sending", () => {
 		expect(transition(termsLoaded, { type: "signup_started" })).toBe(termsLoaded);
-		expect(pending).toMatchObject({ step: "signup_details", busy: true });
+		expect(pending).toMatchObject({ step: "sending" });
 	});
 
 	it("asks again when the terms change, without losing the selected time", () => {
 		const changed = transition(pending, { type: "terms_changed" });
-		expect(changed).toMatchObject({ step: "signup_details", terms: null, busy: false, notice: "terms_changed" });
+		expect(changed).toMatchObject({ step: "signup_details", terms: null, notice: "terms_changed" });
 		const reloaded = transition(changed, { type: "terms_loaded", terms: { ...terms, version: 4 } });
 		expect(reloaded).toMatchObject({ selection: { slotId: slot.id }, terms: { version: 4 } });
 		expect(transition(reloaded, { type: "signup_started" })).toBe(reloaded);
@@ -220,14 +220,15 @@ describe("signed-out booking recovery", () => {
 
 	it.each(["rate_limited", "terms_unavailable", "disabled", "not_found", "bad_request", "signup_failed"] as const)("makes %s visible without restarting the booking", type => {
 		expect(transition(pending, { type })).toMatchObject({
-			step: "signup_details", busy: false, notice: type, selection: { slotId: slot.id },
+			step: "signup_details", notice: type, selection: { slotId: slot.id },
 		});
 	});
 
 	it("keeps the selected time and resumes an existing account request after sign-in", () => {
 		const existing = transition(pending, { type: "account_exists", email: "dana@example.com", contact: { displayName: "Dana", phoneNumber: "0501234567" } });
-		expect(existing).toMatchObject({ step: "needs_account", email: "dana@example.com", selection: { slotId: slot.id } });
+		expect(existing).toMatchObject({ step: "resuming_signup", email: "dana@example.com", selection: { slotId: slot.id } });
 		const signing = transition(existing, { type: "auth_started", method: "sign_in" });
+		expect(signing.step).toBe("signing_in_for_signup");
 		const resumed = transition(signing, { type: "signed_in", userId: "visitor" });
 		expect(resumed).toMatchObject({ step: "completing_profile", userId: "visitor", selection: { slotId: slot.id } });
 		expect(transition(resumed, { type: "registration_requested", registration })).toBe(resumed);
@@ -254,7 +255,7 @@ describe("signed-out booking recovery", () => {
 		const password = transition(pending, { type: "sign_in_failed", credentials, registration, email: "dana@example.com" });
 		expect(password).toMatchObject({ step: "signup_password", credentials });
 		const account = transition(password, { type: "password_saved" });
-		expect(account).toMatchObject({ step: "needs_account", email: "dana@example.com" });
+		expect(account).toMatchObject({ step: "resuming_signup", email: "dana@example.com" });
 		expect(account).not.toHaveProperty("credentials");
 		const signing = transition(account, { type: "auth_started", method: "sign_in" });
 		expect(transition(signing, { type: "signed_in", userId: "visitor" })).toMatchObject({ step: "requested", registration });

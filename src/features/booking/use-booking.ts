@@ -111,7 +111,7 @@ export function useBooking(locale: string, draft: BookingSelection) {
 		state, context, adapter, range, send,
 		signup(draft: SignupDraft) {
 			const flow = current.current;
-			if (flow.step !== "signup_details" || !flow.terms || !flow.accepted || flow.busy) return;
+			if (flow.step !== "signup_details" || !flow.terms || !flow.accepted) return;
 			const terms = flow.terms;
 			return run({ type: "signup_started" }, () => adapter.requestWithSignup(flow.selection.slotId, draft, terms));
 		},
@@ -125,7 +125,7 @@ export function useBooking(locale: string, draft: BookingSelection) {
 		},
 		google(email = "") {
 			if (current.current.step === "signup_details") send({ type: "signup_auth_chosen", email });
-			if (current.current.step !== "needs_account" && current.current.step !== "session_recovery_failed") return;
+			if (current.current.step !== "needs_account" && current.current.step !== "resuming_signup" && current.current.step !== "session_recovery_failed") return;
 			return run({ type: "auth_started", method: "google" }, () => adapter.signInWithGoogle(current.current));
 		},
 		saveProfile(profile: BookingProfile) {

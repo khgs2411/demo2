@@ -245,8 +245,8 @@ it("starts Google once when the provider reports a revoked booking session and d
 it("finishes an existing account request after the same email returns from Google", async () => {
 	const slot = { id: "s", startsAt: "2026-12-08T09:00:00Z", canRegister: true, canCancelRegistration: false, userRegistrationState: null };
 	await saveBookingAuthRedirect({
-		step: "signing_in", selection: { packageId: "system", addonInterests: [], slotId: "s" },
-		email: "test@example.com", continuation: { kind: "book", slot, contact: { displayName: "Dana", phoneNumber: "0501234567" } }, signupSlot: slot,
+		step: "signing_in_for_signup", selection: { packageId: "system", addonInterests: [], slotId: "s" },
+		email: "test@example.com", continuation: { kind: "book", slot, contact: { displayName: "Dana", phoneNumber: "0501234567" } },
 	});
 	context = { ...context, session: { access_token: "test", refresh_token: "test", token_type: "bearer", expires_in: 3600, user: { id: "visitor", email: "test@example.com", app_metadata: {}, user_metadata: {}, aud: "authenticated", created_at: "2026-11-07" } } };
 	fakeAdapter.requestRegistration.mockResolvedValueOnce([{ type: "registration_requested", registration: { id: "google-request", classId: "s", status: "pending" } }]);
@@ -285,8 +285,8 @@ it("keeps a visible notice and asks for consent when previously unavailable term
 it("does not submit a saved request when Google returns a different email", async () => {
 	const slot = { id: "s", startsAt: "2026-12-08T09:00:00Z", canRegister: true, canCancelRegistration: false, userRegistrationState: null };
 	await saveBookingAuthRedirect({
-		step: "signing_in", selection: { packageId: "system", addonInterests: [], slotId: "s" },
-		email: "test@example.com", continuation: { kind: "book", slot, contact: { displayName: "Dana", phoneNumber: "0501234567" } }, signupSlot: slot,
+		step: "signing_in_for_signup", selection: { packageId: "system", addonInterests: [], slotId: "s" },
+		email: "test@example.com", continuation: { kind: "book", slot, contact: { displayName: "Dana", phoneNumber: "0501234567" } },
 	});
 	context = { ...context, session: { access_token: "test", refresh_token: "test", token_type: "bearer", expires_in: 3600, user: { id: "visitor", email: "different@example.com", app_metadata: {}, user_metadata: {}, aud: "authenticated", created_at: "2026-11-07" } } };
 	render(<BookingPage />);
