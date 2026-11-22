@@ -6,7 +6,7 @@ import { BookingPage } from "./page";
 import * as adapterModule from "./adapter";
 import { makeBookingContext } from "./context-fixture";
 import { saveBookingRedirect, saveBookingAuthRedirect } from "./redirect";
-import { weekRange } from "./calendar";
+import { formatWhen, weekRange } from "./calendar";
 
 vi.mock("@class-kit/react", () => ({ useProductContext: vi.fn() }));
 let context: ReturnType<typeof adapterModule.useBookingContext>;
@@ -104,14 +104,17 @@ it("reloads changed terms and waits for fresh consent", async () => {
 it("prefills an existing account’s email and sends the selected request after password sign-in", async () => {
 	fakeAdapter.requestWithSignup.mockResolvedValueOnce({ type: "account_exists", email: "test@example.com", contact: { displayName: "Dana", phoneNumber: "0501234567" } });
 	fakeAdapter.requestRegistration.mockResolvedValueOnce([{ type: "registration_requested", registration: { id: "real-request", classId: "s", status: "pending" } }]);
-	await openSignup();
+	const { slot } = await openSignup();
+	const time = formatWhen(slot.startsAt, "en", Intl.DateTimeFormat().resolvedOptions().timeZone);
 	fireEvent.click(screen.getByRole("checkbox", { name: "I accept the terms of service" }));
 	fireEvent.submit(screen.getByRole("button", { name: "Send request" }).closest("form")!);
 	expect((await screen.findByRole("alert")).textContent).toContain("An account already exists");
 	expect((screen.getByLabelText("Email") as HTMLInputElement).value).toBe("test@example.com");
+	expect(within(screen.getByRole("complementary")).getByText(time)).toBeDefined();
 	fireEvent.change(screen.getByLabelText("Password"), { target: { value: "test-password" } });
 	fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
 	await screen.findByDisplayValue("Dana");
+	expect(within(screen.getByRole("complementary")).getByText(time)).toBeDefined();
 	expect(screen.getByDisplayValue("0501234567")).toBeDefined();
 	expect(fakeAdapter.requestRegistration).not.toHaveBeenCalled();
 	fireEvent.change(screen.getByLabelText("Business name"), { target: { value: "Dana Studio" } });

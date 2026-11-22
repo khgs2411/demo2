@@ -47,7 +47,10 @@ export function BookingPage({ packageId }: { packageId?: string }) {
 		? view.step === "choosing_slot" ? 1 : isSignup ? 2 : 3
 		: view.step === "choosing_package" ? 0 : isAccount ? 1 : view.step === "completing_profile" ? 2 : view.step === "requested" ? 4 : 3;
 	const profileBusy = view.step === "completing_profile" && (view.saving || (!editedProfile && prefill === undefined));
-	const slot = (view.step === "requested" || isSignup) ? view.slot : (view.step === "choosing_slot" || view.step === "submitting") ? view.slots.find(slot => slot.id === view.selection.slotId) : undefined;
+	const slot = view.step === "requested" || isSignup ? view.slot
+		: "continuation" in view ? view.continuation.slot
+			: view.step === "completing_profile" ? view.pendingRequest?.slot
+				: view.step === "choosing_slot" || view.step === "submitting" ? view.slots.find(slot => slot.id === view.selection.slotId) : undefined;
 	useEffect(() => { main.current?.querySelector<HTMLElement>("h1")?.focus(); }, [view.step]);
 	useEffect(() => { saveBookingChoice(selection); }, [selection]);
 	return <main className="booking-page book" data-module="booking" ref={main}>
