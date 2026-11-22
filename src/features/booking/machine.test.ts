@@ -218,7 +218,7 @@ describe("signed-out booking recovery", () => {
 		expect(transition(reloaded, { type: "signup_started" })).toBe(reloaded);
 	});
 
-	it.each(["rate_limited", "terms_unavailable", "disabled", "not_found", "bad_request"] as const)("makes %s visible without restarting the booking", type => {
+	it.each(["rate_limited", "terms_unavailable", "disabled", "not_found", "bad_request", "signup_failed"] as const)("makes %s visible without restarting the booking", type => {
 		expect(transition(pending, { type })).toMatchObject({
 			step: "signup_details", busy: false, notice: type, selection: { slotId: slot.id },
 		});
@@ -258,5 +258,14 @@ describe("signed-out booking recovery", () => {
 		expect(account).not.toHaveProperty("credentials");
 		const signing = transition(account, { type: "auth_started", method: "sign_in" });
 		expect(transition(signing, { type: "signed_in", userId: "visitor" })).toMatchObject({ step: "requested", registration });
+	});
+	it("lets a newly created account select another time when sign-in failed before any registration", () => {
+		const password = transition(pending, { type: "sign_in_failed", credentials, email: "dana@example.com" });
+		const account = transition(password, { type: "password_saved" });
+		expect(account).toMatchObject({ continuation: { kind: "choose_slot" } });
+		const signing = transition(account, { type: "auth_started", method: "sign_in" });
+		expect(transition(signing, { type: "signed_in", userId: "visitor" })).toMatchObject({
+			step: "choosing_slot", userId: "visitor", notice: "slot_full", selection: { slotId: null },
+		});
 	});
 });

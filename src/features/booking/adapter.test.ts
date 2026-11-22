@@ -360,4 +360,11 @@ describe("booking signup SDK adapter", () => {
 		expect(sdk.classes.registerWithSignup).not.toHaveBeenCalled();
 	});
 
+	it("preserves the receipt and password when registration succeeded but no session was established", async () => {
+		sdk.auth.getSession.mockResolvedValueOnce(null).mockResolvedValueOnce(null);
+		sdk.classes.registerWithSignup.mockResolvedValueOnce({ status: "registered", ...issued, registration: registered.registration });
+		expect(await adapter.requestWithSignup("slot-1", draft, terms)).toEqual({
+			type: "sign_in_failed", email: draft.email, credentials, registration: { id: "request-1", classId: "slot-1", status: "pending" },
+		});
+	});
 });

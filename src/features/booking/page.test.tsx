@@ -73,6 +73,7 @@ it("books from published terms and shows the copyable generated password on the 
 });
 it.each([
 	["rate_limited", "Too many requests."],
+	["signup_failed", "We could not send your request."],
 	["disabled", "Booking with a new account is unavailable."],
 	["not_found", "This time is no longer available."],
 	["bad_request", "Check your details"],
@@ -124,6 +125,21 @@ it("shows the unavailable time before allowing an anonymous client to choose ano
 	fireEvent.submit(screen.getByRole("button", { name: "Send request" }).closest("form")!);
 	expect((await screen.findByRole("alert")).textContent).toContain("pick another time");
 	expect(fakeAdapter.loadSlots).toHaveBeenCalledTimes(2);
+});
+
+it("shows the password when an account was created but the time filled, then returns to signed-in time choice", async () => {
+	fakeAdapter.requestWithSignup.mockResolvedValueOnce({
+		type: "class_unavailable", userId: "visitor", credentials: { password: "abcDef", formatted: "abcD ef" },
+	});
+	await openSignup();
+	fakeAdapter.loadSlots.mockResolvedValueOnce({ type: "slots_loaded", slots: [] });
+	fireEvent.click(screen.getByRole("checkbox", { name: "I accept the terms of service" }));
+	fireEvent.submit(screen.getByRole("button", { name: "Send request" }).closest("form")!);
+	await screen.findByText("abcD ef");
+	fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+	expect((await screen.findByRole("alert")).textContent).toContain("pick another time");
+	expect(screen.queryByText("abcD ef")).toBeNull();
+	expect(screen.getByRole("button", { name: "Send request" })).toBeDefined();
 });
 
 it("shows the issued password after failed automatic sign-in and clears it when continuing", async () => {
