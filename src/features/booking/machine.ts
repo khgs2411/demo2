@@ -19,15 +19,14 @@ type AccountState = {
 	email?: string;
 	signupSlot?: BookingSlot;
 };
-type ResumingSignup = {
+type SignupResume = { email: string; continuation: SignupContinuation };
+type ResumingSignup = SignupResume & {
 	step: "resuming_signup" | "signing_in_for_signup";
 	selection: BookingSelection;
-	email: string;
-	continuation: SignupContinuation;
 };
 export type BookingProfile = { displayName: string; phoneNumber: string; businessName: string; websiteUrl?: string };
 type ProfileState = {
-	step: "completing_profile"; selection: BookingSelection; userId: string; saving?: boolean; prefill?: BookingProfile | null; pendingRequest?: { slot: BookingSlot; contact?: BookingContact };
+	step: "completing_profile"; selection: BookingSelection; userId: string; saving?: boolean; prefill?: BookingProfile | null; pendingRequest?: { email: string; slot: BookingSlot; contact?: BookingContact };
 };
 export type SignupDraft = { displayName: string; email: string; phone: string };
 export type BookingTerms = { title: string; text: string; version: number; locale: string };
@@ -81,8 +80,8 @@ export type BookingState =
 	| { step: "requested"; selection: BookingSelection; userId: string; registration: BookingRegistration; slot?: BookingSlot; credentials?: BookingCredentials }
 	| { step: "failed"; operation: BookingOperation; reason: FailureReason; resume: AccountState | ResumingSignup | ProfileState | SlotState };
 export type BookingRedirectRestored = {
-	type: "redirect_restored"; selection: BookingSelection; profileUserId: string | null; userId: string; slotStartsAt?: string; continuation?: SignupContinuation;
-};
+	type: "redirect_restored"; selection: BookingSelection; profileUserId: string | null; userId: string; slotStartsAt?: string;
+} & (SignupResume | { email?: never; continuation?: never });
 export type BookingEvent =
 	| { type: "package_chosen"; packageId: PackageId; addonInterests: readonly AddonId[]; guest?: boolean }
 	| { type: "auth_started"; method: "sign_up" | "sign_in" | "google" }
@@ -140,12 +139,14 @@ function chooseAnotherSlot(selection: BookingSelection, userId: string | null): 
 	return { ...chooseSlot({ ...selection, slotId: null }, userId), notice: "slot_full" };
 }
 
-function afterSignIn(selection: BookingSelection, userId: string, continuation?: SignupContinuation): BookingState {
-	switch (continuation?.kind) {
-		case "book": return { step: "completing_profile", selection, userId, pendingRequest: { slot: continuation.slot, ...(continuation.contact && { contact: continuation.contact }) } };
+function resumeAfterSignIn(selection: BookingSelection, userId: string, { email, continuation }: SignupResume): BookingState {
+	switch (continuation.kind) {
+		case "book": {
+			const { slot, contact } = continuation;
+			return { step: "completing_profile", selection, userId, pendingRequest: { email, slot, ...(contact && { contact }) } };
+		}
 		case "show_request": return { step: "requested", selection, userId, slot: continuation.slot, registration: continuation.registration };
 		case "choose_slot": return chooseAnotherSlot(selection, userId);
-		default: return { step: "completing_profile", selection, userId };
 	}
 }
 
@@ -169,6 +170,15 @@ export function transition(state: BookingState, event: BookingEvent): BookingSta
 		}
 	}
 	if (event.type === "unauthenticated" && "selection" in state) {
+		if (state.step === "signup_password" || state.step === "resuming_signup") return state;
+		if (state.step === "signing_in_for_signup") return { ...state, step: "resuming_signup" };
+		if (state.step === "completing_profile" && state.pendingRequest) {
+			const { email, slot, contact } = state.pendingRequest;
+			return {
+				step: "resuming_signup", selection: state.selection, email,
+				continuation: { kind: "book", slot, ...(contact && { contact }) },
+			};
+		}
 		return { step: "needs_account", selection: state.selection };
 	}
 	if (state.step === "failed") return event.type === "retry_requested" ? state.resume : state;
@@ -200,7 +210,7 @@ export function transition(state: BookingState, event: BookingEvent): BookingSta
 	}
 	if (state.step === "choosing_package") {
 		if (event.type === "redirect_restored") {
-			if (event.continuation) return afterSignIn(event.selection, event.userId, event.continuation);
+			if (event.continuation) return resumeAfterSignIn(event.selection, event.userId, event);
 			return event.profileUserId === event.userId
 				? chooseSlot(event.selection, event.userId)
 				: { step: "completing_profile", selection: event.selection, userId: event.userId };
@@ -217,7 +227,7 @@ export function transition(state: BookingState, event: BookingEvent): BookingSta
 		return { ...state, step: event.method === "sign_up" ? "signing_up" : "signing_in" };
 	}
 	if ((state.step === "needs_account" || state.step === "signing_up" || state.step === "signing_in") && event.type === "signed_in") {
-		return afterSignIn(state.selection, event.userId);
+		return { step: "completing_profile", selection: state.selection, userId: event.userId };
 	}
 	if (state.step === "resuming_signup") {
 		if (event.type === "auth_started" && event.method !== "sign_up") return { ...state, step: "signing_in_for_signup" };
@@ -227,7 +237,7 @@ export function transition(state: BookingState, event: BookingEvent): BookingSta
 		}
 	}
 	if (state.step === "signing_in_for_signup" && event.type === "signed_in") {
-		return afterSignIn(state.selection, event.userId, state.continuation);
+		return resumeAfterSignIn(state.selection, event.userId, state);
 	}
 	if (state.step === "completing_profile" && event.type === "profile_loaded") return { ...state, prefill: event.profile };
 	if (state.step === "completing_profile" && event.type === "profile_saved") {
@@ -278,7 +288,7 @@ export function transition(state: BookingState, event: BookingEvent): BookingSta
 	}
 	if (state.step === "sending") {
 		switch (event.type) {
-			case "signed_in": return afterSignIn(state.selection, event.userId);
+			case "signed_in": return { step: "completing_profile", selection: state.selection, userId: event.userId };
 			case "terms_changed":
 			case "terms_unavailable": return { ...state, step: "signup_details", terms: null, accepted: false, loadingTerms: true, notice: event.type };
 			case "rate_limited":

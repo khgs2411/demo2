@@ -149,7 +149,7 @@ describe("booking transition table", () => {
 	} satisfies BookingState;
 	const signingToResume = { ...resuming, step: "signing_in_for_signup" } satisfies BookingState;
 	const resumeAuthFailure = { ...authFailure, resume: resuming } satisfies BookingState;
-	const profileForRequest = { ...profile, selection: selected.selection, pendingRequest: { slot, contact } } satisfies BookingState;
+	const profileForRequest = { ...profile, selection: selected.selection, pendingRequest: { email, slot, contact } } satisfies BookingState;
 	const recovery = { step: "recovering_session", selection } satisfies BookingState;
 	const recoveryFailure = { step: "session_recovery_failed", selection } satisfies BookingState;
 	const anotherGuestSlot = { ...guestLoading, notice: "slot_full" } satisfies BookingState;
@@ -293,12 +293,12 @@ describe("booking transition table", () => {
 			signupRegistered: { ...requested, credentials },
 		},
 		resuming: { signIn: signingToResume, google: signingToResume, accountBack: signupForm },
-		signingToResume: { signedIn: profileForRequest, authFailed: resumeAuthFailure },
+		signingToResume: { signedIn: profileForRequest, authFailed: resumeAuthFailure, unauthenticated: resuming },
 		resumeAuthFailure: { retry: resuming },
 		profileForRequest: {
 			profileLoaded: { ...profileForRequest, prefill: eventCases.profileLoaded.profile },
 			profileSaveStarted: { ...profileForRequest, saving: true },
-			profileSaved: submitting, profileFailed: { ...profileFailure, resume: profileForRequest },
+			profileSaved: submitting, profileFailed: { ...profileFailure, resume: profileForRequest }, unauthenticated: resuming,
 		},
 		recovery: { recoveryFailed: recoveryFailure },
 		recoveryFailure: { revocationCleared: account, accountBack: initialState, signIn: signingIn, signUp: signingIn, google: signingIn },
@@ -315,12 +315,15 @@ describe("booking transition table", () => {
 			it(`${name} × ${eventName}`, () => {
 				const before = structuredClone(state);
 				const recovering = state.step === "recovering_session" || state.step === "session_recovery_failed";
+				const explicit = expected[name as keyof typeof stateCases][eventName as EventName];
+				const keepsSignup = state.step === "signup_password" || state.step === "resuming_signup";
 				const expectedState = eventName === "restart" ? initialState
-					: eventName === "unauthenticated" && "selection" in state && !recovering ? { step: "needs_account", selection: state.selection }
+					: eventName === "unauthenticated" && "selection" in state && !recovering && !keepsSignup
+						? explicit ?? { step: "needs_account", selection: state.selection }
 						: eventName === "revoked" && !recovering ? {
 							step: "recovering_session",
 							selection: "selection" in state ? state.selection : state.step === "failed" ? state.resume.selection : selection,
-						} : expected[name as keyof typeof stateCases][eventName as EventName];
+						} : explicit;
 				const next = transition(Object.freeze(state), Object.freeze(event));
 				if (expectedState) expect(next).toEqual(expectedState);
 				else expect(next).toBe(state);

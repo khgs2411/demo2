@@ -82,7 +82,7 @@ function isIntent(value: unknown): value is RedirectIntent {
 
 export function restoreBookingRedirect(userId: string): BookingRedirectRestored | null;
 export function restoreBookingRedirect(userId: string, email: string | undefined, storage?: RedirectStorage): BookingRedirectRestored | null | Promise<BookingRedirectRestored | null>;
-export function restoreBookingRedirect(userId: string, email?: string, storage?: RedirectStorage) {
+export function restoreBookingRedirect(userId: string, email?: string, storage?: RedirectStorage): BookingRedirectRestored | null | Promise<BookingRedirectRestored | null> {
 	try {
 		const target = storage ?? window.sessionStorage;
 		const saved = target.getItem(bookingRedirectKey);
@@ -99,7 +99,7 @@ export function restoreBookingRedirect(userId: string, email?: string, storage?:
 		const continuation = intent.continuation;
 		if (!continuation || !email) return restored;
 		return emailDigest(email).then(hash => hash === continuation.emailHash
-			? { ...restored, continuation: withoutDraftContact(continuation.next) } : restored, () => restored);
+			? { ...restored, email: email.trim().toLowerCase(), continuation: withoutDraftContact(continuation.next) } : restored, () => restored);
 	} catch {
 		return null;
 	}
