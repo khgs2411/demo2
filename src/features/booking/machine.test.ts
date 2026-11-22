@@ -193,6 +193,7 @@ describe("booking transition table", () => {
 		classUnavailable: { type: "class_unavailable" },
 		classUnavailableWithAccount: { type: "account_created_class_unavailable", userId: "visitor", credentials },
 		signInFailed: { type: "sign_in_failed", email, credentials, registration },
+		signInFailedMismatched: { type: "sign_in_failed", email, credentials, registration: { ...registration, classId: "other-slot" } },
 		passwordSaved: { type: "password_saved" },
 		signupStarted: { type: "signup_started" },
 		signupRegistered: { type: "signup_registered", userId: "visitor", registration, credentials },
@@ -285,6 +286,10 @@ describe("booking transition table", () => {
 			signupFailed: { ...signupAccepted, notice: "signup_failed" },
 			accountExists: resuming, classUnavailable: anotherGuestSlot, classUnavailableWithAccount: passwordShown,
 			signInFailed: { ...passwordShown, next: signInAfterSignup },
+			signInFailedMismatched: {
+				...passwordShown, notice: "registration_failed",
+				next: { ...signInAfterSignup, continuation: { kind: "choose_slot", slot } },
+			},
 			signupRegistered: { ...requested, credentials },
 		},
 		resuming: { signIn: signingToResume, google: signingToResume, accountBack: signupForm },
@@ -409,6 +414,17 @@ describe("signed-out booking recovery", () => {
 		});
 		expect(outcome).toMatchObject({ step: "signup_password", credentials, notice: "registration_failed" });
 		expect(transition(outcome, { type: "password_saved" })).toMatchObject({
+			step: "choosing_slot", userId: "visitor", selection: { slotId: null },
+		});
+	});
+	it("preserves the password without showing a mismatched receipt after manual sign-in", () => {
+		const outcome = transition(pending, {
+			type: "sign_in_failed", email: "dana@example.com", credentials, registration: { ...registration, classId: "other-slot" },
+		});
+		expect(outcome).toMatchObject({ step: "signup_password", credentials, notice: "registration_failed" });
+		const account = transition(outcome, { type: "password_saved" });
+		const signing = transition(account, { type: "auth_started", method: "sign_in" });
+		expect(transition(signing, { type: "signed_in", userId: "visitor" })).toMatchObject({
 			step: "choosing_slot", userId: "visitor", selection: { slotId: null },
 		});
 	});

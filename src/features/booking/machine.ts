@@ -293,14 +293,19 @@ export function transition(state: BookingState, event: BookingEvent): BookingSta
 				step: "signup_password", selection: state.selection, credentials: event.credentials,
 				next: chooseAnotherSlot(state.selection, event.userId),
 			};
-			case "sign_in_failed":
+			case "sign_in_failed": {
+				const registration = event.registration?.classId === state.selection.slotId ? event.registration : undefined;
 				return {
 					step: "signup_password", selection: state.selection, credentials: event.credentials,
+					...(event.registration && !registration && { notice: "registration_failed" }),
 					next: {
 						step: "resuming_signup", selection: state.selection, email: event.email,
-						continuation: event.registration ? { kind: "show_request", slot: state.slot, registration: event.registration } : { kind: "choose_slot", slot: state.slot },
+						continuation: registration
+							? { kind: "show_request", slot: state.slot, registration }
+							: { kind: "choose_slot", slot: state.slot },
 					},
 				};
+			}
 			case "signup_registered":
 				return event.registration.classId === state.selection.slotId
 					? { step: "requested", selection: state.selection, userId: event.userId, slot: state.slot, registration: event.registration, credentials: event.credentials }
