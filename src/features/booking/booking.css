@@ -146,7 +146,7 @@ h1 { font: 900 clamp(2.4rem, 1.2rem + 3.6vw, 4.4rem)/.95 var(--font-display); le
  .booking-link .main { padding: 0; }
  .booking-link .stub, .time .stub, .day-tab .stub { display: none; }
  .week { grid-template-columns: repeat(var(--days, 5), minmax(0, 1fr)); }
- .day h2 { font: 600 .95rem/1.2 var(--font-sans); margin-block-end: 14px; }
+ .day h2, .booking-terms-heading { font: 600 .95rem/1.2 var(--font-sans); margin-block-end: 14px; }
  .day h2 span { display: block; font: 500 11px/1.4 var(--font-mono); opacity: .55; letter-spacing: .08em; }
  .time { display: block; inline-size: 100%; }
  .time .main { display: block; padding: 0; }
