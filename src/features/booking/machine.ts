@@ -102,7 +102,7 @@ export type BookingEvent =
 	| { type: "signup_auth_chosen"; email: string }
 	| { type: "account_exists"; email: string; contact: BookingContact }
 	| { type: "class_unavailable" }
-	| { type: "class_unavailable"; userId: string; credentials: BookingCredentials }
+	| { type: "account_created_class_unavailable"; userId: string; credentials: BookingCredentials }
 	| { type: "sign_in_failed"; credentials: BookingCredentials; email: string; registration?: BookingRegistration }
 	| { type: "password_saved" }
 	| { type: "signup_started" }
@@ -287,10 +287,11 @@ export function transition(state: BookingState, event: BookingEvent): BookingSta
 			case "signup_failed": return { ...state, step: "signup_details", accepted: true, loadingTerms: false, notice: event.type };
 			case "account_exists":
 				return { step: "resuming_signup", selection: state.selection, email: event.email, continuation: { kind: "book", slot: state.slot, contact: event.contact } };
-			case "class_unavailable": {
-				const next = chooseAnotherSlot(state.selection, "userId" in event ? event.userId : null);
-				return "credentials" in event ? { step: "signup_password", selection: state.selection, credentials: event.credentials, next } : next;
-			}
+			case "class_unavailable": return chooseAnotherSlot(state.selection, null);
+			case "account_created_class_unavailable": return {
+				step: "signup_password", selection: state.selection, credentials: event.credentials,
+				next: chooseAnotherSlot(state.selection, event.userId),
+			};
 			case "sign_in_failed":
 				return {
 					step: "signup_password", selection: state.selection, credentials: event.credentials,

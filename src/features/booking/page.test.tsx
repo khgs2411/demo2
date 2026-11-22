@@ -131,7 +131,7 @@ it("shows the unavailable time before allowing an anonymous client to choose ano
 
 it("shows the password when an account was created but the time filled, then returns to signed-in time choice", async () => {
 	fakeAdapter.requestWithSignup.mockResolvedValueOnce({
-		type: "class_unavailable", userId: "visitor", credentials: { password: "abcDef", formatted: "abcD ef" },
+		type: "account_created_class_unavailable", userId: "visitor", credentials: { password: "abcDef", formatted: "abcD ef" },
 	});
 	await openSignup();
 	fakeAdapter.loadSlots.mockResolvedValueOnce({ type: "slots_loaded", slots: [] });

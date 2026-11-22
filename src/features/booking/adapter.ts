@@ -161,7 +161,7 @@ export function createBookingAdapter(client: BookingSdk | null, refreshProductCo
 			if (!session) return { type: "sign_in_failed", credentials, registration, email };
 			return result.status === "registered"
 				? { type: "signup_registered", userId: session.user.id, registration: mapRegistration(result.registration), credentials }
-				: { type: "class_unavailable", userId: session.user.id, credentials };
+				: { type: "account_created_class_unavailable", userId: session.user.id, credentials };
 		} catch {
 			return { type: "signup_failed" };
 		}

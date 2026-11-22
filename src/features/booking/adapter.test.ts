@@ -345,7 +345,7 @@ describe("booking signup SDK adapter", () => {
 		sdk.auth.getSession.mockResolvedValueOnce(null);
 		sdk.classes.registerWithSignup.mockResolvedValueOnce({ status: "class_unavailable", ...issued });
 		expect(await adapter.requestWithSignup("slot-1", draft, terms)).toEqual({ type: "class_unavailable" });
-		expect(await adapter.requestWithSignup("slot-1", draft, terms)).toEqual({ type: "class_unavailable", userId: "visitor", credentials });
+		expect(await adapter.requestWithSignup("slot-1", draft, terms)).toEqual({ type: "account_created_class_unavailable", userId: "visitor", credentials });
 	});
 
 	it("preserves the new credentials and confirmed registration if automatic sign-in fails", async () => {

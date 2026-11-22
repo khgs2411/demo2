@@ -244,7 +244,7 @@ describe("signed-out booking recovery", () => {
 	});
 
 	it("shows the issued password before returning a signed-in client to time choice", () => {
-		const password = transition(pending, { type: "class_unavailable", userId: "visitor", credentials });
+		const password = transition(pending, { type: "account_created_class_unavailable", userId: "visitor", credentials });
 		expect(password).toMatchObject({ step: "signup_password", credentials });
 		const newSlot = transition(password, { type: "password_saved" });
 		expect(newSlot).toMatchObject({ step: "choosing_slot", userId: "visitor", notice: "slot_full", selection: { slotId: null } });
