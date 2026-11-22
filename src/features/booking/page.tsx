@@ -59,7 +59,9 @@ export function BookingPage({ packageId }: { packageId?: string }) {
 					<Ticket stub="↻" onClick={() => flow.send({ type:"retry_requested" })}>{t("retry")}</Ticket></> : <>
 					{view.step === "choosing_package" && <PackageStep selection={draft} onChange={setDraft} onContinue={() => flow.choosePackage(draft)} />}
 					{isAccount && <>
-						{"continuation" in view && view.continuation?.kind === "book" && <p role="alert" className="notice">{t("signupMessages.account_exists")}</p>}
+						{"continuation" in view && view.continuation && <p role="alert" className="notice">
+							{t(view.continuation.kind === "book" ? "signupMessages.account_exists" : "signupMessages.account_created")}
+						</p>}
 						<AccountStep signInOnly email={"email" in view ? view.email : undefined} emailReadOnly={"continuation" in view && Boolean(view.continuation)} product={context.product} loading={context.loading} busy={view.step !== "needs_account" && view.step !== "session_recovery_failed"}
 						onPassword={(...args) => void flow.auth(...args)} onGoogle={() => void flow.google()} onBack={() => flow.send({ type:"account_back" })} />
 					</>}

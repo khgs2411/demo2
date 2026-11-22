@@ -47,7 +47,7 @@ async function openSignup() {
 	for (const [label, value] of [["Full name", "Dana"], ["Email", "test@example.com"], ["Phone", "0501234567"]]) {
 		fireEvent.change(screen.getByLabelText(label), { target: { value } });
 	}
-	return terms;
+	return { terms, slot };
 }
 
 it("books from published terms and shows the copyable generated password on the receipt", async () => {
@@ -57,7 +57,7 @@ it("books from published terms and shows the copyable generated password on the 
 	});
 	const writeText = vi.fn().mockResolvedValue(undefined);
 	Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText } });
-	const terms = await openSignup();
+	const { terms } = await openSignup();
 	const send = screen.getByRole("button", { name: "Send request" });
 	expect((send as HTMLButtonElement).disabled).toBe(true);
 	fireEvent.click(screen.getByRole("checkbox", { name: "I accept the terms of service" }));
@@ -318,4 +318,20 @@ it("shows a generic notice and the password if the signup receipt names the wron
 	await screen.findByText("abcD ef");
 	expect(screen.getByRole("alert").textContent).toContain("We could not verify your meeting request.");
 	expect(screen.queryByText("Request sent.")).toBeNull();
+});
+
+it.each([undefined, { id: "r", classId: "s", status: "pending" }])("shows account-created guidance and returns to the same time from sign-in", async registration => {
+	fakeAdapter.requestWithSignup.mockResolvedValueOnce({
+		type: "sign_in_failed", email: "test@example.com", registration, credentials: { password: "abcDef", formatted: "abcD ef" },
+	});
+	const { slot } = await openSignup();
+	fakeAdapter.loadSlots.mockResolvedValueOnce({ type: "slots_loaded", slots: [slot] });
+	fireEvent.click(screen.getByRole("checkbox", { name: "I accept the terms of service" }));
+	fireEvent.submit(screen.getByRole("button", { name: "Send request" }).closest("form")!);
+	await screen.findByText("abcD ef");
+	fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+	expect(screen.getByText("Your account was created. Use your new password to sign in.")).toBeDefined();
+	fireEvent.click(screen.getByRole("button", { name: "Back" }));
+	expect(await screen.findByRole("button", { name: /\d{2}:\d{2}/, pressed: true })).toBeDefined();
+	expect(screen.queryByText("abcD ef")).toBeNull();
 });

@@ -200,6 +200,7 @@ export function transition(state: BookingState, event: BookingEvent): BookingSta
 	}
 	if (state.step === "needs_account" && event.type === "guest_slots_requested") return chooseSlot(state.selection, null);
 	if (state.step === "needs_account" && event.type === "account_back") {
+		if (state.continuation && state.continuation.kind !== "book") return chooseSlot(state.selection, null);
 		return state.signupSlot ? openSignup(state.selection, state.signupSlot) : initialState;
 	}
 	if (state.step === "needs_account" && event.type === "auth_started") {
@@ -273,7 +274,7 @@ export function transition(state: BookingState, event: BookingEvent): BookingSta
 				return {
 					step: "signup_password", selection: state.selection, credentials: event.credentials,
 					next: {
-						step: "needs_account", selection: state.selection, email: event.email,
+						step: "needs_account", selection: state.selection, email: event.email, signupSlot: state.slot,
 						continuation: event.registration ? { kind: "show_request", slot: state.slot, registration: event.registration } : { kind: "choose_slot" },
 					},
 				};
