@@ -52,7 +52,7 @@ const loading: BookingState = {
 };
 const ready: BookingState = { ...loading, slots: [slot], availability: "ready" };
 const selected: BookingState = { ...ready, selection: { ...selection, slotId: slot.id } };
-const submitting: BookingState = { ...selected, step: "submitting" };
+const submitting: BookingState = { ...selected, step: "submitting", userId: "visitor" };
 const registration = { id: "request-1", classId: slot.id, status: "pending" } as const;
 
 describe("booking slot selection and request", () => {

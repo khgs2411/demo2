@@ -31,7 +31,7 @@ describe("booking OAuth redirect persistence", () => {
 	});
 
 	it("never restores a submitting mutation and revalidates the saved slot against fresh data", () => {
-		saveBookingRedirect({ ...slotState, step: "submitting" });
+		saveBookingRedirect({ ...slotState, step: "submitting", userId: "visitor" });
 		const restored = transition(initialState, restoreBookingRedirect("visitor")!);
 		expect(restored.step).toBe("choosing_slot");
 		expect(transition(restored, { type: "submit_requested" })).toBe(restored);

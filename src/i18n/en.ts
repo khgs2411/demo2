@@ -206,6 +206,16 @@ export const en = {
 		signInDescription: "Sign in to manage business meetings.",
 	},
 	booking: {
+		signupTitle: "Your details for the meeting.",
+		acceptTerms: "I accept the terms of service",
+		savePassword: "Save this password now. It is shown only once.",
+		copyPassword: "Copy password",
+		copied: "Password copied.",
+		copyFailed: "Could not copy the password. Select and copy it manually.",
+		signupMessages: {
+			terms_unavailable: "The terms of service are unavailable. Please try again later.",
+			bad_request: "Check your details and try again.",
+		},
 		sPackage: "Package",
 		sAccount: "Account",
 		sProfile: "Details",

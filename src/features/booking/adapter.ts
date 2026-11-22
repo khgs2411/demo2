@@ -1,13 +1,13 @@
-import { useProductContext, type ClassKitClient, type ClassSummary } from "@class-kit/react";
+import { invokeProductFunction, useProductContext, type ClassKitClient, type ClassSummary, type ProductDocument } from "@class-kit/react";
 import { getBookingOptions } from "../packages";
-import type { BookingEvent, BookingOperation, BookingSelection, BookingSlot, BookingState, PackageId } from "./machine";
+import type { BookingEvent, BookingOperation, BookingSelection, BookingSlot, BookingState, BookingTerms, PackageId, SignupDraft } from "./machine";
 import { clearBookingRedirect, saveBookingRedirect, saveAccountRedirect, clearAccountRedirect } from "./redirect";
 import type { RequestsEvent } from "./requests-machine";
 
-export type BookingSdk = {
+export type BookingSdk = Pick<ClassKitClient, "supabase" | "authStorageKey" | "productKey"> & {
 	auth: Pick<ClassKitClient["auth"], "signIn" | "signUp" | "getSession" | "signInWithGoogle" | "signOut">;
 	profile: Pick<ClassKitClient["profile"], "update">;
-	classes: Pick<ClassKitClient["classes"], "list" | "listMyRegistrations" | "register" | "cancelRegistration">;
+	classes: Pick<ClassKitClient["classes"], "list" | "listMyRegistrations" | "register" | "registerWithSignup" | "cancelRegistration">;
 };
 export type BookingRange = { start: string; end: string };
 export type BookingProfile = {
@@ -103,6 +103,37 @@ export function createBookingAdapter(client: BookingSdk | null, refreshProductCo
 		}
 	}
 
+	async function loadTerms(locale: string): Promise<BookingEvent> {
+		try {
+			// The document facade caches successful reads. Consent needs a fresh publication.
+			const response = await invokeProductFunction<{ document: ProductDocument }>(client, "product-documents", {
+				action: "get", document_type: "terms_of_service", locale, fallback_locale: "en",
+			});
+			if (response.error) return { type: "terms_unavailable" };
+			const { title, content_markdown: text, version, locale: publishedLocale } = response.data.document;
+			return { type: "terms_loaded", terms: { title, text, version, locale: publishedLocale } };
+		} catch {
+			return { type: "terms_unavailable" };
+		}
+	}
+
+	async function requestWithSignup(classId: string, draft: SignupDraft, terms: BookingTerms): Promise<BookingEvent> {
+		try {
+			if (!client) return { type: "signup_failed" };
+			const result = await client.classes.registerWithSignup({ classId, ...draft, termsVersion: terms.version, termsLocale: terms.locale });
+			if (result.status !== "registered") return { type: "signup_failed" };
+			const session = await client.auth.getSession();
+			if (!session) return { type: "signup_failed" };
+			const { id, class_id, status } = result.registration;
+			return {
+				type: "signup_registered", userId: session.user.id, registration: { id, classId: class_id, status },
+				credentials: { password: result.password, formatted: result.formatPassword() },
+			};
+		} catch {
+			return { type: "signup_failed" };
+		}
+	}
+
 	async function requestRegistration(classId: string, packageId: PackageId, range: BookingRange): Promise<readonly BookingEvent[]> {
 		try {
 			if (!client) return [failure("registration")];
@@ -162,6 +193,8 @@ export function createBookingAdapter(client: BookingSdk | null, refreshProductCo
 		saveProfile,
 		loadSlots,
 		requestRegistration,
+		loadTerms,
+		requestWithSignup,
 		listRequests,
 		cancelRequest,
 		signOut,

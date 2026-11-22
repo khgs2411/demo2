@@ -206,6 +206,16 @@ export const he = {
 		signInDescription: "התחברו כדי לנהל את הפגישות העסקיות.",
 	},
 	booking: {
+		signupTitle: "הפרטים שלך לפגישה.",
+		acceptTerms: "אני מאשר/ת את תנאי השירות",
+		savePassword: "כדאי לשמור את הסיסמה עכשיו. היא מוצגת פעם אחת בלבד.",
+		copyPassword: "העתקת סיסמה",
+		copied: "הסיסמה הועתקה.",
+		copyFailed: "לא הצלחנו להעתיק את הסיסמה. אפשר לסמן ולהעתיק אותה ידנית.",
+		signupMessages: {
+			terms_unavailable: "תנאי השירות אינם זמינים כרגע. כדאי לנסות שוב מאוחר יותר.",
+			bad_request: "כדאי לבדוק את הפרטים ולנסות שוב.",
+		},
 		sPackage: "חבילה",
 		sAccount: "חשבון",
 		sProfile: "פרטים",

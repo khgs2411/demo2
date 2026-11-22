@@ -11,6 +11,7 @@ let context: ReturnType<typeof adapterModule.useBookingContext>;
 const fakeAdapter = {
 	signIn: vi.fn().mockResolvedValue({ type: "signed_in", userId: "visitor" }),
 	signUp: vi.fn().mockResolvedValue({ type: "signed_in", userId: "visitor" }),
+	loadTerms: vi.fn(), requestWithSignup: vi.fn(),
 	signInWithGoogle: vi.fn().mockResolvedValue({ type: "auth_redirect_started" }),
 	saveProfile: vi.fn().mockResolvedValue({ type: "profile_saved" }),
 	loadSlots: vi.fn().mockResolvedValue({ type: "booking_not_open" }),
@@ -20,25 +21,48 @@ const fakeAdapter = {
 beforeEach(async () => {
 	vi.restoreAllMocks(); vi.clearAllMocks(); sessionStorage.clear();
 	context = makeBookingContext();
+	fakeAdapter.loadSlots.mockReset().mockResolvedValue({ type: "booking_not_open" });
 	vi.spyOn(adapterModule, "useBookingContext").mockImplementation(() => context);
 	vi.spyOn(adapterModule, "createBookingAdapter").mockReturnValue(fakeAdapter);
 	await i18n.changeLanguage("en");
 });
 afterEach(cleanup);
 
-it("prefills the route package, gates auth providers, saves profile and renders closed templates", async () => {
+it("books from published terms and shows the copyable generated password on the receipt", async () => {
+	const date = new Date(); date.setDate(date.getDate() - (date.getDay()+6)%7 + 1); date.setHours(9,0,0,0);
+	const slot = { id: "s", startsAt: date.toISOString(), canRegister: true, canCancelRegistration: false, userRegistrationState: null };
+	const terms = { title: "Studio terms", text: "Published studio terms", version: 3, locale: "en" };
+	fakeAdapter.loadSlots.mockResolvedValueOnce({ type: "slots_loaded", slots: [slot] });
+	fakeAdapter.loadTerms.mockResolvedValueOnce({ type: "terms_loaded", terms });
+	fakeAdapter.requestWithSignup.mockResolvedValueOnce({
+		type: "signup_registered", userId: "visitor", registration: { id: "real-request", classId: "s", status: "pending" },
+		credentials: { password: "abcdefghijklmnop", formatted: "abcd efgh ijkl mnop" },
+	});
+	const writeText = vi.fn().mockResolvedValue(undefined);
+	Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText } });
 	render(<BookingPage packageId="system" />);
 	fireEvent.click(screen.getByRole("button", { name: "Continue" }));
-	expect(screen.getByRole("button", { name: "Continue with Google" })).toBeDefined();
-	fireEvent.change(screen.getByLabelText("Email"), { target: { value: "test@example.com" } });
-	fireEvent.change(screen.getByLabelText("Password"), { target: { value: "test-password" } });
-	fireEvent.click(screen.getByRole("button", { name: "Create account" }));
-	await screen.findByLabelText("Full name");
-	for (const [label, value] of [["Full name", "Dana"], ["Phone", "0501234567"], ["Business name", "Dana Studio"]]) fireEvent.change(screen.getByLabelText(label), { target: { value } });
+	fireEvent.click(await screen.findByRole("button", { name: /\d{2}:\d{2}/ }));
 	fireEvent.click(screen.getByRole("button", { name: "Continue" }));
-	await screen.findByText("The calendar isn't open yet.");
-	expect(fakeAdapter.saveProfile).toHaveBeenCalledWith(expect.objectContaining({ displayName: "Dana", businessName: "Dana Studio" }), expect.objectContaining({ packageId: "system" }));
-	expect(screen.queryByRole("button", { name:"Send request" })).toBeNull();
+	await screen.findByText("Published studio terms");
+	expect(screen.getByRole("button", { name: "Continue with Google" })).toBeDefined();
+	for (const [label, value] of [["Full name", "Dana"], ["Email", "test@example.com"], ["Phone", "0501234567"]]) {
+		fireEvent.change(screen.getByLabelText(label), { target: { value } });
+	}
+	const send = screen.getByRole("button", { name: "Send request" });
+	expect((send as HTMLButtonElement).disabled).toBe(true);
+	fireEvent.click(screen.getByRole("checkbox", { name: "I accept the terms of service" }));
+	fireEvent.submit(send.closest("form")!);
+	fireEvent.submit(send.closest("form")!);
+	await screen.findByText("Request sent.");
+	expect(fakeAdapter.requestWithSignup).toHaveBeenCalledExactlyOnceWith("s", { displayName: "Dana", email: "test@example.com", phone: "0501234567" }, terms);
+	expect(fakeAdapter.requestRegistration).not.toHaveBeenCalled();
+	expect(screen.getAllByText("abcd efgh ijkl mnop")).toHaveLength(1);
+	expect(within(screen.getByRole("complementary")).getByText("№ real-request")).toBeDefined();
+	fireEvent.click(screen.getByRole("button", { name: "Copy password" }));
+	await screen.findByText("Password copied.");
+	expect(writeText).toHaveBeenCalledExactlyOnceWith("abcdefghijklmnop");
+	Reflect.deleteProperty(navigator, "clipboard");
 });
 it("hides disallowed auth methods and signup for invite-only products", () => {
 	context.product = { ...context.product!, auth_mode: "invite_only", google_oauth_enabled: false };

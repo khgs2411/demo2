@@ -164,3 +164,5 @@ h1 { font: 900 clamp(2.4rem, 1.2rem + 3.6vw, 4.4rem)/.95 var(--font-display); le
  @media (max-width: 719px) { .day h2 { display: none; } .week-nav .range { text-align: center; } }
  @media (prefers-reduced-motion: reduce) { .step { animation: none; } .steps li::before, .stamp, .time { transition: none; } }
 }
+
+.booking-page .booking-terms { white-space: pre-wrap; overflow-wrap: anywhere; }

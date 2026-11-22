@@ -8,6 +8,7 @@ export function SlotStep({ flow, timeZone }: { flow: ReturnType<typeof useBookin
 	const { t, i18n } = useTranslation("booking");
 	const state = flow.state;
 	if (state.step !== "choosing_slot" && state.step !== "submitting") return null;
+	const guest = state.userId === null;
 	const selected = state.slots.find(slot => slot.id === state.selection.slotId);
 	return <>
 		<h1 tabIndex={-1}>{t("sTitle")}</h1>
@@ -18,7 +19,7 @@ export function SlotStep({ flow, timeZone }: { flow: ReturnType<typeof useBookin
 				<WeekGrid range={flow.range} slots={state.slots} selectedId={state.selection.slotId} timeZone={timeZone}
 					onChoose={slotId => flow.send({ type:"slot_chosen", slotId })} onMove={flow.moveWeek} canGoBack={flow.range.start > weekRange(new Date()).start} />
 			</fieldset>}
-			<div className="actions"><Ticket stub={selected ? formatStart(selected.startsAt, i18n.language, timeZone) : "—"} disabled={!selected || state.step === "submitting"} onClick={() => void flow.submit()}>{t(state.step === "submitting" ? "loading" : "send")}</Ticket>
+			<div className="actions"><Ticket stub={selected ? formatStart(selected.startsAt, i18n.language, timeZone) : "—"} disabled={!selected || state.step === "submitting"} onClick={() => guest ? flow.send({ type: "signup_opened" }) : void flow.submit()}>{t(state.step === "submitting" ? "loading" : guest ? "next" : "send")}</Ticket>
 				<Ticket className="booking-link" stub="" disabled={state.step === "submitting"} onClick={() => flow.send({ type:"profile_reopened" })}>{t("back")}</Ticket></div>
 		</>}
 	</>;

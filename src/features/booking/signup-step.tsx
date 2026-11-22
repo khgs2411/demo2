@@ -1,0 +1,44 @@
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Input } from "../../ui/input";
+import { Ticket } from "../../ui/ticket";
+import { GoogleSignIn } from "./account-step";
+import type { SignupDraft } from "./machine";
+import type { useBooking } from "./use-booking";
+
+export function SignupStep({ flow, draft, onChange }: {
+	flow: ReturnType<typeof useBooking>; draft: SignupDraft; onChange: (draft: SignupDraft) => void;
+}) {
+	const { t } = useTranslation("booking");
+	const [acceptedTerms, setAcceptedTerms] = useState<string | null>(null);
+	const state = flow.state;
+	if (state.step !== "signup_details") return null;
+	const { busy, notice, terms } = state;
+	const termsKey = terms && `${terms.locale}:${terms.version}`;
+	const accepted = termsKey !== null && acceptedTerms === termsKey;
+	return <>
+		<h1 tabIndex={-1}>{t("signupTitle")}</h1>
+		<GoogleSignIn busy={busy} onGoogle={() => void flow.google()} />
+		<div className="or mono">{t("or")}</div>
+		{notice && <p className="notice error" role="alert">{t(`signupMessages.${notice}`)}</p>}
+		<form onSubmit={event => {
+			event.preventDefault();
+			if (accepted && !busy) void flow.signup(draft);
+		}}>
+			<fieldset className="fields" disabled={busy}>
+				<Input label={t("name")} value={draft.displayName} onChange={event => onChange({ ...draft, displayName: event.target.value })} autoComplete="name" maxLength={200} required />
+				<Input label={t("email")} value={draft.email} onChange={event => onChange({ ...draft, email: event.target.value })} type="email" dir="ltr" autoComplete="email" required />
+				<Input label={t("phone")} value={draft.phone} onChange={event => onChange({ ...draft, phone: event.target.value })} type="tel" dir="ltr" autoComplete="tel" minLength={7} maxLength={20} required />
+				{terms ? <>
+					<h2>{terms.title}</h2>
+					<p className="booking-terms" lang={terms.locale} dir="auto">{terms.text}</p>
+					<label><input type="checkbox" required checked={accepted} onChange={event => setAcceptedTerms(event.target.checked ? termsKey : null)} /> {t("acceptTerms")}</label>
+				</> : !notice && <p role="status">{t("loading")}</p>}
+			</fieldset>
+			<div className="actions">
+				<Ticket stub="03" type="submit" disabled={busy || !accepted}>{t(busy ? "loading" : "send")}</Ticket>
+				<Ticket stub="" className="booking-link" disabled={busy} onClick={() => flow.send({ type: "signup_back" })}>{t("back")}</Ticket>
+			</div>
+		</form>
+	</>;
+}

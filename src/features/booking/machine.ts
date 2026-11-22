@@ -10,13 +10,25 @@ export type BookingSelection = {
 
 type AccountState = { step: "needs_account" | "signing_up" | "signing_in"; selection: BookingSelection };
 type ProfileState = { step: "completing_profile"; selection: BookingSelection; userId: string; saving?: boolean };
+export type SignupDraft = { displayName: string; email: string; phone: string };
+export type BookingTerms = { title: string; text: string; version: number; locale: string };
+export type BookingCredentials = { password: string; formatted: string };
+
 type SlotState = {
 	step: "choosing_slot";
 	selection: BookingSelection;
-	userId: string;
+	userId: string | null;
 	slots: readonly BookingSlot[];
 	availability: "loading" | "ready" | "not_open";
 	notice: "slot_full" | null;
+};
+type SignupState = {
+	step: "signup_details";
+	selection: BookingSelection & { slotId: string };
+	slot: BookingSlot;
+	terms: BookingTerms | null;
+	busy: boolean;
+	notice: "terms_unavailable" | "bad_request" | null;
 };
 export type BookingSlot = {
 	id: string;
@@ -31,15 +43,22 @@ export type BookingOperation = "auth" | "profile" | "slots" | "registration";
 export type FailureReason = "generic" | "redirect_storage";
 export type BookingState =
 	| { step: "choosing_package" }
-	| AccountState | ProfileState | SlotState
-	| (Omit<SlotState, "step"> & { step: "submitting" })
-	| { step: "requested"; selection: BookingSelection; userId: string; registration: BookingRegistration; slot?: BookingSlot }
+	| AccountState | ProfileState | SlotState | SignupState
+	| (Omit<SlotState, "step"> & { step: "submitting"; userId: string })
+	| { step: "requested"; selection: BookingSelection; userId: string; registration: BookingRegistration; slot?: BookingSlot; credentials?: BookingCredentials }
 	| { step: "failed"; operation: BookingOperation; reason: FailureReason; resume: AccountState | ProfileState | SlotState };
 export type BookingEvent =
-	| { type: "package_chosen"; packageId: PackageId; addonInterests: readonly AddonId[] }
+	| { type: "package_chosen"; packageId: PackageId; addonInterests: readonly AddonId[]; guest?: boolean }
 	| { type: "auth_started"; method: "sign_up" | "sign_in" | "google" }
 	| { type: "auth_redirect_started" }
 	| { type: "signed_in"; userId: string }
+	| { type: "signup_opened" }
+	| { type: "signup_back" }
+	| { type: "terms_loaded"; terms: BookingTerms }
+	| { type: "terms_unavailable" }
+	| { type: "signup_started" }
+	| { type: "signup_registered"; userId: string; registration: BookingRegistration; credentials: BookingCredentials }
+	| { type: "signup_failed" }
 	| { type: "profile_saved" }
 	| { type: "profile_save_started" }
 	| { type: "profile_reopened" }
@@ -59,7 +78,7 @@ export type BookingEvent =
 
 export const initialState: BookingState = { step: "choosing_package" };
 
-function chooseSlot(selection: BookingSelection, userId: string): SlotState {
+function chooseSlot(selection: BookingSelection, userId: string | null): SlotState {
 	return { step: "choosing_slot", selection, userId, slots: [], availability: "loading", notice: null };
 }
 
@@ -85,7 +104,7 @@ export function transition(state: BookingState, event: BookingEvent): BookingSta
 				: state.step === "signing_up" || state.step === "signing_in"
 					? { ...state, step: "needs_account" as const }
 					: state.step === "completing_profile" ? { step: "completing_profile" as const, selection: state.selection, userId: state.userId } : state;
-		if (resume.step === "choosing_package" || resume.step === "requested") return state;
+		if (resume.step === "choosing_package" || resume.step === "requested" || resume.step === "signup_details") return state;
 		return { step: "failed", operation: event.operation, reason: event.reason, resume };
 	}
 	if (state.step === "choosing_package") {
@@ -94,9 +113,9 @@ export function transition(state: BookingState, event: BookingEvent): BookingSta
 				? chooseSlot(event.selection, event.userId)
 				: { step: "completing_profile", selection: event.selection, userId: event.userId };
 		}
-		return event.type === "package_chosen" ? {
-			step: "needs_account", selection: { packageId: event.packageId, addonInterests: [...event.addonInterests], slotId: null },
-		} : state;
+		if (event.type !== "package_chosen") return state;
+		const selection = { packageId: event.packageId, addonInterests: [...event.addonInterests], slotId: null };
+		return event.guest ? chooseSlot(selection, null) : { step: "needs_account", selection };
 	}
 	if (state.step === "needs_account" && event.type === "auth_started") {
 		return { ...state, step: event.method === "sign_up" ? "signing_up" : "signing_in" };
@@ -110,7 +129,13 @@ export function transition(state: BookingState, event: BookingEvent): BookingSta
 	if (state.step === "completing_profile" && event.type === "profile_save_started") return { ...state, saving: true };
 	if (state.step === "choosing_slot") {
 		switch (event.type) {
-			case "profile_reopened": return { step: "completing_profile", selection: state.selection, userId: state.userId };
+			case "profile_reopened": return state.userId === null ? initialState : { step: "completing_profile", selection: state.selection, userId: state.userId };
+			case "signup_opened": {
+				const slot = state.slots.find(slot => slot.id === state.selection.slotId && slot.canRegister);
+				return state.userId === null && state.availability === "ready" && slot
+					? { step: "signup_details", selection: { ...state.selection, slotId: slot.id }, slot, terms: null, busy: false, notice: null }
+					: state;
+			}
 			case "booking_not_open":
 				return { ...chooseSlot({ ...state.selection, slotId: null }, state.userId), availability: "not_open" };
 			case "slots_refresh_requested":
@@ -124,7 +149,20 @@ export function transition(state: BookingState, event: BookingEvent): BookingSta
 				return state.availability === "ready" && state.slots.some((slot) => slot.id === event.slotId && slot.canRegister)
 					? { ...state, selection: { ...state.selection, slotId: event.slotId }, notice: null } : state;
 			case "submit_requested":
-				return state.availability === "ready" && state.selection.slotId !== null ? { ...state, step: "submitting" } : state;
+				return state.userId !== null && state.availability === "ready" && state.selection.slotId !== null ? { ...state, step: "submitting", userId: state.userId } : state;
+		}
+	}
+	if (state.step === "signup_details") {
+		switch (event.type) {
+			case "terms_loaded": return { ...state, terms: event.terms };
+			case "terms_unavailable": return { ...state, terms: null, busy: false, notice: "terms_unavailable" };
+			case "signup_back": return state.busy ? state : chooseSlot(state.selection, null);
+			case "signup_started": return state.terms ? { ...state, busy: true, notice: null } : state;
+			case "signup_failed": return { ...state, busy: false, notice: "bad_request" };
+			case "signup_registered":
+				return state.busy && event.registration.classId === state.selection.slotId
+					? { step: "requested", selection: state.selection, userId: event.userId, slot: state.slot, registration: event.registration, credentials: event.credentials }
+					: state;
 		}
 	}
 	if (state.step === "submitting") {

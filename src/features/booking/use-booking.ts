@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { createBookingAdapter, useBookingContext, type BookingProfile } from "./adapter";
-import { initialState, transition, type BookingEvent, type BookingSelection } from "./machine";
+import { initialState, transition, type BookingEvent, type BookingSelection, type SignupDraft } from "./machine";
 import { restoreBookingRedirect } from "./redirect";
 import { moveWeek, weekRange } from "./calendar";
 
-export function useBooking() {
+export function useBooking(locale: string) {
 	const context = useBookingContext();
 	const adapter = useMemo(() => createBookingAdapter(context.client, context.refreshProductContext), [context.client, context.refreshProductContext]);
 	const [state, dispatch] = useReducer(transition, initialState);
@@ -37,6 +37,14 @@ export function useBooking() {
 		return () => { active = false; };
 	}, [adapter, loadingPackage, range, send]);
 
+	const needsTerms = state.step === "signup_details" && !state.terms && !state.notice;
+	useEffect(() => {
+		if (!needsTerms) return;
+		let active = true;
+		void adapter.loadTerms(locale).then(event => { if (active) send(event); });
+		return () => { active = false; };
+	}, [adapter, locale, needsTerms, send]);
+
 	async function run(started: BookingEvent, operation: () => Promise<BookingEvent | readonly BookingEvent[]>) {
 		if (locked.current) return;
 		locked.current = true;
@@ -48,9 +56,16 @@ export function useBooking() {
 	}
 	return {
 		state, context, adapter, range, send,
+		signup(draft: SignupDraft) {
+			const flow = current.current;
+			if (flow.step !== "signup_details" || !flow.terms) return;
+			return run({ type: "signup_started" }, () => adapter.requestWithSignup(flow.selection.slotId, draft, flow.terms!));
+		},
 		choosePackage(selection: BookingSelection) {
 			autoSession.current = true;
-			send({ type: "package_chosen", ...selection });
+			const guest = !context.session && context.product?.auth_mode === "open"
+				&& context.product.email_password_enabled && context.product.google_oauth_enabled;
+			send({ type: "package_chosen", ...selection, guest });
 		},
 		auth(method: "signIn" | "signUp", email: string, password: string) {
 			return run({ type: "auth_started", method: method === "signUp" ? "sign_up" : "sign_in" }, () => adapter[method](email, password));

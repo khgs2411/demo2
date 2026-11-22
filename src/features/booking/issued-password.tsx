@@ -1,0 +1,23 @@
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Ticket } from "../../ui/ticket";
+import type { BookingCredentials } from "./machine";
+
+export function IssuedPassword({ credentials }: { credentials: BookingCredentials }) {
+	const { t } = useTranslation("booking");
+	const [copyStatus, setCopyStatus] = useState<"copied" | "copyFailed" | null>(null);
+	async function copy() {
+		try {
+			await navigator.clipboard.writeText(credentials.password);
+			setCopyStatus("copied");
+		} catch {
+			setCopyStatus("copyFailed");
+		}
+	}
+	return <>
+		<p>{t("savePassword")}</p>
+		<p><code className="mono" dir="ltr">{credentials.formatted}</code></p>
+		<Ticket stub="" className="booking-link" onClick={() => void copy()}>{t("copyPassword")}</Ticket>
+		{copyStatus && <p role="status">{t(copyStatus)}</p>}
+	</>;
+}

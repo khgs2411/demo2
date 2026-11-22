@@ -1,13 +1,17 @@
+import { createClassKitClient } from "@class-kit/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createBookingAdapter, type BookingSdk } from "./adapter";
 import * as packages from "../packages";
 import { initialState, transition } from "./machine";
 import { bookingRedirectKey, restoreBookingRedirect, consumeAccountRedirect, saveBookingRedirect } from "./redirect";
 
-vi.mock("@class-kit/react", () => ({ useProductContext: vi.fn() }));
+vi.mock("@class-kit/react", async importOriginal => ({ ...await importOriginal<typeof import("@class-kit/react")>(), useProductContext: vi.fn() }));
 
 function mockSdk() {
+	const transport = createClassKitClient({ supabaseUrl: "http://localhost:54321", supabasePublishableKey: "test-key", authStorageKey: "booking-test" });
+	if (!transport) throw new Error("Test SDK transport could not be created");
 	return {
+		supabase: transport.supabase, authStorageKey: transport.authStorageKey,
 		auth: {
 			signIn: vi.fn<BookingSdk["auth"]["signIn"]>().mockResolvedValue({ error: null }),
 			signUp: vi.fn<BookingSdk["auth"]["signUp"]>().mockResolvedValue({ error: null }),
@@ -23,6 +27,7 @@ function mockSdk() {
 			listMyRegistrations: vi.fn<BookingSdk["classes"]["listMyRegistrations"]>(),
 			list: vi.fn<BookingSdk["classes"]["list"]>(),
 			register: vi.fn<BookingSdk["classes"]["register"]>(),
+			registerWithSignup: vi.fn<BookingSdk["classes"]["registerWithSignup"]>(),
 			cancelRegistration: vi.fn<BookingSdk["classes"]["cancelRegistration"]>(),
 		},
 	};
