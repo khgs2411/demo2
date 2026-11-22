@@ -130,7 +130,7 @@ it("shows the unavailable time before allowing an anonymous client to choose ano
 	fireEvent.click(screen.getByRole("checkbox", { name: "I accept the terms of service" }));
 	fireEvent.submit(screen.getByRole("button", { name: "Send request" }).closest("form")!);
 	expect((await screen.findByRole("alert")).textContent).toContain("pick another time");
-	expect(fakeAdapter.loadSlots).toHaveBeenCalledTimes(2);
+	await waitFor(() => expect(fakeAdapter.loadSlots).toHaveBeenCalledTimes(2));
 });
 
 it("shows the password when an account was created but the time filled, then returns to signed-in time choice", async () => {
