@@ -129,9 +129,73 @@ describe("booking transition table", () => {
 	const slotsFailure: BookingState = { step: "failed", operation: "slots", reason: "generic", resume: loading };
 	const registrationFailure: BookingState = { step: "failed", operation: "registration", reason: "generic", resume: loading };
 	const closed: BookingState = { ...loading, availability: "not_open" };
-	const stateCases = { initialState, account, signingIn, signingUp, profile, saving, loading, ready, selected, submitting, requested, authFailure, profileFailure, slotsFailure, registrationFailure, closed };
+	const guestLoading = { ...loading, userId: null } satisfies BookingState;
+	const guestReady = { ...ready, userId: null } satisfies BookingState;
+	const guestSelected = { ...selected, userId: null } satisfies BookingState;
+	const terms = { title: "Terms", text: "Published terms", version: 3, locale: "en" };
+	const email = "visitor@example.com";
+	const contact = { displayName: "Dana", phoneNumber: "0501234567" };
+	const credentials = { password: "abcdefghijklmnop", formatted: "abcd efgh ijkl mnop" };
+	const signupForm = {
+		step: "signup_details", selection: { ...selection, slotId: slot.id }, slot,
+		terms: null, loadingTerms: true, accepted: false, notice: null,
+	} satisfies BookingState;
+	const signupWithTerms = { ...signupForm, terms, loadingTerms: false } satisfies BookingState;
+	const signupAccepted = { ...signupWithTerms, accepted: true } satisfies BookingState;
+	const signupNoTerms = { ...signupForm, loadingTerms: false, notice: "terms_unavailable" } satisfies BookingState;
+	const sending = { step: "sending", selection: signupForm.selection, slot, terms } satisfies BookingState;
+	const resuming = {
+		step: "resuming_signup", selection: selected.selection, email, continuation: { kind: "book", slot, contact },
+	} satisfies BookingState;
+	const signingToResume = { ...resuming, step: "signing_in_for_signup" } satisfies BookingState;
+	const resumeAuthFailure = { ...authFailure, resume: resuming } satisfies BookingState;
+	const profileForRequest = { ...profile, selection: selected.selection, pendingRequest: { slot, contact } } satisfies BookingState;
+	const recovery = { step: "recovering_session", selection } satisfies BookingState;
+	const recoveryFailure = { step: "session_recovery_failed", selection } satisfies BookingState;
+	const anotherGuestSlot = { ...guestLoading, notice: "slot_full" } satisfies BookingState;
+	const passwordShown = {
+		step: "signup_password", selection: selected.selection, credentials, next: { ...loading, notice: "slot_full" },
+	} satisfies BookingState;
+	const signInAfterSignup = {
+		step: "resuming_signup", selection: selected.selection, email, continuation: { kind: "show_request", slot, registration },
+	} satisfies BookingState;
+	const stateCases = {
+		initialState: { step: "choosing_package" } as const,
+		account, signingIn, signingUp, profile, saving, loading, ready, selected, submitting, requested,
+		authFailure, profileFailure, slotsFailure, registrationFailure, closed,
+		guestLoading, guestReady, guestSelected, signupForm, signupWithTerms, signupAccepted, signupNoTerms, sending,
+		resuming, signingToResume, resumeAuthFailure, profileForRequest, recovery, recoveryFailure, passwordShown,
+		signInAfterSignup,
+	};
 	const eventCases = {
 		chosen,
+		guestChosen: { ...chosen, guest: true },
+		revoked: { type: "session_revoked", selection },
+		revocationCleared: { type: "session_revocation_cleared" },
+		accountBack: { type: "account_back" },
+		guestSlots: { type: "guest_slots_requested" },
+		signupOpened: { type: "signup_opened" },
+		signupBack: { type: "signup_back" },
+		termsLoaded: { type: "terms_loaded", terms },
+		termsFailed: { type: "terms_load_failed" },
+		termsReload: { type: "terms_reload_requested" },
+		termsAccepted: { type: "terms_accepted", accepted: true },
+		termsChanged: { type: "terms_changed" },
+		termsUnavailable: { type: "terms_unavailable" },
+		rateLimited: { type: "rate_limited" },
+		signupDisabled: { type: "disabled" },
+		notFound: { type: "not_found" },
+		badRequest: { type: "bad_request" },
+		signupFailed: { type: "signup_failed" },
+		signupAuth: { type: "signup_auth_chosen", email },
+		accountExists: { type: "account_exists", email, contact },
+		classUnavailable: { type: "class_unavailable" },
+		classUnavailableWithAccount: { type: "account_created_class_unavailable", userId: "visitor", credentials },
+		signInFailed: { type: "sign_in_failed", email, credentials, registration },
+		passwordSaved: { type: "password_saved" },
+		signupStarted: { type: "signup_started" },
+		signupRegistered: { type: "signup_registered", userId: "visitor", registration, credentials },
+		profileLoaded: { type: "profile_loaded", profile: { ...contact, businessName: "Studio" } },
 		signIn: { type: "auth_started", method: "sign_in" },
 		signUp: { type: "auth_started", method: "sign_up" },
 		google: { type: "auth_started", method: "google" },
@@ -158,13 +222,17 @@ describe("booking transition table", () => {
 		restart: { type: "restarted" },
 	} satisfies Record<string, BookingEvent>;
 	type EventName = keyof typeof eventCases;
-	const expected: Record<keyof typeof stateCases, Partial<Record<EventName, BookingState>>> = {
-		initialState: { chosen: account, restored: loading },
-		account: { signIn: signingIn, signUp: signingUp, google: signingIn, signedIn: profile, authFailed: authFailure },
+	type MissingState = Exclude<BookingState["step"], typeof stateCases[keyof typeof stateCases]["step"]>;
+	type MissingEvent = Exclude<BookingEvent["type"], typeof eventCases[EventName]["type"]>;
+	const expected: (MissingState | MissingEvent) extends never
+		? Record<keyof typeof stateCases, Partial<Record<EventName, BookingState>>>
+		: never = {
+		initialState: { chosen: account, guestChosen: guestLoading, restored: loading },
+		account: { accountBack: initialState, guestSlots: guestLoading, signIn: signingIn, signUp: signingUp, google: signingIn, signedIn: profile, authFailed: authFailure },
 		signingIn: { signedIn: profile, authFailed: authFailure },
 		signingUp: { signedIn: profile, authFailed: authFailure },
-		profile: { profileSaved: loading, profileFailed: profileFailure, profileSaveStarted: saving },
-		saving: { profileSaved: loading, profileFailed: profileFailure, profileSaveStarted: saving },
+		profile: { profileLoaded: { ...profile, prefill: eventCases.profileLoaded.profile }, profileSaved: loading, profileFailed: profileFailure, profileSaveStarted: saving },
+		saving: { profileLoaded: { ...saving, prefill: eventCases.profileLoaded.profile }, profileSaved: loading, profileFailed: profileFailure, profileSaveStarted: saving },
 		loading: { notOpen: closed, refresh: loading, loaded: ready, slotsFailed: slotsFailure, profileReopened: profile },
 		ready: { notOpen: closed, refresh: loading, loaded: ready, slotChosen: selected, slotsFailed: slotsFailure, profileReopened: profile },
 		selected: { notOpen: closed, refresh: loading, loaded: selected, slotChosen: selected, submit: submitting, slotsFailed: slotsFailure, profileReopened: { ...profile, selection:selected.selection } },
@@ -173,15 +241,80 @@ describe("booking transition table", () => {
 		authFailure: { retry: account }, profileFailure: { retry: profile },
 		slotsFailure: { retry: loading }, registrationFailure: { retry: loading },
 		closed: { notOpen: closed, refresh: loading, loaded: ready, slotsFailed: slotsFailure, profileReopened: profile },
+		guestLoading: {
+			notOpen: { ...guestLoading, availability: "not_open" }, refresh: guestLoading, loaded: guestReady,
+			slotsFailed: { ...slotsFailure, resume: guestLoading }, profileReopened: initialState,
+		},
+		guestReady: {
+			notOpen: { ...guestLoading, availability: "not_open" }, refresh: guestLoading, loaded: guestReady,
+			slotChosen: guestSelected, slotsFailed: { ...slotsFailure, resume: guestLoading }, profileReopened: initialState,
+		},
+		guestSelected: {
+			notOpen: { ...guestLoading, availability: "not_open" }, refresh: guestLoading, loaded: guestSelected,
+			slotChosen: guestSelected, slotsFailed: { ...slotsFailure, resume: guestLoading }, profileReopened: initialState, signupOpened: signupForm,
+		},
+		signupForm: {
+			termsLoaded: signupWithTerms, termsFailed: signupNoTerms, termsReload: signupForm,
+			signupBack: { ...guestLoading, selection: selected.selection },
+			signupAuth: { ...account, selection: selected.selection, email, signupSlot: slot },
+		},
+		signupWithTerms: {
+			termsAccepted: signupAccepted,
+			signupBack: { ...guestLoading, selection: selected.selection },
+			signupAuth: { ...account, selection: selected.selection, email, signupSlot: slot },
+		},
+		signupAccepted: {
+			termsAccepted: signupAccepted, signupStarted: sending,
+			signupBack: { ...guestLoading, selection: selected.selection },
+			signupAuth: { ...account, selection: selected.selection, email, signupSlot: slot },
+		},
+		signupNoTerms: {
+			termsReload: { ...signupNoTerms, loadingTerms: true },
+			signupBack: { ...guestLoading, selection: selected.selection },
+			signupAuth: { ...account, selection: selected.selection, email, signupSlot: slot },
+		},
+		sending: {
+			signedIn: { ...profile, selection: selected.selection },
+			termsChanged: { ...signupForm, notice: "terms_changed" },
+			termsUnavailable: { ...signupForm, notice: "terms_unavailable" },
+			rateLimited: { ...signupAccepted, notice: "rate_limited" },
+			signupDisabled: { ...signupAccepted, notice: "disabled" },
+			notFound: { ...signupAccepted, notice: "not_found" },
+			badRequest: { ...signupAccepted, notice: "bad_request" },
+			signupFailed: { ...signupAccepted, notice: "signup_failed" },
+			accountExists: resuming, classUnavailable: anotherGuestSlot, classUnavailableWithAccount: passwordShown,
+			signInFailed: { ...passwordShown, next: signInAfterSignup },
+			signupRegistered: { ...requested, credentials },
+		},
+		resuming: { signIn: signingToResume, google: signingToResume, accountBack: signupForm },
+		signingToResume: { signedIn: profileForRequest, authFailed: resumeAuthFailure },
+		resumeAuthFailure: { retry: resuming },
+		profileForRequest: {
+			profileLoaded: { ...profileForRequest, prefill: eventCases.profileLoaded.profile },
+			profileSaveStarted: { ...profileForRequest, saving: true },
+			profileSaved: submitting, profileFailed: { ...profileFailure, resume: profileForRequest },
+		},
+		recovery: { authFailed: recoveryFailure },
+		recoveryFailure: { revocationCleared: account, accountBack: initialState, signIn: signingIn, signUp: signingIn, google: signingIn },
+		passwordShown: { passwordSaved: passwordShown.next },
+		signInAfterSignup: {
+			signIn: { ...signInAfterSignup, step: "signing_in_for_signup" },
+			google: { ...signInAfterSignup, step: "signing_in_for_signup" },
+			accountBack: { ...guestLoading, selection: selected.selection },
+		},
 	};
 
 	for (const [name, state] of Object.entries(stateCases)) {
 		for (const [eventName, event] of Object.entries(eventCases)) {
 			it(`${name} × ${eventName}`, () => {
 				const before = structuredClone(state);
+				const recovering = state.step === "recovering_session" || state.step === "session_recovery_failed";
 				const expectedState = eventName === "restart" ? initialState
-					: eventName === "unauthenticated" && "selection" in state ? { step: "needs_account", selection: state.selection }
-						: expected[name as keyof typeof stateCases][eventName as EventName];
+					: eventName === "unauthenticated" && "selection" in state && !recovering ? { step: "needs_account", selection: state.selection }
+						: eventName === "revoked" && !recovering ? {
+							step: "recovering_session",
+							selection: "selection" in state ? state.selection : state.step === "failed" ? state.resume.selection : selection,
+						} : expected[name as keyof typeof stateCases][eventName as EventName];
 				const next = transition(Object.freeze(state), Object.freeze(event));
 				if (expectedState) expect(next).toEqual(expectedState);
 				else expect(next).toBe(state);
