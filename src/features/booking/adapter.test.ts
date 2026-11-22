@@ -234,14 +234,14 @@ describe("booking Google redirect", () => {
 		expect(sdk.auth.signInWithGoogle).toHaveBeenCalledOnce();
 		expect(refresh).not.toHaveBeenCalled();
 		expect(sdk.auth.getSession).not.toHaveBeenCalled();
-		expect(restoreBookingRedirect("visitor")).toMatchObject({ type: "redirect_restored", selection: { packageId: "system" } });
+		expect(await restoreBookingRedirect("visitor")).toMatchObject({ type: "redirect_restored", selection: { packageId: "system" } });
 	});
 
 	it("clears saved intent when Google fails before redirecting", async () => {
 		const state = transition(initialState, { type: "package_chosen", packageId: "site", addonInterests: [] });
 		sdk.auth.signInWithGoogle.mockResolvedValueOnce({ error: "Google redirect is not configured" });
 		expect(await adapter.signInWithGoogle(state)).toEqual({ type: "operation_failed", operation: "auth", reason: "generic" });
-		expect(restoreBookingRedirect("visitor")).toBeNull();
+		expect(await restoreBookingRedirect("visitor")).toBeNull();
 	});
 
 	it("blocks OAuth if session storage cannot preserve the choice", async () => {
@@ -255,7 +255,7 @@ describe("booking Google redirect", () => {
 		const state = transition(initialState, { type: "package_chosen", packageId: "site", addonInterests: [] });
 		sdk.auth.signInWithGoogle.mockRejectedValueOnce(new Error("offline"));
 		expect(await adapter.signInWithGoogle(state)).toEqual({ type: "operation_failed", operation: "auth", reason: "generic" });
-		expect(restoreBookingRedirect("visitor")).toBeNull();
+		expect(await restoreBookingRedirect("visitor")).toBeNull();
 	});
 });
 
@@ -288,7 +288,7 @@ describe("my meeting requests", () => {
 it("returns account OAuth to the account route and clears any older booking redirect", async () => {
 	saveBookingRedirect({step:"needs_account",selection});
 	expect(await adapter.signInWithGoogle()).toEqual({type:"auth_redirect_started"});
-	expect(restoreBookingRedirect("visitor")).toBeNull();
+	expect(await restoreBookingRedirect("visitor")).toBeNull();
 	expect(consumeAccountRedirect()).toBe(true);
 	expect(consumeAccountRedirect()).toBe(false);
 });

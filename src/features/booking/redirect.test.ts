@@ -11,40 +11,40 @@ beforeEach(() => { vi.restoreAllMocks(); sessionStorage.clear(); vi.stubGlobal("
 afterEach(() => vi.unstubAllGlobals());
 
 describe("booking OAuth redirect persistence", () => {
-	it("restores the package, add-ons and selected slot for the same authenticated visitor", () => {
+	it("restores the package, add-ons and selected slot for the same authenticated visitor", async () => {
 		expect(saveBookingRedirect(slotState)).toBe(true);
-		const restored = restoreBookingRedirect("visitor");
+		const restored = await restoreBookingRedirect("visitor");
 		expect(restored).not.toBeNull();
 		expect(transition(initialState, restored!)).toEqual(slotState);
 		const slot = { id: "slot-1", startsAt: "2026-11-10T09:00:00Z", canRegister: true, canCancelRegistration: false, userRegistrationState: null };
 		expect(transition(transition(initialState, restored!), { type: "slots_loaded", slots: [slot] }))
 			.toEqual({ ...slotState, slots: [slot], availability: "ready" });
-		expect(restoreBookingRedirect("visitor")).toBeNull();
+		expect(await restoreBookingRedirect("visitor")).toBeNull();
 	});
 
-	it("requires a profile after initial account auth or when the OAuth user changed", () => {
+	it("requires a profile after initial account auth or when the OAuth user changed", async () => {
 		saveBookingRedirect({ step: "needs_account", selection });
-		const firstAuth = restoreBookingRedirect("visitor")!;
+		const firstAuth = (await restoreBookingRedirect("visitor"))!;
 		expect(transition(initialState, firstAuth)).toEqual({ step: "completing_profile", selection, userId: "visitor" });
 		saveBookingRedirect(slotState);
-		expect(transition(initialState, restoreBookingRedirect("other-visitor")!)).toEqual({
+		expect(transition(initialState, (await restoreBookingRedirect("other-visitor"))!)).toEqual({
 			step: "completing_profile", selection, userId: "other-visitor",
 		});
 	});
 
-	it("never restores a submitting mutation and revalidates the saved slot against fresh data", () => {
+	it("never restores a submitting mutation and revalidates the saved slot against fresh data", async () => {
 		saveBookingRedirect({ ...slotState, step: "submitting", userId: "visitor" });
-		const restored = transition(initialState, restoreBookingRedirect("visitor")!);
+		const restored = transition(initialState, (await restoreBookingRedirect("visitor"))!);
 		expect(restored.step).toBe("choosing_slot");
 		expect(transition(restored, { type: "submit_requested" })).toBe(restored);
 		expect(transition(restored, { type: "slots_loaded", slots: [] })).toEqual({ ...slotState, selection: { ...selection, slotId: null }, availability: "ready" });
 	});
 
-	it("saves only the booking intent and the identity whose profile was completed", () => {
+	it("saves only the booking intent and the identity whose profile was completed", async () => {
 		saveBookingRedirect(slotState);
 		expect(JSON.parse(sessionStorage.getItem(bookingRedirectKey)!)).toEqual({ selection, profileUserId: "visitor" });
 		clearBookingRedirect();
-		expect(restoreBookingRedirect("visitor")).toBeNull();
+		expect(await restoreBookingRedirect("visitor")).toBeNull();
 		expect(saveBookingRedirect(initialState)).toBe(false);
 		expect(saveBookingRedirect({ step: "requested", selection, userId: "visitor", registration: { id: "request-1", classId: "slot-1", status: "pending" } })).toBe(false);
 	});
@@ -55,33 +55,33 @@ describe("booking OAuth redirect persistence", () => {
 		JSON.stringify({ selection: { ...selection, addonInterests: ["system"] }, profileUserId: null }),
 		JSON.stringify({ selection: { ...selection, slotId: 42 }, profileUserId: null }),
 		JSON.stringify({ selection, profileUserId: 42 }),
-	])("rejects malformed persisted intent: %s", (saved) => {
+	])("rejects malformed persisted intent: %s", async (saved) => {
 		sessionStorage.setItem(bookingRedirectKey, saved);
-		expect(restoreBookingRedirect("visitor")).toBeNull();
+		expect(await restoreBookingRedirect("visitor")).toBeNull();
 		expect(sessionStorage.getItem(bookingRedirectKey)).toBeNull();
 	});
 
-	it("handles denied storage access and failed reads, writes and removal", () => {
+	it("handles denied storage access and failed reads, writes and removal", async () => {
 		vi.spyOn(Storage.prototype, "setItem").mockImplementationOnce(() => { throw new Error("denied"); });
 		expect(saveBookingRedirect(slotState)).toBe(false);
 		vi.spyOn(Storage.prototype, "getItem").mockImplementationOnce(() => { throw new Error("denied"); });
-		expect(restoreBookingRedirect("visitor")).toBeNull();
+		expect(await restoreBookingRedirect("visitor")).toBeNull();
 		vi.spyOn(Storage.prototype, "removeItem").mockImplementationOnce(() => { throw new Error("denied"); });
 		expect(() => clearBookingRedirect()).not.toThrow();
 		vi.spyOn(window, "sessionStorage", "get").mockImplementation(() => { throw new Error("denied"); });
 		expect(saveBookingRedirect(slotState)).toBe(false);
-		expect(restoreBookingRedirect("visitor")).toBeNull();
+		expect(await restoreBookingRedirect("visitor")).toBeNull();
 	});
 });
 
-it("preserves the selected signup time across Google sign-in even when it is in another week", () => {
+it("preserves the selected signup time across Google sign-in even when it is in another week", async () => {
 	const slot = { id: "slot-1", startsAt: "2026-12-08T09:00:00Z", canRegister: true, canCancelRegistration: false, userRegistrationState: null };
 	expect(saveBookingRedirect({ step: "signing_in", selection, email: "dana@example.com", signupSlot: slot })).toBe(true);
 	expect(JSON.parse(sessionStorage.getItem(bookingRedirectKey)!)).toEqual({
 		selection, profileUserId: null, slotStartsAt: slot.startsAt,
 	});
-	expect(restoreBookingRedirect("visitor")).toMatchObject({ selection, slotStartsAt: slot.startsAt });
-	expect(restoreBookingRedirect("visitor")).toBeNull();
+	expect(await restoreBookingRedirect("visitor")).toMatchObject({ selection, slotStartsAt: slot.startsAt });
+	expect(await restoreBookingRedirect("visitor")).toBeNull();
 });
 
 it("restores an issued receipt only for the matching email and keeps credentials out of the redirect", async () => {
@@ -112,4 +112,10 @@ it("persists the account-exists continuation without the signup name or phone", 
 	expect(JSON.parse(saved).continuation.next).toEqual({ kind: "book", slot });
 	const restored = await restoreBookingRedirect("visitor", "dana@example.com");
 	expect(restored?.continuation).toEqual({ kind: "book", slot });
+});
+
+it("returns a Promise even when there is no stored redirect", async () => {
+	const result = restoreBookingRedirect("visitor");
+	expect(result).toBeInstanceOf(Promise);
+	expect(await result).toBeNull();
 });

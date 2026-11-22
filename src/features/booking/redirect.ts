@@ -80,9 +80,9 @@ function isIntent(value: unknown): value is RedirectIntent {
 		&& (profileUserId === null || (typeof profileUserId === "string" && profileUserId.length > 0));
 }
 
-export function restoreBookingRedirect(userId: string): BookingRedirectRestored | null;
-export function restoreBookingRedirect(userId: string, email: string | undefined, storage?: RedirectStorage): BookingRedirectRestored | null | Promise<BookingRedirectRestored | null>;
-export function restoreBookingRedirect(userId: string, email?: string, storage?: RedirectStorage): BookingRedirectRestored | null | Promise<BookingRedirectRestored | null> {
+export async function restoreBookingRedirect(
+	userId: string, email?: string, storage?: RedirectStorage,
+): Promise<BookingRedirectRestored | null> {
 	try {
 		const target = storage ?? window.sessionStorage;
 		const saved = target.getItem(bookingRedirectKey);
@@ -97,9 +97,10 @@ export function restoreBookingRedirect(userId: string, email?: string, storage?:
 			selection: { packageId: intent.selection.packageId, addonInterests: [...intent.selection.addonInterests], slotId: intent.selection.slotId },
 		};
 		const continuation = intent.continuation;
-		if (!continuation || !email) return restored;
-		return emailDigest(email).then(hash => hash === continuation.emailHash
-			? { ...restored, email: email.trim().toLowerCase(), continuation: withoutDraftContact(continuation.next) } : restored, () => restored);
+		if (continuation && email && continuation.emailHash === await emailDigest(email).catch(() => null)) {
+			return { ...restored, email: email.trim().toLowerCase(), continuation: withoutDraftContact(continuation.next) };
+		}
+		return restored;
 	} catch {
 		return null;
 	}

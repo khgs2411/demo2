@@ -31,7 +31,7 @@ export function useBooking(locale: string, draft: BookingSelection) {
 		if (context.loading) return;
 		if (state.step === "choosing_package" && context.session) {
 			const { id, email } = context.session.user;
-			void Promise.resolve(restoreBookingRedirect(id, email)).then(restored => {
+			void restoreBookingRedirect(id, email).then(restored => {
 				const currentUser = latestSession.current?.user;
 				if (!restored || !mounted.current || current.current.step !== "choosing_package"
 					|| currentUser?.id !== id || currentUser.email !== email) return;
