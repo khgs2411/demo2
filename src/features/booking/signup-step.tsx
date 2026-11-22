@@ -14,9 +14,9 @@ export function SignupStep({ flow, draft, onChange }: {
 	const { busy, notice, terms, accepted, loadingTerms } = state;
 	return <>
 		<h1 tabIndex={-1}>{t("signupTitle")}</h1>
-		<GoogleSignIn busy={busy} onGoogle={() => void flow.google()} />
+		<GoogleSignIn busy={busy} onGoogle={() => void flow.google(draft.email)} />
 		<div className="or mono">{t("or")}</div>
-		{notice && <p className="notice error" role="alert">{t(`signupMessages.${notice}`)}</p>}
+		{notice && <p className="notice error" role="alert">{t(`signupMessages.${notice === "terms_unavailable" && terms ? "terms_restored" : notice}`)}</p>}
 		<form onSubmit={event => {
 			event.preventDefault();
 			if (accepted && !busy) void flow.signup(draft);

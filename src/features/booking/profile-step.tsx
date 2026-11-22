@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Input } from "../../ui/input";
 import { Ticket } from "../../ui/ticket";
-import type { BookingProfile } from "./adapter";
+import type { BookingProfile } from "./machine";
 
 export function ProfileStep({ profile, onChange, onSubmit, busy }: { profile: BookingProfile; onChange: (profile: BookingProfile) => void; onSubmit: () => void; busy: boolean }) {
 	const { t } = useTranslation("booking");

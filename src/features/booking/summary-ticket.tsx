@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import type { BookingProfile } from "./adapter";
+import type { BookingProfile } from "./machine";
 import type { BookingRegistration, BookingSelection, BookingSlot } from "./machine";
 import { addonCopy } from "./package-step";
 import { formatWhen } from "./calendar";

@@ -213,6 +213,7 @@ export const en = {
 		copied: "Password copied.",
 		copyFailed: "Could not copy the password. Select and copy it manually.",
 		signupMessages: {
+			terms_restored: "The previous terms were unavailable. Please read and accept the current terms.",
 			terms_changed: "The terms of service have changed. Please read and accept them again.",
 			rate_limited: "Too many requests. Please try again later.",
 			disabled: "Booking with a new account is unavailable. You can sign in to book.",

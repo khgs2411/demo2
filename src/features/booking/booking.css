@@ -11,6 +11,7 @@
 
 /* the four steps on one rule, numbered, not pills */
 .steps { display: grid; grid-template-columns: repeat(4, 1fr); border-block-start: 2px solid var(--ink); margin-block-end: 44px; }
+.steps.guest-steps { grid-template-columns: repeat(3, 1fr); }
 .steps li { list-style: none; padding-block-start: 10px; display: flex; gap: 8px; opacity: .4; font: 500 12px/1 var(--font-mono); letter-spacing: .08em; position: relative; }
 .steps li::before { content: ""; position: absolute; inset-block-start: -2px; inset-inline: 0; block-size: 2px; background: var(--coral); transform: scaleX(0); transform-origin: right; transition: transform var(--duration-flip) var(--ease); }
 &:dir(ltr) .steps li::before { transform-origin: left; }

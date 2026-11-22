@@ -6,7 +6,7 @@ const selection = { packageId: "system", addonInterests: ["agent-voice"], slotId
 const slotState: BookingState = {
 	step: "choosing_slot", selection, userId: "visitor", slots: [], availability: "loading", notice: null,
 };
-beforeEach(() => { sessionStorage.clear(); vi.restoreAllMocks(); });
+beforeEach(() => { vi.restoreAllMocks(); sessionStorage.clear(); });
 
 describe("booking OAuth redirect persistence", () => {
 	it("restores the package, add-ons and selected slot for the same authenticated visitor", () => {
@@ -70,4 +70,27 @@ describe("booking OAuth redirect persistence", () => {
 		expect(saveBookingRedirect(slotState)).toBe(false);
 		expect(restoreBookingRedirect("visitor")).toBeNull();
 	});
+});
+
+it("preserves the selected signup time across Google sign-in even when it is in another week", () => {
+	const slot = { id: "slot-1", startsAt: "2026-12-08T09:00:00Z", canRegister: true, canCancelRegistration: false, userRegistrationState: null };
+	expect(saveBookingRedirect({ step: "signing_in", selection, email: "dana@example.com", signupSlot: slot })).toBe(true);
+	expect(JSON.parse(sessionStorage.getItem(bookingRedirectKey)!)).toEqual({
+		selection, profileUserId: null, slotStartsAt: slot.startsAt,
+	});
+	expect(restoreBookingRedirect("visitor")).toMatchObject({ selection, slotStartsAt: slot.startsAt });
+	expect(restoreBookingRedirect("visitor")).toBeNull();
+});
+
+it("restores an issued receipt only for the matching email and keeps credentials out of the redirect", () => {
+	const slot = { id: "slot-1", startsAt: "2026-12-08T09:00:00Z", canRegister: true, canCancelRegistration: false, userRegistrationState: null };
+	const continuation = { kind: "show_request", slot, registration: { id: "r", classId: "slot-1", status: "pending" } } as const;
+	const account = { step: "signing_in", selection, email: "dana@example.com", continuation } as const;
+	expect(saveBookingRedirect(account)).toBe(true);
+	expect(restoreBookingRedirect("visitor", "other@example.com")).not.toHaveProperty("continuation");
+	expect(saveBookingRedirect(account)).toBe(true);
+	const restored = restoreBookingRedirect("visitor", "DANA@example.com");
+	expect(restored).toMatchObject({ continuation, slotStartsAt: slot.startsAt });
+	expect(transition(initialState, restored!)).toMatchObject({ step: "requested", registration: continuation.registration });
+	expect(restoreBookingRedirect("visitor", "dana@example.com")).toBeNull();
 });

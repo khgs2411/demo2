@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
-import { createBookingAdapter, useBookingContext, type BookingProfile } from "./adapter";
-import { initialState, transition, type BookingEvent, type BookingSelection, type SignupDraft } from "./machine";
+import { createBookingAdapter, useBookingContext } from "./adapter";
+import { initialState, transition, type BookingEvent, type BookingState, type BookingProfile, type BookingSelection, type SignupDraft } from "./machine";
 import { restoreBookingRedirect } from "./redirect";
 import { moveWeek, weekRange } from "./calendar";
 
-export function useBooking(locale: string) {
+export function useBooking(locale: string, draft: BookingSelection) {
 	const context = useBookingContext();
 	const adapter = useMemo(() => createBookingAdapter(context.client, context.refreshProductContext), [context.client, context.refreshProductContext]);
 	const [state, dispatch] = useReducer(transition, initialState);
@@ -13,6 +13,10 @@ export function useBooking(locale: string) {
 	const mounted = useRef(true);
 	const locked = useRef(false);
 	const autoSession = useRef(false);
+	const recoveryStarted = useRef(false);
+	const requestStarted = useRef<BookingState | null>(null);
+	const guestAvailable = context.product?.auth_mode === "open"
+		&& context.product.email_password_enabled && context.product.google_oauth_enabled;
 	const send = useCallback((event: BookingEvent) => {
 		current.current = transition(current.current, event);
 		dispatch(event);
@@ -21,14 +25,41 @@ export function useBooking(locale: string) {
 	useEffect(() => {
 		if (context.loading) return;
 		if (state.step === "choosing_package" && context.session) {
-			const restored = restoreBookingRedirect(context.session.user.id);
-			if (restored) send(restored);
+			const restored = restoreBookingRedirect(context.session.user.id, context.session.user.email);
+			if (restored) {
+				if (restored.slotStartsAt) setRange(weekRange(new Date(restored.slotStartsAt)));
+				send(restored);
+			}
 		}
 		if (state.step === "needs_account" && autoSession.current) {
 			autoSession.current = false;
 			if (context.session) send({ type: "signed_in", userId: context.session.user.id });
+			else if (guestAvailable) send({ type: "guest_slots_requested" });
 		}
-	}, [context.loading, context.session, state.step, send]);
+	}, [context.loading, context.session, guestAvailable, state.step, send]);
+	const revoked = context.sessionErrorCode === "session_revoked";
+	const recovering = state.step === "signing_in" && state.recovering ? state : null;
+	useEffect(() => {
+		if (revoked) send({ type: "session_revoked", selection: draft });
+	}, [revoked, draft, send]);
+	useEffect(() => {
+		if (!recovering) {
+			recoveryStarted.current = false;
+			return;
+		}
+		if (recoveryStarted.current) return;
+		recoveryStarted.current = true;
+		void adapter.signInWithGoogle(recovering).then(event => { if (mounted.current) send(event); });
+	}, [adapter, recovering, send]);
+
+	const profileUserId = state.step === "completing_profile" && state.prefill === undefined ? state.userId : null;
+	useEffect(() => {
+		if (!profileUserId) return;
+		let active = true;
+		void adapter.loadProfile(profileUserId).then(event => { if (active) send(event); });
+		return () => { active = false; };
+	}, [adapter, profileUserId, send]);
+
 	const loadingPackage = state.step === "choosing_slot" && state.availability === "loading" ? state.selection.packageId : null;
 	useEffect(() => {
 		if (!loadingPackage) return;
@@ -45,21 +76,24 @@ export function useBooking(locale: string) {
 		return () => { active = false; };
 	}, [adapter, locale, needsTerms, send]);
 
+	const submission = state.step === "submitting" ? state : null;
+	useEffect(() => {
+		const slotId = submission?.selection.slotId;
+		if (!submission || !slotId || requestStarted.current === submission) return;
+		requestStarted.current = submission;
+		const requestState = current.current;
+		void adapter.requestRegistration(slotId, submission.selection.packageId, range).then(events => {
+			if (mounted.current && current.current === requestState) for (const event of events) send(event);
+		});
+	}, [adapter, range, submission, send]);
+
 	async function run(started: BookingEvent, operation: () => Promise<BookingEvent | readonly BookingEvent[]>) {
 		if (locked.current) return;
 		locked.current = true;
 		send(started);
 		try {
 			const result = await operation();
-			if (!mounted.current) return;
-			for (const event of Array.isArray(result) ? result : [result]) {
-				send(event);
-				const flow = current.current;
-				if (event.type === "signed_in" && flow.step === "submitting" && flow.selection.slotId) {
-					const resumed = await adapter.requestRegistration(flow.selection.slotId, flow.selection.packageId, range);
-					if (mounted.current) for (const outcome of resumed) send(outcome);
-				}
-			}
+			if (mounted.current) for (const event of Array.isArray(result) ? result : [result]) send(event);
 		} finally { locked.current = false; }
 	}
 	return {
@@ -71,15 +105,18 @@ export function useBooking(locale: string) {
 			return run({ type: "signup_started" }, () => adapter.requestWithSignup(flow.selection.slotId, draft, terms));
 		},
 		choosePackage(selection: BookingSelection) {
-			autoSession.current = true;
-			const guest = !context.session && context.product?.auth_mode === "open"
-				&& context.product.email_password_enabled && context.product.google_oauth_enabled;
+			const guest = !context.loading && !context.session && guestAvailable;
+			autoSession.current = !guest;
 			send({ type: "package_chosen", ...selection, guest });
 		},
 		auth(method: "signIn" | "signUp", email: string, password: string) {
 			return run({ type: "auth_started", method: method === "signUp" ? "sign_up" : "sign_in" }, () => adapter[method](email, password));
 		},
-		google() { return run({ type: "auth_started", method: "google" }, () => adapter.signInWithGoogle(current.current)); },
+		google(email = "") {
+			if (current.current.step === "signup_details") send({ type: "signup_auth_chosen", email });
+			if (current.current.step !== "needs_account") return;
+			return run({ type: "auth_started", method: "google" }, () => adapter.signInWithGoogle(current.current));
+		},
 		saveProfile(profile: BookingProfile) {
 			const flow = current.current;
 			if (flow.step !== "completing_profile") return;
@@ -88,8 +125,8 @@ export function useBooking(locale: string) {
 		moveWeek(direction: -1 | 1) { send({ type: "slots_refresh_requested" }); setRange(previous => moveWeek(previous, direction)); },
 		submit() {
 			const flow = current.current;
-			if (flow.step !== "choosing_slot" || !flow.selection.slotId) return;
-			return run({ type: "submit_requested" }, () => adapter.requestRegistration(flow.selection.slotId!, flow.selection.packageId, range));
+			if (flow.step !== "choosing_slot" || !flow.userId || !flow.selection.slotId || flow.availability !== "ready") return;
+			send({ type: "submit_requested" });
 		},
 	};
 }

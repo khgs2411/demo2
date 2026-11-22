@@ -5,13 +5,14 @@ import { BookingPage } from "./page";
 import * as adapterModule from "./adapter";
 import { makeBookingContext } from "./context-fixture";
 import { saveBookingRedirect } from "./redirect";
+import { weekRange } from "./calendar";
 
 vi.mock("@class-kit/react", () => ({ useProductContext: vi.fn() }));
 let context: ReturnType<typeof adapterModule.useBookingContext>;
 const fakeAdapter = {
 	signIn: vi.fn().mockResolvedValue({ type: "signed_in", userId: "visitor" }),
 	signUp: vi.fn().mockResolvedValue({ type: "signed_in", userId: "visitor" }),
-	loadTerms: vi.fn(), requestWithSignup: vi.fn(),
+	loadTerms: vi.fn(), requestWithSignup: vi.fn(), loadProfile: vi.fn().mockResolvedValue({ type: "profile_loaded", profile: null }),
 	signInWithGoogle: vi.fn().mockResolvedValue({ type: "auth_redirect_started" }),
 	saveProfile: vi.fn().mockResolvedValue({ type: "profile_saved" }),
 	loadSlots: vi.fn().mockResolvedValue({ type: "booking_not_open" }),
@@ -185,4 +186,83 @@ it("renders a refreshed capacity-race notice and requires another explicit selec
 	await screen.findByText("That time just filled up. The calendar is refreshed; pick another time.");
 	expect((screen.getByRole("button",{name:"Send request"}) as HTMLButtonElement).disabled).toBe(true);
 	expect(fakeAdapter.requestRegistration).toHaveBeenCalledOnce();
+});
+
+it("prefills name and phone from the signed-in profile and sends the request through regular registration", async () => {
+	const date = new Date(); date.setDate(date.getDate() - (date.getDay()+6)%7 + 1); date.setHours(9,0,0,0);
+	const slot = { id: "s", startsAt: date.toISOString(), canRegister: true, canCancelRegistration: false, userRegistrationState: null };
+	context = { ...context, session: { access_token: "test", refresh_token: "test", token_type: "bearer", expires_in: 3600, user: { id: "visitor", app_metadata: {}, user_metadata: {}, aud: "authenticated", created_at: "2026-11-07" } } };
+	fakeAdapter.loadProfile.mockResolvedValueOnce({ type: "profile_loaded", profile: { displayName: "Dana", phoneNumber: "0501234567", businessName: "Dana Studio" } });
+	fakeAdapter.loadSlots.mockResolvedValueOnce({ type: "slots_loaded", slots: [slot] });
+	fakeAdapter.requestRegistration.mockResolvedValueOnce([{ type: "registration_requested", registration: { id: "real-request", classId: "s", status: "pending" } }]);
+	render(<BookingPage packageId="system" />);
+	fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+	await screen.findByDisplayValue("Dana");
+	expect(screen.getByDisplayValue("0501234567")).toBeDefined();
+	fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+	fireEvent.click(await screen.findByRole("button", { name: /\d{2}:\d{2}/ }));
+	fireEvent.click(screen.getByRole("button", { name: "Send request" }));
+	await screen.findByText("Request sent.");
+	expect(fakeAdapter.saveProfile).toHaveBeenCalledWith(expect.objectContaining({ displayName: "Dana", businessName: "Dana Studio" }), expect.objectContaining({ packageId: "system" }));
+	expect(fakeAdapter.requestRegistration).toHaveBeenCalledOnce();
+	expect(fakeAdapter.requestWithSignup).not.toHaveBeenCalled();
+	expect(screen.queryByText("Copy password")).toBeNull();
+});
+
+it("starts Google once when the provider reports a revoked booking session and displays no auth error", async () => {
+	const page = render(<BookingPage />);
+	context = { ...context, sessionErrorCode: "session_revoked" };
+	page.rerender(<BookingPage />);
+	await waitFor(() => expect(fakeAdapter.signInWithGoogle).toHaveBeenCalledOnce());
+	page.rerender(<BookingPage />);
+	expect(fakeAdapter.signInWithGoogle).toHaveBeenCalledOnce();
+	expect(screen.queryByRole("alert")).toBeNull();
+});
+
+it("finishes an existing account request after the same email returns from Google", async () => {
+	const slot = { id: "s", startsAt: "2026-12-08T09:00:00Z", canRegister: true, canCancelRegistration: false, userRegistrationState: null };
+	saveBookingRedirect({
+		step: "signing_in", selection: { packageId: "system", addonInterests: [], slotId: "s" },
+		email: "test@example.com", continuation: { kind: "book", slot }, signupSlot: slot,
+	});
+	context = { ...context, session: { access_token: "test", refresh_token: "test", token_type: "bearer", expires_in: 3600, user: { id: "visitor", email: "test@example.com", app_metadata: {}, user_metadata: {}, aud: "authenticated", created_at: "2026-11-07" } } };
+	fakeAdapter.requestRegistration.mockResolvedValueOnce([{ type: "registration_requested", registration: { id: "google-request", classId: "s", status: "pending" } }]);
+	render(<BookingPage />);
+	await screen.findByText("Request sent.");
+	expect(fakeAdapter.requestRegistration).toHaveBeenCalledExactlyOnceWith("s", "system", weekRange(new Date(slot.startsAt)));
+});
+
+it("retains the route package when a signed-in client visits a closed calendar", async () => {
+	context = { ...context, session: { access_token: "test", refresh_token: "test", token_type: "bearer", expires_in: 3600, user: { id: "visitor", app_metadata: {}, user_metadata: {}, aud: "authenticated", created_at: "2026-11-07" } } };
+	fakeAdapter.loadProfile.mockResolvedValueOnce({ type: "profile_loaded", profile: { displayName: "Dana", phoneNumber: "0501234567", businessName: "Dana Studio" } });
+	render(<BookingPage packageId="site" />);
+	fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+	await screen.findByDisplayValue("Dana");
+	fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+	await screen.findByText("The calendar isn't open yet.");
+	expect(fakeAdapter.saveProfile).toHaveBeenCalledWith(expect.objectContaining({ displayName: "Dana", businessName: "Dana Studio" }), expect.objectContaining({ packageId: "site" }));
+	expect(screen.queryByRole("button", { name: "Send request" })).toBeNull();
+});
+
+it("keeps a visible notice and asks for consent when previously unavailable terms are reloaded", async () => {
+	fakeAdapter.requestWithSignup.mockResolvedValueOnce({ type: "terms_unavailable" });
+	await openSignup();
+	fakeAdapter.loadTerms.mockResolvedValueOnce({ type: "terms_loaded", terms: { title: "Studio terms", text: "Republished studio terms", version: 4, locale: "en" } });
+	fireEvent.click(screen.getByRole("checkbox", { name: "I accept the terms of service" }));
+	fireEvent.submit(screen.getByRole("button", { name: "Send request" }).closest("form")!);
+	await screen.findByText("Republished studio terms");
+	expect(screen.getByRole("alert").textContent).toContain("The previous terms were unavailable.");
+	expect((screen.getByRole("checkbox") as HTMLInputElement).checked).toBe(false);
+});
+
+it("does not submit a saved request when Google returns a different email", async () => {
+	const slot = { id: "s", startsAt: "2026-12-08T09:00:00Z", canRegister: true, canCancelRegistration: false, userRegistrationState: null };
+	saveBookingRedirect({
+		step: "signing_in", selection: { packageId: "system", addonInterests: [], slotId: "s" },
+		email: "test@example.com", continuation: { kind: "book", slot }, signupSlot: slot,
+	});
+	context = { ...context, session: { access_token: "test", refresh_token: "test", token_type: "bearer", expires_in: 3600, user: { id: "visitor", email: "different@example.com", app_metadata: {}, user_metadata: {}, aud: "authenticated", created_at: "2026-11-07" } } };
+	render(<BookingPage />);
+	await screen.findByLabelText("Full name");
+	expect(fakeAdapter.requestRegistration).not.toHaveBeenCalled();
 });

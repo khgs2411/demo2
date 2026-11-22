@@ -1,22 +1,15 @@
 import { invokeProductFunction, useProductContext, type ClassKitClient, type ClassRegistrationResponse, type ClassSummary, type ProductDocument } from "@class-kit/react";
 import { getBookingOptions } from "../packages";
-import type { BookingEvent, BookingOperation, BookingSelection, BookingSlot, BookingState, BookingTerms, PackageId, SignupDraft } from "./machine";
+import type { BookingEvent, BookingOperation, BookingProfile, BookingSelection, BookingSlot, BookingState, BookingTerms, PackageId, SignupDraft } from "./machine";
 import { clearBookingRedirect, saveBookingRedirect, saveAccountRedirect, clearAccountRedirect } from "./redirect";
 import type { RequestsEvent } from "./requests-machine";
 
 export type BookingSdk = Pick<ClassKitClient, "supabase" | "authStorageKey" | "productKey"> & {
 	auth: Pick<ClassKitClient["auth"], "signIn" | "signUp" | "getSession" | "signInWithGoogle" | "signOut">;
-	profile: Pick<ClassKitClient["profile"], "update">;
+	profile: Pick<ClassKitClient["profile"], "get" | "update">;
 	classes: Pick<ClassKitClient["classes"], "list" | "listMyRegistrations" | "register" | "registerWithSignup" | "cancelRegistration">;
 };
 export type BookingRange = { start: string; end: string };
-export type BookingProfile = {
-	displayName: string;
-	phoneNumber: string;
-	businessName: string;
-	websiteUrl?: string;
-};
-
 export function useBookingContext() {
 	return useProductContext();
 }
@@ -74,6 +67,26 @@ export function createBookingAdapter(client: BookingSdk | null, refreshProductCo
 		return failure("auth");
 	}
 
+	async function loadProfile(userId: string): Promise<BookingEvent> {
+		try {
+			const response = await client?.profile.get();
+			const user = response?.data?.user;
+			if (user && user.user_id === userId) {
+				const { business_name: business, website_url: website } = user.metadata;
+				const profile: BookingProfile = {
+					displayName: user.display_name ?? "",
+					phoneNumber: user.phone_number ?? "",
+					businessName: typeof business === "string" ? business : "",
+					websiteUrl: typeof website === "string" ? website : undefined,
+				};
+				return { type: "profile_loaded", profile };
+			}
+		} catch {
+			return { type: "profile_loaded", profile: null };
+		}
+		return { type: "profile_loaded", profile: null };
+	}
+
 	async function saveProfile(profile: BookingProfile, selection: BookingSelection): Promise<BookingEvent> {
 		try {
 			if (!client) return failure("profile");
@@ -124,6 +137,8 @@ export function createBookingAdapter(client: BookingSdk | null, refreshProductCo
 	async function requestWithSignup(classId: string, draft: SignupDraft, terms: BookingTerms): Promise<BookingEvent> {
 		try {
 			if (!client) return { type: "signup_failed" };
+			const existingSession = await client.auth.getSession();
+			if (existingSession) return { type: "signed_in", userId: existingSession.user.id };
 			const result = await client.classes.registerWithSignup({ classId, ...draft, termsVersion: terms.version, termsLocale: terms.locale });
 			switch (result.status) {
 				case "account_exists": return { type: result.status, email: draft.email.trim().toLowerCase() };
@@ -172,7 +187,7 @@ export function createBookingAdapter(client: BookingSdk | null, refreshProductCo
 		try {
 			if (!client) return { type: "failed" };
 			const response = await client.classes.listMyRegistrations({ range });
-			if (response.error) return { type: response.error.code === "unauthorized" ? "signed_out" : "failed" };
+			if (response.error) return { type: ["unauthorized", "session_revoked"].includes(response.error.code) ? "signed_out" : "failed" };
 			return { type: "loaded", requests: response.data.registrations.map(registration => ({
 				id: registration.classId, name: registration.class.name, startsAt: registration.class.startsAt,
 				canRegister: false, canCancelRegistration: registration.canCancel,
@@ -205,6 +220,7 @@ export function createBookingAdapter(client: BookingSdk | null, refreshProductCo
 		signIn: (email: string, password: string) => passwordAuth("signIn", email, password),
 		signUp: (email: string, password: string) => passwordAuth("signUp", email, password),
 		signInWithGoogle,
+		loadProfile,
 		saveProfile,
 		loadSlots,
 		requestRegistration,

@@ -8,7 +8,7 @@ import { bookingRedirectKey, restoreBookingRedirect, consumeAccountRedirect, sav
 vi.mock("@class-kit/react", async importOriginal => ({ ...await importOriginal<typeof import("@class-kit/react")>(), useProductContext: vi.fn() }));
 
 function mockSdk() {
-	const transport = createClassKitClient({ supabaseUrl: "http://localhost:54321", supabasePublishableKey: "test-key", authStorageKey: "booking-test" });
+	const transport = createClassKitClient({ supabaseUrl: "http://localhost:54321", supabasePublishableKey: "test-key", authStorageKey: "booking-test", debug: false });
 	if (!transport) throw new Error("Test SDK transport could not be created");
 	return {
 		supabase: transport.supabase, authStorageKey: transport.authStorageKey,
@@ -22,7 +22,7 @@ function mockSdk() {
 				user: { id: "visitor", app_metadata: {}, user_metadata: {}, aud: "authenticated", created_at: "2026-11-07" },
 			}),
 		},
-		profile: { update: vi.fn<BookingSdk["profile"]["update"]>() },
+		profile: { get: vi.fn<BookingSdk["profile"]["get"]>(), update: vi.fn<BookingSdk["profile"]["update"]>() },
 		classes: {
 			listMyRegistrations: vi.fn<BookingSdk["classes"]["listMyRegistrations"]>(),
 			list: vi.fn<BookingSdk["classes"]["list"]>(),
@@ -304,4 +304,60 @@ it("refreshes after a thrown cancellation error with no automatic retry", async 
 	sdk.classes.listMyRegistrations.mockResolvedValueOnce({data:{registrations:[]},error:null});
 	expect(await adapter.cancelRequest("request-1",range)).toEqual([{type:"cancel_failed"},{type:"loaded",requests:[]}]);
 	expect(sdk.classes.cancelRegistration).toHaveBeenCalledOnce();
+});
+
+describe("booking signup SDK adapter", () => {
+	const terms = { title: "Studio terms", text: "Published text", version: 8, locale: "he" };
+	const draft = { email: "dana@example.com", displayName: "Dana", phone: "+972501234567" };
+	const issued = { password: "abCDefGhIjKlmNop", formatPassword: () => "abCD efGh IjKl mNop" };
+	const credentials = { password: issued.password, formatted: issued.formatPassword() };
+
+	it("freshly loads the published document and returns its actual locale and version", async () => {
+		const getSession = vi.spyOn(sdk.supabase.auth, "getSession").mockResolvedValue({ data: { session: null }, error: null });
+		const functions = sdk.supabase.functions;
+		vi.spyOn(sdk.supabase, "functions", "get").mockReturnValue(functions);
+		const invoke = vi.spyOn(functions, "invoke");
+		invoke.mockResolvedValueOnce({ data: { data: { document: { title: terms.title, content_markdown: terms.text, version: 7, locale: "he" } }, error: null }, error: null });
+		invoke.mockResolvedValueOnce({ data: { data: { document: { title: terms.title, content_markdown: terms.text, version: 8, locale: "he" } }, error: null }, error: null });
+		expect(await adapter.loadTerms("he")).toEqual({ type: "terms_loaded", terms: { ...terms, version: 7 } });
+		expect(await adapter.loadTerms("he")).toEqual({ type: "terms_loaded", terms });
+		expect(invoke).toHaveBeenCalledTimes(2);
+		expect(invoke).toHaveBeenLastCalledWith("class-kit-product-documents", expect.objectContaining({
+			body: { action: "get", document_type: "terms_of_service", locale: "he", fallback_locale: "en" },
+		}));
+		getSession.mockRestore();
+	});
+
+	it("sends the shown publication and maps the SDK receipt and formatted password", async () => {
+		sdk.auth.getSession.mockResolvedValueOnce(null);
+		sdk.classes.registerWithSignup.mockResolvedValueOnce({ status: "registered", ...issued, registration: registered.registration });
+		expect(await adapter.requestWithSignup("slot-1", draft, terms)).toEqual({
+			type: "signup_registered", userId: "visitor", registration: { id: "request-1", classId: "slot-1", status: "pending" }, credentials,
+		});
+		expect(sdk.classes.registerWithSignup).toHaveBeenCalledExactlyOnceWith({
+			classId: "slot-1", ...draft, termsVersion: 8, termsLocale: "he",
+		});
+	});
+
+	it("distinguishes unavailable classes with and without a new account", async () => {
+		sdk.auth.getSession.mockResolvedValueOnce(null);
+		sdk.classes.registerWithSignup.mockResolvedValueOnce({ status: "class_unavailable" });
+		sdk.auth.getSession.mockResolvedValueOnce(null);
+		sdk.classes.registerWithSignup.mockResolvedValueOnce({ status: "class_unavailable", ...issued });
+		expect(await adapter.requestWithSignup("slot-1", draft, terms)).toEqual({ type: "class_unavailable" });
+		expect(await adapter.requestWithSignup("slot-1", draft, terms)).toEqual({ type: "class_unavailable", userId: "visitor", credentials });
+	});
+
+	it("preserves the new credentials and confirmed registration if automatic sign-in fails", async () => {
+		sdk.auth.getSession.mockResolvedValueOnce(null);
+		sdk.classes.registerWithSignup.mockResolvedValueOnce({ status: "sign_in_failed", ...issued, registration: registered.registration });
+		expect(await adapter.requestWithSignup("slot-1", draft, terms)).toEqual({
+			type: "sign_in_failed", email: draft.email, credentials, registration: { id: "request-1", classId: "slot-1", status: "pending" },
+		});
+	});
+	it("keeps the current account when a session starts while the guest form is open", async () => {
+		expect(await adapter.requestWithSignup("slot-1", draft, terms)).toEqual({ type: "signed_in", userId: "visitor" });
+		expect(sdk.classes.registerWithSignup).not.toHaveBeenCalled();
+	});
+
 });
