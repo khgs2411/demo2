@@ -2,7 +2,7 @@ import { getBookingOptions } from "../packages";
 import type { BookingSelection, BookingState, BookingRedirectRestored, SignupContinuation } from "./machine";
 
 export const bookingRedirectKey = "demo2-booking-redirect";
-type RedirectContinuation = { email: string; next: SignupContinuation };
+type RedirectContinuation = { emailHash: string; next: SignupContinuation };
 type RedirectIntent = {
 	selection: BookingSelection;
 	profileUserId: string | null;
@@ -11,18 +11,32 @@ type RedirectIntent = {
 };
 type RedirectStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
-export function saveBookingRedirect(state: BookingState, storage?: RedirectStorage): boolean {
+async function emailDigest(email: string): Promise<string> {
+	const input = new TextEncoder().encode(email.trim().toLowerCase());
+	const digest = await crypto.subtle.digest("SHA-256", input);
+	return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
+}
+
+export async function saveBookingAuthRedirect(state: BookingState): Promise<boolean> {
+	try {
+		const emailHash = "continuation" in state && state.continuation && state.email
+			? await emailDigest(state.email) : undefined;
+		return saveBookingRedirect(state, undefined, emailHash);
+	} catch {
+		return false;
+	}
+}
+
+export function saveBookingRedirect(state: BookingState, storage?: RedirectStorage, emailHash?: string): boolean {
 	if (state.step === "choosing_package" || state.step === "requested" || state.step === "failed") return false;
-	const continuation = "continuation" in state && state.continuation && state.email
-		? { email: state.email, next: state.continuation }
-		: undefined;
-	const next = continuation?.next;
+	const next = "continuation" in state ? state.continuation : undefined;
+	if (next && !emailHash) return false;
 	const signupSlot = next && "slot" in next ? next.slot : "signupSlot" in state ? state.signupSlot : undefined;
 	const intent: RedirectIntent = {
 		selection: state.selection,
 		profileUserId: state.step === "choosing_slot" || state.step === "submitting" ? state.userId : null,
 		...(signupSlot?.id === state.selection.slotId && { slotStartsAt: signupSlot.startsAt }),
-		...(continuation && { continuation }),
+		...(next && emailHash && { continuation: { emailHash, next } }),
 	};
 	try {
 		(storage ?? window.sessionStorage).setItem(bookingRedirectKey, JSON.stringify(intent));
@@ -34,8 +48,8 @@ export function saveBookingRedirect(state: BookingState, storage?: RedirectStora
 
 function isContinuation(value: unknown, slotId: string | null): value is RedirectContinuation {
 	if (!value || typeof value !== "object") return false;
-	const { email, next } = value as Partial<RedirectContinuation>;
-	if (typeof email !== "string" || !email || !next || typeof next !== "object") return false;
+	const { emailHash, next } = value as Partial<RedirectContinuation>;
+	if (typeof emailHash !== "string" || !/^[a-f0-9]{64}$/.test(emailHash) || !next || typeof next !== "object") return false;
 	if (next.kind === "choose_slot") return true;
 	if (next.kind !== "book" && next.kind !== "show_request") return false;
 	const slot = next.slot;
@@ -61,7 +75,9 @@ function isIntent(value: unknown): value is RedirectIntent {
 		&& (profileUserId === null || (typeof profileUserId === "string" && profileUserId.length > 0));
 }
 
-export function restoreBookingRedirect(userId: string, email?: string, storage?: RedirectStorage): BookingRedirectRestored | null {
+export function restoreBookingRedirect(userId: string): BookingRedirectRestored | null;
+export function restoreBookingRedirect(userId: string, email: string | undefined, storage?: RedirectStorage): BookingRedirectRestored | null | Promise<BookingRedirectRestored | null>;
+export function restoreBookingRedirect(userId: string, email?: string, storage?: RedirectStorage) {
 	try {
 		const target = storage ?? window.sessionStorage;
 		const saved = target.getItem(bookingRedirectKey);
@@ -70,13 +86,15 @@ export function restoreBookingRedirect(userId: string, email?: string, storage?:
 		target.removeItem(bookingRedirectKey);
 		const intent: unknown = JSON.parse(saved);
 		if (!isIntent(intent)) return null;
-		const matches = intent.continuation && intent.continuation.email === email?.trim().toLowerCase();
-		return {
+		const restored: BookingRedirectRestored = {
 			type: "redirect_restored", userId, profileUserId: intent.profileUserId,
 			...(intent.slotStartsAt && { slotStartsAt: intent.slotStartsAt }),
-			...(matches && { continuation: intent.continuation?.next }),
 			selection: { packageId: intent.selection.packageId, addonInterests: [...intent.selection.addonInterests], slotId: intent.selection.slotId },
 		};
+		const continuation = intent.continuation;
+		if (!continuation || !email) return restored;
+		return emailDigest(email).then(hash => hash === continuation.emailHash
+			? { ...restored, continuation: continuation.next } : restored, () => restored);
 	} catch {
 		return null;
 	}

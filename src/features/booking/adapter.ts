@@ -1,7 +1,7 @@
 import { invokeProductFunction, useProductContext, type ClassKitClient, type ClassRegistrationResponse, type ClassSummary, type ProductDocument } from "@class-kit/react";
 import { getBookingOptions } from "../packages";
 import type { BookingEvent, BookingOperation, BookingProfile, BookingSelection, BookingSlot, BookingState, BookingTerms, PackageId, SignupDraft } from "./machine";
-import { clearBookingRedirect, saveBookingRedirect, saveAccountRedirect, clearAccountRedirect } from "./redirect";
+import { clearBookingRedirect, saveBookingAuthRedirect, saveAccountRedirect, clearAccountRedirect } from "./redirect";
 import type { RequestsEvent } from "./requests-machine";
 
 export type BookingSdk = Pick<ClassKitClient, "supabase" | "authStorageKey" | "productKey"> & {
@@ -51,7 +51,7 @@ export function createBookingAdapter(client: BookingSdk | null, refreshProductCo
 		if (!client) return failure("auth");
 		if (state) clearAccountRedirect();
 		else clearBookingRedirect();
-		if (!(state ? saveBookingRedirect(state) : saveAccountRedirect())) {
+		if (!(state ? await saveBookingAuthRedirect(state) : saveAccountRedirect())) {
 			clearBookingRedirect();
 			clearAccountRedirect();
 			return { type: "operation_failed", operation: "auth", reason: "redirect_storage" };

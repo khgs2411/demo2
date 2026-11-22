@@ -1,12 +1,14 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { clearBookingRedirect, restoreBookingRedirect, saveBookingRedirect, bookingRedirectKey } from "./redirect";
+import { webcrypto } from "node:crypto";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { clearBookingRedirect, restoreBookingRedirect, saveBookingRedirect, saveBookingAuthRedirect, bookingRedirectKey } from "./redirect";
 import { initialState, transition, type BookingState } from "./machine";
 
 const selection = { packageId: "system", addonInterests: ["agent-voice"], slotId: "slot-1" } as const;
 const slotState: BookingState = {
 	step: "choosing_slot", selection, userId: "visitor", slots: [], availability: "loading", notice: null,
 };
-beforeEach(() => { vi.restoreAllMocks(); sessionStorage.clear(); });
+beforeEach(() => { vi.restoreAllMocks(); sessionStorage.clear(); vi.stubGlobal("crypto", webcrypto); });
+afterEach(() => vi.unstubAllGlobals());
 
 describe("booking OAuth redirect persistence", () => {
 	it("restores the package, add-ons and selected slot for the same authenticated visitor", () => {
@@ -82,15 +84,18 @@ it("preserves the selected signup time across Google sign-in even when it is in 
 	expect(restoreBookingRedirect("visitor")).toBeNull();
 });
 
-it("restores an issued receipt only for the matching email and keeps credentials out of the redirect", () => {
+it("restores an issued receipt only for the matching email and keeps credentials out of the redirect", async () => {
 	const slot = { id: "slot-1", startsAt: "2026-12-08T09:00:00Z", canRegister: true, canCancelRegistration: false, userRegistrationState: null };
 	const continuation = { kind: "show_request", slot, registration: { id: "r", classId: "slot-1", status: "pending" } } as const;
 	const account = { step: "signing_in", selection, email: "dana@example.com", continuation } as const;
-	expect(saveBookingRedirect(account)).toBe(true);
-	expect(restoreBookingRedirect("visitor", "other@example.com")).not.toHaveProperty("continuation");
-	expect(saveBookingRedirect(account)).toBe(true);
-	const restored = restoreBookingRedirect("visitor", "DANA@example.com");
+	expect(await saveBookingAuthRedirect(account)).toBe(true);
+	expect(JSON.parse(sessionStorage.getItem(bookingRedirectKey)!).continuation).toEqual({
+		emailHash: "07e2f1394b0ea80e2adca010ea8318df697001a005ba7452720edda4b0ce57b3", next: continuation,
+	});
+	expect(await restoreBookingRedirect("visitor", "other@example.com")).not.toHaveProperty("continuation");
+	expect(await saveBookingAuthRedirect(account)).toBe(true);
+	const restored = await restoreBookingRedirect("visitor", "DANA@example.com");
 	expect(restored).toMatchObject({ continuation, slotStartsAt: slot.startsAt });
 	expect(transition(initialState, restored!)).toMatchObject({ step: "requested", registration: continuation.registration });
-	expect(restoreBookingRedirect("visitor", "dana@example.com")).toBeNull();
+	expect(await restoreBookingRedirect("visitor", "dana@example.com")).toBeNull();
 });

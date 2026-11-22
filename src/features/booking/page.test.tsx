@@ -1,10 +1,11 @@
+import { webcrypto } from "node:crypto";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { i18n } from "../../i18n";
 import { BookingPage } from "./page";
 import * as adapterModule from "./adapter";
 import { makeBookingContext } from "./context-fixture";
-import { saveBookingRedirect } from "./redirect";
+import { saveBookingRedirect, saveBookingAuthRedirect } from "./redirect";
 import { weekRange } from "./calendar";
 
 vi.mock("@class-kit/react", () => ({ useProductContext: vi.fn() }));
@@ -22,13 +23,14 @@ const fakeAdapter = {
 beforeEach(async () => {
 	vi.restoreAllMocks(); vi.clearAllMocks(); sessionStorage.clear();
 	context = makeBookingContext();
+	vi.stubGlobal("crypto", webcrypto);
 	fakeAdapter.loadSlots.mockReset().mockResolvedValue({ type: "booking_not_open" });
 	fakeAdapter.loadTerms.mockReset().mockResolvedValue({ type: "terms_load_failed" });
 	vi.spyOn(adapterModule, "useBookingContext").mockImplementation(() => context);
 	vi.spyOn(adapterModule, "createBookingAdapter").mockReturnValue(fakeAdapter);
 	await i18n.changeLanguage("en");
 });
-afterEach(cleanup);
+afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 async function openSignup() {
 	const date = new Date(); date.setDate(date.getDate() - (date.getDay()+6)%7 + 1); date.setHours(9,0,0,0);
@@ -242,7 +244,7 @@ it("starts Google once when the provider reports a revoked booking session and d
 
 it("finishes an existing account request after the same email returns from Google", async () => {
 	const slot = { id: "s", startsAt: "2026-12-08T09:00:00Z", canRegister: true, canCancelRegistration: false, userRegistrationState: null };
-	saveBookingRedirect({
+	await saveBookingAuthRedirect({
 		step: "signing_in", selection: { packageId: "system", addonInterests: [], slotId: "s" },
 		email: "test@example.com", continuation: { kind: "book", slot, contact: { displayName: "Dana", phoneNumber: "0501234567" } }, signupSlot: slot,
 	});
@@ -282,7 +284,7 @@ it("keeps a visible notice and asks for consent when previously unavailable term
 
 it("does not submit a saved request when Google returns a different email", async () => {
 	const slot = { id: "s", startsAt: "2026-12-08T09:00:00Z", canRegister: true, canCancelRegistration: false, userRegistrationState: null };
-	saveBookingRedirect({
+	await saveBookingAuthRedirect({
 		step: "signing_in", selection: { packageId: "system", addonInterests: [], slotId: "s" },
 		email: "test@example.com", continuation: { kind: "book", slot, contact: { displayName: "Dana", phoneNumber: "0501234567" } }, signupSlot: slot,
 	});

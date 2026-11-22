@@ -16,6 +16,7 @@ export function useBooking(locale: string, draft: BookingSelection) {
 	const recoveryStarted = useRef(false);
 	const latestDraft = useRef(draft);
 	const wasRevoked = useRef(false);
+	const latestSession = useRef(context.session);
 	const requestStarted = useRef<BookingState | null>(null);
 	const guestAvailable = context.product?.auth_mode === "open"
 		&& context.product.email_password_enabled && context.product.google_oauth_enabled;
@@ -25,13 +26,17 @@ export function useBooking(locale: string, draft: BookingSelection) {
 	}, []);
 	useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
 	useEffect(() => {
+		latestSession.current = context.session;
 		if (context.loading) return;
 		if (state.step === "choosing_package" && context.session) {
-			const restored = restoreBookingRedirect(context.session.user.id, context.session.user.email);
-			if (restored) {
+			const { id, email } = context.session.user;
+			void Promise.resolve(restoreBookingRedirect(id, email)).then(restored => {
+				const currentUser = latestSession.current?.user;
+				if (!restored || !mounted.current || current.current.step !== "choosing_package"
+					|| currentUser?.id !== id || currentUser.email !== email) return;
 				if (restored.slotStartsAt) setRange(weekRange(new Date(restored.slotStartsAt)));
 				send(restored);
-			}
+			});
 		}
 		if (state.step === "needs_account" && autoSession.current) {
 			autoSession.current = false;
