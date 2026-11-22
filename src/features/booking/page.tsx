@@ -28,7 +28,13 @@ export function BookingPage({ packageId }: { packageId?: string }) {
 	const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 	const view = state.step === "failed" ? state.resume : state;
 	const prefill = view.step === "completing_profile" ? view.prefill : undefined;
-	const profile = editedProfile ?? prefill ?? { displayName: signup.displayName, phoneNumber: signup.phone, businessName: "" };
+	const pendingContact = view.step === "completing_profile" ? view.pendingRequest?.contact : undefined;
+	const profile = editedProfile ?? {
+		displayName: prefill?.displayName || pendingContact?.displayName || signup.displayName,
+		phoneNumber: prefill?.phoneNumber || pendingContact?.phoneNumber || signup.phone,
+		businessName: prefill?.businessName ?? "",
+		websiteUrl: prefill?.websiteUrl,
+	};
 	const selection = "selection" in view ? view.selection : draft;
 	const guestSteps = view.step === "signup_details" || (view.step === "choosing_slot" && view.userId === null)
 		|| (view.step === "requested" && !!view.credentials) || view.step === "signup_password";

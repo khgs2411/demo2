@@ -41,7 +41,7 @@ function isContinuation(value: unknown, slotId: string | null): value is Redirec
 	const slot = next.slot;
 	if (!slotId || slot?.id !== slotId || typeof slot.startsAt !== "string" || !Number.isFinite(Date.parse(slot.startsAt))
 		|| typeof slot.canRegister !== "boolean" || typeof slot.canCancelRegistration !== "boolean" || slot.userRegistrationState !== null) return false;
-	if (next.kind === "book") return true;
+	if (next.kind === "book") return typeof next.contact?.displayName === "string" && typeof next.contact?.phoneNumber === "string";
 	const registration = next.registration;
 	return registration?.classId === slotId && typeof registration.id === "string" && registration.id.length > 0
 		&& ["pending", "approved", "rejected", "cancelled"].includes(registration.status);

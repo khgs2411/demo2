@@ -99,7 +99,7 @@ it("reloads changed terms and waits for fresh consent", async () => {
 });
 
 it("prefills an existing account’s email and sends the selected request after password sign-in", async () => {
-	fakeAdapter.requestWithSignup.mockResolvedValueOnce({ type: "account_exists", email: "test@example.com" });
+	fakeAdapter.requestWithSignup.mockResolvedValueOnce({ type: "account_exists", email: "test@example.com", contact: { displayName: "Dana", phoneNumber: "0501234567" } });
 	fakeAdapter.requestRegistration.mockResolvedValueOnce([{ type: "registration_requested", registration: { id: "real-request", classId: "s", status: "pending" } }]);
 	await openSignup();
 	fireEvent.click(screen.getByRole("checkbox", { name: "I accept the terms of service" }));
@@ -108,6 +108,11 @@ it("prefills an existing account’s email and sends the selected request after 
 	expect((screen.getByLabelText("Email") as HTMLInputElement).value).toBe("test@example.com");
 	fireEvent.change(screen.getByLabelText("Password"), { target: { value: "test-password" } });
 	fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
+	await screen.findByDisplayValue("Dana");
+	expect(screen.getByDisplayValue("0501234567")).toBeDefined();
+	expect(fakeAdapter.requestRegistration).not.toHaveBeenCalled();
+	fireEvent.change(screen.getByLabelText("Business name"), { target: { value: "Dana Studio" } });
+	fireEvent.click(screen.getByRole("button", { name: "Continue" }));
 	await screen.findByText("Request sent.");
 	expect(fakeAdapter.requestRegistration).toHaveBeenCalledExactlyOnceWith("s", "system", expect.anything());
 });
@@ -223,11 +228,15 @@ it("finishes an existing account request after the same email returns from Googl
 	const slot = { id: "s", startsAt: "2026-12-08T09:00:00Z", canRegister: true, canCancelRegistration: false, userRegistrationState: null };
 	saveBookingRedirect({
 		step: "signing_in", selection: { packageId: "system", addonInterests: [], slotId: "s" },
-		email: "test@example.com", continuation: { kind: "book", slot }, signupSlot: slot,
+		email: "test@example.com", continuation: { kind: "book", slot, contact: { displayName: "Dana", phoneNumber: "0501234567" } }, signupSlot: slot,
 	});
 	context = { ...context, session: { access_token: "test", refresh_token: "test", token_type: "bearer", expires_in: 3600, user: { id: "visitor", email: "test@example.com", app_metadata: {}, user_metadata: {}, aud: "authenticated", created_at: "2026-11-07" } } };
 	fakeAdapter.requestRegistration.mockResolvedValueOnce([{ type: "registration_requested", registration: { id: "google-request", classId: "s", status: "pending" } }]);
+	fakeAdapter.loadProfile.mockResolvedValueOnce({ type: "profile_loaded", profile: { displayName: "Saved name", phoneNumber: "", businessName: "Studio" } });
 	render(<BookingPage />);
+	await screen.findByDisplayValue("Saved name");
+	expect(screen.getByDisplayValue("0501234567")).toBeDefined();
+	fireEvent.click(screen.getByRole("button", { name: "Continue" }));
 	await screen.findByText("Request sent.");
 	expect(fakeAdapter.requestRegistration).toHaveBeenCalledExactlyOnceWith("s", "system", weekRange(new Date(slot.startsAt)));
 });
@@ -259,7 +268,7 @@ it("does not submit a saved request when Google returns a different email", asyn
 	const slot = { id: "s", startsAt: "2026-12-08T09:00:00Z", canRegister: true, canCancelRegistration: false, userRegistrationState: null };
 	saveBookingRedirect({
 		step: "signing_in", selection: { packageId: "system", addonInterests: [], slotId: "s" },
-		email: "test@example.com", continuation: { kind: "book", slot }, signupSlot: slot,
+		email: "test@example.com", continuation: { kind: "book", slot, contact: { displayName: "Dana", phoneNumber: "0501234567" } }, signupSlot: slot,
 	});
 	context = { ...context, session: { access_token: "test", refresh_token: "test", token_type: "bearer", expires_in: 3600, user: { id: "visitor", email: "different@example.com", app_metadata: {}, user_metadata: {}, aud: "authenticated", created_at: "2026-11-07" } } };
 	render(<BookingPage />);

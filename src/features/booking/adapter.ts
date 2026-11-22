@@ -141,7 +141,10 @@ export function createBookingAdapter(client: BookingSdk | null, refreshProductCo
 			if (existingSession) return { type: "signed_in", userId: existingSession.user.id };
 			const result = await client.classes.registerWithSignup({ classId, ...draft, termsVersion: terms.version, termsLocale: terms.locale });
 			switch (result.status) {
-				case "account_exists": return { type: result.status, email: draft.email.trim().toLowerCase() };
+				case "account_exists": return {
+					type: result.status, email: draft.email.trim().toLowerCase(),
+					contact: { displayName: draft.displayName, phoneNumber: draft.phone },
+				};
 				case "terms_changed":
 				case "terms_unavailable":
 				case "rate_limited":

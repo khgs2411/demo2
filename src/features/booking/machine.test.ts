@@ -225,12 +225,15 @@ describe("signed-out booking recovery", () => {
 	});
 
 	it("keeps the selected time and resumes an existing account request after sign-in", () => {
-		const existing = transition(pending, { type: "account_exists", email: "dana@example.com" });
+		const existing = transition(pending, { type: "account_exists", email: "dana@example.com", contact: { displayName: "Dana", phoneNumber: "0501234567" } });
 		expect(existing).toMatchObject({ step: "needs_account", email: "dana@example.com", selection: { slotId: slot.id } });
 		const signing = transition(existing, { type: "auth_started", method: "sign_in" });
 		const resumed = transition(signing, { type: "signed_in", userId: "visitor" });
-		expect(resumed).toMatchObject({ step: "submitting", userId: "visitor", selection: { slotId: slot.id } });
-		expect(transition(resumed, { type: "registration_requested", registration })).toMatchObject({ step: "requested", registration });
+		expect(resumed).toMatchObject({ step: "completing_profile", userId: "visitor", selection: { slotId: slot.id } });
+		expect(transition(resumed, { type: "registration_requested", registration })).toBe(resumed);
+		const submitted = transition(resumed, { type: "profile_saved" });
+		expect(submitted).toMatchObject({ step: "submitting", userId: "visitor", selection: { slotId: slot.id } });
+		expect(transition(submitted, { type: "registration_requested", registration })).toMatchObject({ step: "requested", registration });
 	});
 
 	it("goes back to anonymous time choice if the account was never created", () => {
