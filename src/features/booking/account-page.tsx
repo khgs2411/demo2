@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useReducer, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { TextLink } from "../../ui/text-link";
 import { Ticket } from "../../ui/ticket";
 import { createBookingAdapter, useBookingContext } from "./adapter";
 import type { BookingEvent } from "./machine";
@@ -51,8 +52,11 @@ export function AccountPage() {
 	return <main data-module="booking" className="booking-page account-page">
 		<section>
 			{auth.error && <p role="alert" className="notice error">{t(auth.error)}</p>}
-			{context.loading ? <><h1>{t("accTitle")}</h1><p role="status">{t("loading")}</p></> : signedOut ? <AccountStep product={context.product} loading={false} busy={auth.busy} initialSignIn
-				onPassword={(method,email,password) => void authenticate(() => adapter[method](email,password))} onGoogle={() => void authenticate(() => adapter.signInWithGoogle())} /> : <>
+			{context.loading ? <><h1>{t("accTitle")}</h1><p role="status">{t("loading")}</p></> : signedOut ? <>
+				<AccountStep product={context.product} loading={false} busy={auth.busy} signInOnly title={t("signIn")} description={t("accSignInLede")}
+					onPassword={(_method,email,password) => void authenticate(() => adapter.signIn(email,password))} onGoogle={() => void authenticate(() => adapter.signInWithGoogle())} />
+				<p className="switch"><TextLink href="#/book">{t("accBookToCreate")}</TextLink></p>
+			</> : <>
 				<h1>{t("accTitle")}</h1><p className="lede">{t("accLede")}</p>
 				<RequestLedger {...requests} timeZone={Intl.DateTimeFormat().resolvedOptions().timeZone} />
 				<div className="actions"><Ticket href="#/book" stub="+">{t("bookAnother")}</Ticket><Ticket className="booking-link" stub="" disabled={auth.busy} onClick={() => void signOut()}>{t("signOut")}</Ticket></div>

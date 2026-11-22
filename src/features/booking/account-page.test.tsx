@@ -47,7 +47,11 @@ it("shows an empty ledger and handles a read failure without mutation", async ()
 it("offers authentication to signed-out visitors without reading private requests", () => {
 	context.session = null;
 	render(<AccountPage />);
+	expect(screen.getByRole("heading", { name: "Sign in" })).toBeDefined();
 	expect(screen.getByRole("button",{name:"Continue with Google"})).toBeDefined();
+	expect(screen.getByRole("button", { name: "Sign in" })).toBeDefined();
+	expect(screen.queryByRole("button", { name: "Create account" })).toBeNull();
+	expect(screen.getByRole("link", { name: "No account? Book a meeting and we'll create one." }).getAttribute("href")).toBe("#/book");
 	expect(listRequests).not.toHaveBeenCalled();
 });
 it("ignores a stale read after the provider switches visitors", async () => {

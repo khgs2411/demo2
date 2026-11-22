@@ -1,15 +1,15 @@
 import { useProductContext } from "@class-kit/react";
 import { useTranslation } from "react-i18next";
+import { getStudioAccess, type StudioAccess } from "../../lib/studio-access";
 import { AccountStep } from "../booking";
 import { Ticket } from "../../ui/ticket";
-import { useStudio, type StudioAccess } from "./use-studio";
+import { useStudio } from "./use-studio";
 import { MeetingList } from "./meeting-list";
 import "./studio.css";
 
 export function StudioPage() {
 	const context = useProductContext();
-	const access = context.loading ? "loading" : !context.session ? "signed_out"
-		: context.productUser?.role === "manager" || context.capabilities.permissions.includes("registrations.manage") ? "manager" : "not_manager";
+	const access = getStudioAccess(context);
 	return <StudioSession key={`${context.session?.user.id ?? "anonymous"}:${access}`} context={context} access={access} />;
 }
 

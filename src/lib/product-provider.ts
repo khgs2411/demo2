@@ -1,1 +1,1 @@
-export { ProductProvider } from "@class-kit/react";
+export { ProductProvider, useProductContext } from "@class-kit/react";

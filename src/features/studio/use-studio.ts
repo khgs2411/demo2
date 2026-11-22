@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
 import type { useProductContext } from "@class-kit/react";
+import type { StudioAccess } from "../../lib/studio-access";
 import { createStudioAdapter, createStudioAuthAdapter } from "./adapter";
 import { transition, type StudioEvent, type StudioState } from "./machine";
 
-export type StudioAccess = "loading" | "signed_out" | "not_manager" | "manager";
 export function useStudio(context: ReturnType<typeof useProductContext>, access: StudioAccess) {
 	const [state, dispatch] = useReducer(transition, access === "loading" ? {step:"loading"} as StudioState : transition({step:"loading"},{type:"access_resolved",access}));
 	const current = useRef(state);
