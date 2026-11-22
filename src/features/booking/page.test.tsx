@@ -1,5 +1,5 @@
 import { webcrypto } from "node:crypto";
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { i18n } from "../../i18n";
 import { BookingPage } from "./page";
@@ -308,8 +308,11 @@ it("does not retry failed Google recovery when the package draft changes", async
 	const back = () => screen.getByRole("button", { name: "Back" }) as HTMLButtonElement;
 	await waitFor(() => expect(back().disabled).toBe(false));
 	fireEvent.click(back());
-	fireEvent.click(screen.getByRole("radio", { name: /Landing or product page/ }));
+	await act(async () => {
+		fireEvent.click(screen.getByRole("radio", { name: /Landing or product page/ }));
+	});
 	expect(fakeAdapter.signInWithGoogle).toHaveBeenCalledOnce();
+	expect(screen.getByRole("radio", { name: /Landing or product page/, checked: true })).toBeDefined();
 });
 
 it("shows a generic notice and the password if the signup receipt names the wrong time", async () => {
