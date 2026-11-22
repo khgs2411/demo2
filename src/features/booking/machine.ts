@@ -17,7 +17,6 @@ type AccountState = {
 	selection: BookingSelection;
 	email?: string;
 	continuation?: SignupContinuation;
-	recovering?: boolean;
 	signupSlot?: BookingSlot;
 };
 export type BookingProfile = { displayName: string; phoneNumber: string; businessName: string; websiteUrl?: string };
@@ -67,6 +66,8 @@ export type FailureReason = "generic" | "redirect_storage";
 export type BookingState =
 	| { step: "choosing_package" }
 	| AccountState | ProfileState | SlotState | SignupState | PasswordState
+	| { step: "recovering_session"; selection: BookingSelection }
+	| { step: "session_recovery_failed"; selection: BookingSelection }
 	| (Omit<SlotState, "step"> & { step: "submitting"; userId: string })
 	| { step: "requested"; selection: BookingSelection; userId: string; registration: BookingRegistration; slot?: BookingSlot; credentials?: BookingCredentials }
 	| { step: "failed"; operation: BookingOperation; reason: FailureReason; resume: AccountState | ProfileState | SlotState };
@@ -78,6 +79,7 @@ export type BookingEvent =
 	| { type: "auth_started"; method: "sign_up" | "sign_in" | "google" }
 	| { type: "auth_redirect_started" }
 	| { type: "session_revoked"; selection?: BookingSelection }
+	| { type: "session_revocation_cleared" }
 	| { type: "account_back" }
 	| { type: "guest_slots_requested" }
 	| { type: "signed_in"; userId: string }
@@ -140,9 +142,21 @@ function afterSignIn(selection: BookingSelection, userId: string, continuation?:
 export function transition(state: BookingState, event: BookingEvent): BookingState {
 	if (event.type === "restarted") return initialState;
 	if (event.type === "session_revoked") {
-		if (state.step === "signing_in" && state.recovering) return state;
+		if (state.step === "recovering_session" || state.step === "session_recovery_failed") return state;
 		const selection = "selection" in state ? state.selection : state.step === "failed" ? state.resume.selection : event.selection;
-		return selection ? { step: "signing_in", selection, recovering: true } : state;
+		return selection ? { step: "recovering_session", selection } : state;
+	}
+	if (state.step === "recovering_session") {
+		return event.type === "operation_failed" && event.operation === "auth"
+			? { step: "session_recovery_failed", selection: state.selection } : state;
+	}
+	if (state.step === "session_recovery_failed") {
+		switch (event.type) {
+			case "session_revocation_cleared": return { step: "needs_account", selection: state.selection };
+			case "account_back": return initialState;
+			case "auth_started": return { step: "signing_in", selection: state.selection };
+			default: return state;
+		}
 	}
 	if (event.type === "unauthenticated" && "selection" in state) {
 		return { step: "needs_account", selection: state.selection };
@@ -152,7 +166,6 @@ export function transition(state: BookingState, event: BookingEvent): BookingSta
 		return event.registration.status === state.registration.status ? state : { ...state, registration: event.registration };
 	}
 	if (event.type === "operation_failed") {
-		if (state.step === "signing_in" && state.recovering && event.operation === "auth") return { step: "needs_account", selection: state.selection };
 		const operation = state.step === "completing_profile" ? "profile"
 			: state.step === "choosing_slot" ? "slots"
 				: state.step === "submitting" ? "registration"

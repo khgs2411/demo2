@@ -33,7 +33,8 @@ export function BookingPage({ packageId }: { packageId?: string }) {
 	const guestSteps = view.step === "signup_details" || (view.step === "choosing_slot" && view.userId === null)
 		|| (view.step === "requested" && !!view.credentials) || view.step === "signup_password";
 	const stepLabels = guestSteps ? ["sPackage", "sSlot", "sProfile"] : ["sPackage", "sAccount", "sProfile", "sSlot"];
-	const isAccount = view.step === "needs_account" || view.step === "signing_up" || view.step === "signing_in";
+	const isAccount = view.step === "needs_account" || view.step === "signing_up" || view.step === "signing_in"
+		|| view.step === "recovering_session" || view.step === "session_recovery_failed";
 	const stepIndex = guestSteps
 		? view.step === "choosing_slot" ? 1 : view.step === "signup_details" ? 2 : 3
 		: view.step === "choosing_package" ? 0 : isAccount ? 1 : view.step === "completing_profile" ? 2 : view.step === "requested" ? 4 : 3;
@@ -46,14 +47,14 @@ export function BookingPage({ packageId }: { packageId?: string }) {
 			<ol className={guestSteps ? "steps guest-steps" : "steps"} aria-label={t("ticketHead")}>{stepLabels.map((key, index) => <li key={key} className={index < stepIndex ? "done" : index === stepIndex ? "now" : ""} aria-current={index === stepIndex ? "step" : undefined}>
 				<span aria-hidden="true">0{index + 1}</span><span>{t(key)}</span>
 			</li>)}</ol>
-			<div className="step shown" key={view.step} aria-busy={view.step === "signing_in" || view.step === "signing_up" || view.step === "submitting" || (view.step === "signup_details" && view.busy) || profileBusy}>
+			<div className="step shown" key={view.step} aria-busy={view.step === "recovering_session" || view.step === "signing_in" || view.step === "signing_up" || view.step === "submitting" || (view.step === "signup_details" && view.busy) || profileBusy}>
 				{context.sessionErrorCode === "session_revoked" && state.step === "failed" ? <p role="status">{t("loading")}</p> : state.step === "failed" ? <><h1 tabIndex={-1}>{t(stepIndex === 1 ? "aTitle" : stepIndex === 2 ? "prTitle" : "sTitle")}</h1>
 					<p role="alert" className="notice error">{t(`messages.${state.reason === "redirect_storage" ? "redirect_storage" : `${state.operation}_failed`}`)}</p>
 					<Ticket stub="↻" onClick={() => flow.send({ type:"retry_requested" })}>{t("retry")}</Ticket></> : <>
 					{view.step === "choosing_package" && <PackageStep selection={draft} onChange={setDraft} onContinue={() => flow.choosePackage(draft)} />}
 					{isAccount && <>
-						{view.continuation?.kind === "book" && <p role="alert" className="notice">{t("signupMessages.account_exists")}</p>}
-						<AccountStep signInOnly email={view.email} emailReadOnly={Boolean(view.continuation)} product={context.product} loading={context.loading} busy={view.step !== "needs_account"}
+						{"continuation" in view && view.continuation?.kind === "book" && <p role="alert" className="notice">{t("signupMessages.account_exists")}</p>}
+						<AccountStep signInOnly email={"email" in view ? view.email : undefined} emailReadOnly={"continuation" in view && Boolean(view.continuation)} product={context.product} loading={context.loading} busy={view.step !== "needs_account" && view.step !== "session_recovery_failed"}
 						onPassword={(...args) => void flow.auth(...args)} onGoogle={() => void flow.google()} onBack={() => flow.send({ type:"account_back" })} />
 					</>}
 					{view.step === "signup_details" && <SignupStep flow={flow} draft={signup} onChange={setSignup} />}

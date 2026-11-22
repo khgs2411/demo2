@@ -14,6 +14,8 @@ export function useBooking(locale: string, draft: BookingSelection) {
 	const locked = useRef(false);
 	const autoSession = useRef(false);
 	const recoveryStarted = useRef(false);
+	const latestDraft = useRef(draft);
+	const wasRevoked = useRef(false);
 	const requestStarted = useRef<BookingState | null>(null);
 	const guestAvailable = context.product?.auth_mode === "open"
 		&& context.product.email_password_enabled && context.product.google_oauth_enabled;
@@ -38,10 +40,13 @@ export function useBooking(locale: string, draft: BookingSelection) {
 		}
 	}, [context.loading, context.session, guestAvailable, state.step, send]);
 	const revoked = context.sessionErrorCode === "session_revoked";
-	const recovering = state.step === "signing_in" && state.recovering ? state : null;
+	const recovering = state.step === "recovering_session" ? state : null;
+	useEffect(() => { latestDraft.current = draft; }, [draft]);
 	useEffect(() => {
-		if (revoked) send({ type: "session_revoked", selection: draft });
-	}, [revoked, draft, send]);
+		if (revoked === wasRevoked.current) return;
+		wasRevoked.current = revoked;
+		send(revoked ? { type: "session_revoked", selection: latestDraft.current } : { type: "session_revocation_cleared" });
+	}, [revoked, send]);
 	useEffect(() => {
 		if (!recovering) {
 			recoveryStarted.current = false;
@@ -114,7 +119,7 @@ export function useBooking(locale: string, draft: BookingSelection) {
 		},
 		google(email = "") {
 			if (current.current.step === "signup_details") send({ type: "signup_auth_chosen", email });
-			if (current.current.step !== "needs_account") return;
+			if (current.current.step !== "needs_account" && current.current.step !== "session_recovery_failed") return;
 			return run({ type: "auth_started", method: "google" }, () => adapter.signInWithGoogle(current.current));
 		},
 		saveProfile(profile: BookingProfile) {

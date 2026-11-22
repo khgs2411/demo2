@@ -55,6 +55,16 @@ const selected: BookingState = { ...ready, selection: { ...selection, slotId: sl
 const submitting: BookingState = { ...selected, step: "submitting", userId: "visitor" };
 const registration = { id: "request-1", classId: slot.id, status: "pending" } as const;
 
+it("does not restart failed Google recovery until the revocation clears", () => {
+	const revoked = { type: "session_revoked", selection } as const;
+	const recovering = transition(selected, revoked);
+	expect(recovering).toEqual({ step: "recovering_session", selection: selected.selection });
+	const failed = transition(recovering, { type: "operation_failed", operation: "auth", reason: "generic" });
+	expect(failed).toEqual({ step: "session_recovery_failed", selection: selected.selection });
+	expect(transition(failed, revoked)).toBe(failed);
+	expect(transition(transition(failed, { type: "session_revocation_cleared" }), revoked)).toEqual(recovering);
+});
+
 describe("booking slot selection and request", () => {
 	it("keeps a null template at the slot step as booking not open", () => {
 		const closed = transition(loading, { type: "booking_not_open" });

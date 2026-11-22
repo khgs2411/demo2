@@ -266,3 +266,16 @@ it("does not submit a saved request when Google returns a different email", asyn
 	await screen.findByLabelText("Full name");
 	expect(fakeAdapter.requestRegistration).not.toHaveBeenCalled();
 });
+
+
+it("does not retry failed Google recovery when the package draft changes", async () => {
+	fakeAdapter.signInWithGoogle.mockResolvedValueOnce({ type: "operation_failed", operation: "auth", reason: "generic" });
+	const page = render(<BookingPage />);
+	context = { ...context, sessionErrorCode: "session_revoked" };
+	page.rerender(<BookingPage />);
+	const back = () => screen.getByRole("button", { name: "Back" }) as HTMLButtonElement;
+	await waitFor(() => expect(back().disabled).toBe(false));
+	fireEvent.click(back());
+	fireEvent.click(screen.getByRole("radio", { name: /Landing or product page/ }));
+	expect(fakeAdapter.signInWithGoogle).toHaveBeenCalledOnce();
+});
