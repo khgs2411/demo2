@@ -16,7 +16,7 @@ export function IssuedPassword({ credentials }: { credentials: BookingCredential
 	}
 	return <>
 		<p>{t("savePassword")}</p>
-		<p><code className="mono" dir="ltr">{credentials.formatted}</code></p>
+		<p><code className="issued-password" dir="ltr">{credentials.formatted}</code></p>
 		<Ticket stub="" className="booking-link" onClick={() => void copy()}>{t("copyPassword")}</Ticket>
 		{copyStatus && <p role="status">{t(copyStatus)}</p>}
 	</>;

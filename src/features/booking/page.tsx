@@ -7,6 +7,7 @@ import { useBooking } from "./use-booking";
 import { readBookingChoice, saveBookingChoice } from "./redirect";
 import { PackageStep } from "./package-step";
 import { AccountStep } from "./account-step";
+import { IssuedPassword } from "./issued-password";
 import { SignupStep } from "./signup-step";
 import { ProfileStep } from "./profile-step";
 import { SlotStep } from "./slot-step";
@@ -28,7 +29,7 @@ export function BookingPage({ packageId }: { packageId?: string }) {
 	const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 	const view = state.step === "failed" ? state.resume : state;
 	const selection = "selection" in view ? view.selection : draft;
-	const stepIndex = view.step === "choosing_package" ? 0 : ["needs_account", "signing_up", "signing_in"].includes(view.step) ? 1 : (view.step === "completing_profile" || view.step === "signup_details") ? 2 : view.step === "requested" ? 4 : 3;
+	const stepIndex = view.step === "choosing_package" ? 0 : ["needs_account", "signing_up", "signing_in"].includes(view.step) ? 1 : (view.step === "completing_profile" || view.step === "signup_details") ? 2 : (view.step === "requested" || view.step === "signup_password") ? 4 : 3;
 	const slot = (view.step === "requested" || view.step === "signup_details") ? view.slot : (view.step === "choosing_slot" || view.step === "submitting") ? view.slots.find(slot => slot.id === view.selection.slotId) : undefined;
 	useEffect(() => { main.current?.querySelector<HTMLElement>("h1")?.focus(); }, [view.step]);
 	useEffect(() => { saveBookingChoice(selection); }, [selection]);
@@ -42,11 +43,20 @@ export function BookingPage({ packageId }: { packageId?: string }) {
 					<p role="alert" className="notice error">{t(`messages.${state.reason === "redirect_storage" ? "redirect_storage" : `${state.operation}_failed`}`)}</p>
 					<Ticket stub="↻" onClick={() => flow.send({ type:"retry_requested" })}>{t("retry")}</Ticket></> : <>
 					{view.step === "choosing_package" && <PackageStep selection={draft} onChange={setDraft} onContinue={() => flow.choosePackage(draft)} />}
-					{(view.step === "needs_account" || view.step === "signing_in" || view.step === "signing_up") && <AccountStep product={context.product} loading={context.loading} busy={view.step !== "needs_account"}
-						onPassword={(...args) => void flow.auth(...args)} onGoogle={() => void flow.google()} onBack={() => flow.send({ type:"restarted" })} />}
+					{(view.step === "needs_account" || view.step === "signing_in" || view.step === "signing_up") && <>
+						{view.continuation?.kind === "book" && <p role="alert" className="notice">{t("signupMessages.account_exists")}</p>}
+						<AccountStep signInOnly email={view.email} product={context.product} loading={context.loading} busy={view.step !== "needs_account"}
+						onPassword={(...args) => void flow.auth(...args)} onGoogle={() => void flow.google()} onBack={() => flow.send({ type:"restarted" })} />
+					</>}
 					{view.step === "signup_details" && <SignupStep flow={flow} draft={signup} onChange={setSignup} />}
 					{view.step === "completing_profile" && <ProfileStep profile={profile} onChange={setProfile} onSubmit={() => void flow.saveProfile(profile)} busy={Boolean(view.saving)} />}
 					{(view.step === "choosing_slot" || view.step === "submitting") && <SlotStep flow={flow} timeZone={timeZone} />}
+					{view.step === "signup_password" && <>
+						<h1 tabIndex={-1}>{t(view.next.step === "choosing_slot" ? "sTitle" : "signIn")}</h1>
+						<p className="lede">{t(view.next.step === "choosing_slot" ? "slotFull" : "signupMessages.sign_in_failed")}</p>
+						<IssuedPassword credentials={view.credentials} />
+						<div className="actions"><Ticket stub="→" onClick={() => flow.send({ type: "password_saved" })}>{t("next")}</Ticket></div>
+					</>}
 					{view.step === "requested" && <RequestedStep flow={flow} />}
 				</>}
 			</div>

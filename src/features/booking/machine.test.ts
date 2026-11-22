@@ -183,3 +183,67 @@ describe("booking transition table", () => {
 		});
 	}
 });
+
+describe("signed-out booking recovery", () => {
+	const terms = { title: "Studio terms", text: "Terms", version: 3, locale: "en" };
+	const credentials = { password: "abcdefghijklmnop", formatted: "abcd efgh ijkl mnop" };
+	const guest = transition(initialState, { ...chosen, guest: true });
+	const slotsLoaded = transition(guest, { type: "slots_loaded", slots: [slot] });
+	const slotChosen = transition(slotsLoaded, { type: "slot_chosen", slotId: slot.id });
+	const form = transition(slotChosen, { type: "signup_opened" });
+	const termsLoaded = transition(form, { type: "terms_loaded", terms });
+	const accepted = transition(termsLoaded, { type: "terms_accepted", accepted: true });
+	const pending = transition(accepted, { type: "signup_started" });
+
+	it("requires acceptance of the displayed terms before sending", () => {
+		expect(transition(termsLoaded, { type: "signup_started" })).toBe(termsLoaded);
+		expect(pending).toMatchObject({ step: "signup_details", busy: true });
+	});
+
+	it("asks again when the terms change, without losing the selected time", () => {
+		const changed = transition(pending, { type: "terms_changed" });
+		expect(changed).toMatchObject({ step: "signup_details", terms: null, busy: false, notice: "terms_changed" });
+		const reloaded = transition(changed, { type: "terms_loaded", terms: { ...terms, version: 4 } });
+		expect(reloaded).toMatchObject({ selection: { slotId: slot.id }, terms: { version: 4 } });
+		expect(transition(reloaded, { type: "signup_started" })).toBe(reloaded);
+	});
+
+	it.each(["rate_limited", "terms_unavailable", "disabled", "not_found", "bad_request"] as const)("makes %s visible without restarting the booking", type => {
+		expect(transition(pending, { type })).toMatchObject({
+			step: "signup_details", busy: false, notice: type, selection: { slotId: slot.id },
+		});
+	});
+
+	it("keeps the selected time and resumes an existing account request after sign-in", () => {
+		const existing = transition(pending, { type: "account_exists", email: "dana@example.com" });
+		expect(existing).toMatchObject({ step: "needs_account", email: "dana@example.com", selection: { slotId: slot.id } });
+		const signing = transition(existing, { type: "auth_started", method: "sign_in" });
+		const resumed = transition(signing, { type: "signed_in", userId: "visitor" });
+		expect(resumed).toMatchObject({ step: "submitting", userId: "visitor", selection: { slotId: slot.id } });
+		expect(transition(resumed, { type: "registration_requested", registration })).toMatchObject({ step: "requested", registration });
+	});
+
+	it("goes back to anonymous time choice if the account was never created", () => {
+		expect(transition(pending, { type: "class_unavailable" })).toMatchObject({
+			step: "choosing_slot", userId: null, notice: "slot_full", selection: { slotId: null },
+		});
+	});
+
+	it("shows the issued password before returning a signed-in client to time choice", () => {
+		const password = transition(pending, { type: "class_unavailable", userId: "visitor", credentials });
+		expect(password).toMatchObject({ step: "signup_password", credentials });
+		const newSlot = transition(password, { type: "password_saved" });
+		expect(newSlot).toMatchObject({ step: "choosing_slot", userId: "visitor", notice: "slot_full", selection: { slotId: null } });
+		expect(newSlot).not.toHaveProperty("credentials");
+	});
+
+	it("shows the password, then resumes an already-created request after sign-in without sending it twice", () => {
+		const password = transition(pending, { type: "sign_in_failed", credentials, registration, email: "dana@example.com" });
+		expect(password).toMatchObject({ step: "signup_password", credentials });
+		const account = transition(password, { type: "password_saved" });
+		expect(account).toMatchObject({ step: "needs_account", email: "dana@example.com" });
+		expect(account).not.toHaveProperty("credentials");
+		const signing = transition(account, { type: "auth_started", method: "sign_in" });
+		expect(transition(signing, { type: "signed_in", userId: "visitor" })).toMatchObject({ step: "requested", registration });
+	});
+});

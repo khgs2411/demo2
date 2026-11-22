@@ -3,11 +3,11 @@ import { useTranslation } from "react-i18next";
 import { Input } from "../../ui/input";
 import { Ticket } from "../../ui/ticket";
 
-export function AccountStep({ product, loading, busy, onPassword, onGoogle, onBack, signInOnly = false, title, description }: {
+export function AccountStep({ product, loading, busy, onPassword, onGoogle, onBack, signInOnly = false, title, description, email }: {
 	product: { auth_mode: string; email_password_enabled: boolean; google_oauth_enabled: boolean } | null;
 	loading: boolean; busy: boolean; onPassword: (method: "signIn" | "signUp", email: string, password: string) => void;
 	onGoogle: () => void; onBack?: () => void;
-	signInOnly?: boolean; title?: string; description?: string;
+	signInOnly?: boolean; title?: string; description?: string; email?: string;
 }) {
 	const { t } = useTranslation("booking");
 	const [signingIn, setSigningIn] = useState(false);
@@ -25,7 +25,7 @@ export function AccountStep({ product, loading, busy, onPassword, onGoogle, onBa
 			{product?.google_oauth_enabled && product.email_password_enabled && <div className="or mono">{t("or")}</div>}
 			{product?.email_password_enabled && <form onSubmit={submit}>
 				<fieldset disabled={busy} className="fields">
-					<Input label={t("email")} name="email" type="email" dir="ltr" autoComplete="email" required />
+					<Input label={t("email")} name="email" defaultValue={email} type="email" dir="ltr" autoComplete="email" required />
 					<div><Input label={t("password")} name="password" type="password" autoComplete={signIn ? "current-password" : "new-password"} minLength={signIn ? undefined : 8} aria-describedby={signIn ? undefined : "password-hint"} required />
 						{!signIn && <span className="hint" id="password-hint">{t("pwHint")}</span>}</div>
 				</fieldset>

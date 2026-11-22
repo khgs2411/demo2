@@ -1,4 +1,4 @@
-import { invokeProductFunction, useProductContext, type ClassKitClient, type ClassSummary, type ProductDocument } from "@class-kit/react";
+import { invokeProductFunction, useProductContext, type ClassKitClient, type ClassRegistrationResponse, type ClassSummary, type ProductDocument } from "@class-kit/react";
 import { getBookingOptions } from "../packages";
 import type { BookingEvent, BookingOperation, BookingSelection, BookingSlot, BookingState, BookingTerms, PackageId, SignupDraft } from "./machine";
 import { clearBookingRedirect, saveBookingRedirect, saveAccountRedirect, clearAccountRedirect } from "./redirect";
@@ -27,6 +27,10 @@ function failure(operation: BookingOperation): BookingEvent {
 
 function apiFailure(operation: BookingOperation, error: { code: string }): BookingEvent {
 	return error.code === "unauthorized" ? { type: "unauthenticated" } : failure(operation);
+}
+
+function mapRegistration(registration: ClassRegistrationResponse["registration"]) {
+	return { id: registration.id, classId: registration.class_id, status: registration.status };
 }
 
 function mapSlot(slot: ClassSummary): BookingSlot {
@@ -109,11 +113,11 @@ export function createBookingAdapter(client: BookingSdk | null, refreshProductCo
 			const response = await invokeProductFunction<{ document: ProductDocument }>(client, "product-documents", {
 				action: "get", document_type: "terms_of_service", locale, fallback_locale: "en",
 			});
-			if (response.error) return { type: "terms_unavailable" };
+			if (response.error) return { type: "terms_load_failed" };
 			const { title, content_markdown: text, version, locale: publishedLocale } = response.data.document;
 			return { type: "terms_loaded", terms: { title, text, version, locale: publishedLocale } };
 		} catch {
-			return { type: "terms_unavailable" };
+			return { type: "terms_load_failed" };
 		}
 	}
 
@@ -121,14 +125,25 @@ export function createBookingAdapter(client: BookingSdk | null, refreshProductCo
 		try {
 			if (!client) return { type: "signup_failed" };
 			const result = await client.classes.registerWithSignup({ classId, ...draft, termsVersion: terms.version, termsLocale: terms.locale });
-			if (result.status !== "registered") return { type: "signup_failed" };
-			const session = await client.auth.getSession();
-			if (!session) return { type: "signup_failed" };
-			const { id, class_id, status } = result.registration;
-			return {
-				type: "signup_registered", userId: session.user.id, registration: { id, classId: class_id, status },
-				credentials: { password: result.password, formatted: result.formatPassword() },
-			};
+			switch (result.status) {
+				case "account_exists": return { type: result.status, email: draft.email.trim().toLowerCase() };
+				case "terms_changed":
+				case "terms_unavailable":
+				case "rate_limited":
+				case "disabled":
+				case "not_found":
+				case "bad_request": return { type: result.status };
+			}
+			if (!("formatPassword" in result) || !result.formatPassword) return { type: "class_unavailable" };
+			const credentials = { password: result.password, formatted: result.formatPassword() };
+			const registration = "registration" in result && result.registration ? mapRegistration(result.registration) : undefined;
+			const email = draft.email.trim().toLowerCase();
+			if (result.status === "sign_in_failed") return { type: result.status, credentials, registration, email };
+			const session = await client.auth.getSession().catch(() => null);
+			if (!session) return { type: "sign_in_failed", credentials, registration, email };
+			return result.status === "registered"
+				? { type: "signup_registered", userId: session.user.id, registration: mapRegistration(result.registration), credentials }
+				: { type: "class_unavailable", userId: session.user.id, credentials };
 		} catch {
 			return { type: "signup_failed" };
 		}

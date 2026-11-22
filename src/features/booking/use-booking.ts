@@ -37,7 +37,7 @@ export function useBooking(locale: string) {
 		return () => { active = false; };
 	}, [adapter, loadingPackage, range, send]);
 
-	const needsTerms = state.step === "signup_details" && !state.terms && !state.notice;
+	const needsTerms = state.step === "signup_details" && state.loadingTerms;
 	useEffect(() => {
 		if (!needsTerms) return;
 		let active = true;
@@ -51,15 +51,24 @@ export function useBooking(locale: string) {
 		send(started);
 		try {
 			const result = await operation();
-			if (mounted.current) for (const event of Array.isArray(result) ? result : [result]) send(event);
+			if (!mounted.current) return;
+			for (const event of Array.isArray(result) ? result : [result]) {
+				send(event);
+				const flow = current.current;
+				if (event.type === "signed_in" && flow.step === "submitting" && flow.selection.slotId) {
+					const resumed = await adapter.requestRegistration(flow.selection.slotId, flow.selection.packageId, range);
+					if (mounted.current) for (const outcome of resumed) send(outcome);
+				}
+			}
 		} finally { locked.current = false; }
 	}
 	return {
 		state, context, adapter, range, send,
 		signup(draft: SignupDraft) {
 			const flow = current.current;
-			if (flow.step !== "signup_details" || !flow.terms) return;
-			return run({ type: "signup_started" }, () => adapter.requestWithSignup(flow.selection.slotId, draft, flow.terms!));
+			if (flow.step !== "signup_details" || !flow.terms || !flow.accepted || flow.busy) return;
+			const terms = flow.terms;
+			return run({ type: "signup_started" }, () => adapter.requestWithSignup(flow.selection.slotId, draft, terms));
 		},
 		choosePackage(selection: BookingSelection) {
 			autoSession.current = true;

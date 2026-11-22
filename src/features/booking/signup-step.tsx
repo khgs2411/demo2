@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Input } from "../../ui/input";
 import { Ticket } from "../../ui/ticket";
@@ -10,12 +9,9 @@ export function SignupStep({ flow, draft, onChange }: {
 	flow: ReturnType<typeof useBooking>; draft: SignupDraft; onChange: (draft: SignupDraft) => void;
 }) {
 	const { t } = useTranslation("booking");
-	const [acceptedTerms, setAcceptedTerms] = useState<string | null>(null);
 	const state = flow.state;
 	if (state.step !== "signup_details") return null;
-	const { busy, notice, terms } = state;
-	const termsKey = terms && `${terms.locale}:${terms.version}`;
-	const accepted = termsKey !== null && acceptedTerms === termsKey;
+	const { busy, notice, terms, accepted, loadingTerms } = state;
 	return <>
 		<h1 tabIndex={-1}>{t("signupTitle")}</h1>
 		<GoogleSignIn busy={busy} onGoogle={() => void flow.google()} />
@@ -32,13 +28,15 @@ export function SignupStep({ flow, draft, onChange }: {
 				{terms ? <>
 					<h2>{terms.title}</h2>
 					<p className="booking-terms" lang={terms.locale} dir="auto">{terms.text}</p>
-					<label><input type="checkbox" required checked={accepted} onChange={event => setAcceptedTerms(event.target.checked ? termsKey : null)} /> {t("acceptTerms")}</label>
-				</> : !notice && <p role="status">{t("loading")}</p>}
+					<label className="check"><input type="checkbox" required checked={accepted} onChange={event => flow.send({ type: "terms_accepted", accepted: event.target.checked })} /> {t("acceptTerms")}</label>
+				</> : loadingTerms && <p role="status">{t("loading")}</p>}
 			</fieldset>
 			<div className="actions">
 				<Ticket stub="03" type="submit" disabled={busy || !accepted}>{t(busy ? "loading" : "send")}</Ticket>
 				<Ticket stub="" className="booking-link" disabled={busy} onClick={() => flow.send({ type: "signup_back" })}>{t("back")}</Ticket>
 			</div>
 		</form>
+		{!terms && !loadingTerms && <Ticket stub="↻" className="booking-link" onClick={() => flow.send({ type: "terms_reload_requested" })}>{t("retry")}</Ticket>}
+		<p className="switch">{t("haveAccount")} <Ticket stub="" className="booking-link" disabled={busy} onClick={() => flow.send({ type: "signup_auth_chosen", email: draft.email })}>{t("signIn")}</Ticket></p>
 	</>;
 }

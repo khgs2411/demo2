@@ -22,24 +22,19 @@ beforeEach(async () => {
 	vi.restoreAllMocks(); vi.clearAllMocks(); sessionStorage.clear();
 	context = makeBookingContext();
 	fakeAdapter.loadSlots.mockReset().mockResolvedValue({ type: "booking_not_open" });
+	fakeAdapter.loadTerms.mockReset().mockResolvedValue({ type: "terms_load_failed" });
 	vi.spyOn(adapterModule, "useBookingContext").mockImplementation(() => context);
 	vi.spyOn(adapterModule, "createBookingAdapter").mockReturnValue(fakeAdapter);
 	await i18n.changeLanguage("en");
 });
 afterEach(cleanup);
 
-it("books from published terms and shows the copyable generated password on the receipt", async () => {
+async function openSignup() {
 	const date = new Date(); date.setDate(date.getDate() - (date.getDay()+6)%7 + 1); date.setHours(9,0,0,0);
 	const slot = { id: "s", startsAt: date.toISOString(), canRegister: true, canCancelRegistration: false, userRegistrationState: null };
 	const terms = { title: "Studio terms", text: "Published studio terms", version: 3, locale: "en" };
 	fakeAdapter.loadSlots.mockResolvedValueOnce({ type: "slots_loaded", slots: [slot] });
 	fakeAdapter.loadTerms.mockResolvedValueOnce({ type: "terms_loaded", terms });
-	fakeAdapter.requestWithSignup.mockResolvedValueOnce({
-		type: "signup_registered", userId: "visitor", registration: { id: "real-request", classId: "s", status: "pending" },
-		credentials: { password: "abcdefghijklmnop", formatted: "abcd efgh ijkl mnop" },
-	});
-	const writeText = vi.fn().mockResolvedValue(undefined);
-	Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText } });
 	render(<BookingPage packageId="system" />);
 	fireEvent.click(screen.getByRole("button", { name: "Continue" }));
 	fireEvent.click(await screen.findByRole("button", { name: /\d{2}:\d{2}/ }));
@@ -49,6 +44,17 @@ it("books from published terms and shows the copyable generated password on the 
 	for (const [label, value] of [["Full name", "Dana"], ["Email", "test@example.com"], ["Phone", "0501234567"]]) {
 		fireEvent.change(screen.getByLabelText(label), { target: { value } });
 	}
+	return terms;
+}
+
+it("books from published terms and shows the copyable generated password on the receipt", async () => {
+	fakeAdapter.requestWithSignup.mockResolvedValueOnce({
+		type: "signup_registered", userId: "visitor", registration: { id: "real-request", classId: "s", status: "pending" },
+		credentials: { password: "abcdefghijklmnop", formatted: "abcd efgh ijkl mnop" },
+	});
+	const writeText = vi.fn().mockResolvedValue(undefined);
+	Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText } });
+	const terms = await openSignup();
 	const send = screen.getByRole("button", { name: "Send request" });
 	expect((send as HTMLButtonElement).disabled).toBe(true);
 	fireEvent.click(screen.getByRole("checkbox", { name: "I accept the terms of service" }));
@@ -64,6 +70,67 @@ it("books from published terms and shows the copyable generated password on the 
 	expect(writeText).toHaveBeenCalledExactlyOnceWith("abcdefghijklmnop");
 	Reflect.deleteProperty(navigator, "clipboard");
 });
+it.each([
+	["rate_limited", "Too many requests."],
+	["disabled", "Booking with a new account is unavailable."],
+	["not_found", "This time is no longer available."],
+	["bad_request", "Check your details"],
+	["terms_unavailable", "The terms of service are unavailable."],
+])("shows a message for %s and preserves the submitted details", async (type, message) => {
+	fakeAdapter.requestWithSignup.mockResolvedValueOnce({ type });
+	await openSignup();
+	fireEvent.click(screen.getByRole("checkbox", { name: "I accept the terms of service" }));
+	fireEvent.submit(screen.getByRole("button", { name: "Send request" }).closest("form")!);
+	expect((await screen.findByRole("alert")).textContent).toContain(message);
+	expect((screen.getByLabelText("Full name") as HTMLInputElement).value).toBe("Dana");
+});
+
+it("reloads changed terms and waits for fresh consent", async () => {
+	fakeAdapter.requestWithSignup.mockResolvedValueOnce({ type: "terms_changed" });
+	await openSignup();
+	fakeAdapter.loadTerms.mockResolvedValueOnce({ type: "terms_loaded", terms: { title: "Studio terms", text: "Updated studio terms", version: 4, locale: "en" } });
+	fireEvent.click(screen.getByRole("checkbox", { name: "I accept the terms of service" }));
+	fireEvent.submit(screen.getByRole("button", { name: "Send request" }).closest("form")!);
+	await screen.findByText("Updated studio terms");
+	expect(screen.getByRole("alert").textContent).toContain("have changed");
+	expect((screen.getByRole("checkbox") as HTMLInputElement).checked).toBe(false);
+	expect((screen.getByRole("button", { name: "Send request" }) as HTMLButtonElement).disabled).toBe(true);
+});
+
+it("prefills an existing account’s email and sends the selected request after password sign-in", async () => {
+	fakeAdapter.requestWithSignup.mockResolvedValueOnce({ type: "account_exists", email: "test@example.com" });
+	fakeAdapter.requestRegistration.mockResolvedValueOnce([{ type: "registration_requested", registration: { id: "real-request", classId: "s", status: "pending" } }]);
+	await openSignup();
+	fireEvent.click(screen.getByRole("checkbox", { name: "I accept the terms of service" }));
+	fireEvent.submit(screen.getByRole("button", { name: "Send request" }).closest("form")!);
+	expect((await screen.findByRole("alert")).textContent).toContain("An account already exists");
+	expect((screen.getByLabelText("Email") as HTMLInputElement).value).toBe("test@example.com");
+	fireEvent.change(screen.getByLabelText("Password"), { target: { value: "test-password" } });
+	fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
+	await screen.findByText("Request sent.");
+	expect(fakeAdapter.requestRegistration).toHaveBeenCalledExactlyOnceWith("s", "system", expect.anything());
+});
+
+it("shows the unavailable time before allowing an anonymous client to choose another", async () => {
+	fakeAdapter.requestWithSignup.mockResolvedValueOnce({ type: "class_unavailable" });
+	await openSignup();
+	fireEvent.click(screen.getByRole("checkbox", { name: "I accept the terms of service" }));
+	fireEvent.submit(screen.getByRole("button", { name: "Send request" }).closest("form")!);
+	expect((await screen.findByRole("alert")).textContent).toContain("pick another time");
+	expect(fakeAdapter.loadSlots).toHaveBeenCalledTimes(2);
+});
+
+it("shows the issued password after failed automatic sign-in and clears it when continuing", async () => {
+	fakeAdapter.requestWithSignup.mockResolvedValueOnce({ type: "sign_in_failed", email: "test@example.com", credentials: { password: "abcDef", formatted: "abcD ef" } });
+	await openSignup();
+	fireEvent.click(screen.getByRole("checkbox", { name: "I accept the terms of service" }));
+	fireEvent.submit(screen.getByRole("button", { name: "Send request" }).closest("form")!);
+	await screen.findByText("abcD ef");
+	fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+	expect((screen.getByLabelText("Email") as HTMLInputElement).value).toBe("test@example.com");
+	expect(screen.queryByText("abcD ef")).toBeNull();
+});
+
 it("hides disallowed auth methods and signup for invite-only products", () => {
 	context.product = { ...context.product!, auth_mode: "invite_only", google_oauth_enabled: false };
 	render(<BookingPage />);

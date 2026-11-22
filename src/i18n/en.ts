@@ -213,6 +213,13 @@ export const en = {
 		copied: "Password copied.",
 		copyFailed: "Could not copy the password. Select and copy it manually.",
 		signupMessages: {
+			terms_changed: "The terms of service have changed. Please read and accept them again.",
+			rate_limited: "Too many requests. Please try again later.",
+			disabled: "Booking with a new account is unavailable. You can sign in to book.",
+			not_found: "This time is no longer available. Please pick another time.",
+			signup_failed: "We could not send your request. Please try again.",
+			account_exists: "An account already exists for this email. Sign in to send your request.",
+			sign_in_failed: "Your account was created. Save the password, then use it to sign in.",
 			terms_unavailable: "The terms of service are unavailable. Please try again later.",
 			bad_request: "Check your details and try again.",
 		},
