@@ -79,17 +79,17 @@ a { color: inherit; }
 .sample-underside { --n: 1; --bg: var(--night); --fg: var(--paper); padding: 32px; background: var(--bg); color: var(--fg); }
 
 .topline { position: fixed; inset-block-start: 0; inset-inline: 0; z-index: 10; display: flex; align-items: center; gap: 12px; padding: 18px var(--gutter); color: var(--fg); background: var(--bg); }
-.mark { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 600; }
+.mark { white-space: nowrap; display: inline-flex; align-items: center; gap: 10px; margin-inline-end: auto; text-decoration: none; font-weight: 600; }
 .mark b { flex: none; inline-size: 30px; block-size: 30px; display: grid; place-items: center; background: var(--fg); color: var(--bg); font: 900 20px/1 var(--font-display); transition: transform var(--duration-flip) var(--ease); }
 .mark:hover b { transform: rotateX(180deg); }
-.links { display: none; gap: 22px; margin-inline-start: auto; font-size: .875rem; }
+.links { display: none; gap: 22px; font-size: .875rem; }
 .links a { text-decoration: none; background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat; transition: background-size var(--duration-link) var(--ease); }
 .links a:hover { background-size: 100% 1px; }
-.account-links { display: flex; gap: 12px; margin-inline-start: auto; font-size: .875rem; white-space: nowrap; }
+.account-links { display: flex; flex-wrap: wrap; justify-content: flex-end; column-gap: 12px; font-size: .875rem; white-space: nowrap; }
 .account-links a { display: flex; align-items: center; min-block-size: 1.5rem; }
 .lang { font: 500 12px/1 var(--font-mono); letter-spacing: .08em; background: none; border: 0; color: inherit; cursor: pointer; text-decoration: underline; text-underline-offset: 4px; }
 [data-desk] { display: none !important; }
-@media (min-width: 900px) { .topline { gap: 22px; } .links { display: flex; } .account-links { margin-inline-start: 0; } [data-desk] { display: inline-flex !important; } }
+@media (min-width: 900px) { .topline { gap: 22px; } .links { display: flex; } [data-desk] { display: inline-flex !important; } }
 
 .ticket-dock { position: fixed; inset-block-end: 14px; inset-inline: 0; display: flex; justify-content: center; z-index: 10; }
 @media (min-width: 900px) { .ticket-dock { display: none; } }

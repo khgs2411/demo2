@@ -8,6 +8,7 @@ export const he = {
 		bookMeeting: "קביעת פגישה",
 		ticketNumber: "№ 01",
 		myRequests: "הבקשות שלי",
+		signIn: "כניסה",
 		myAccount: "החשבון שלי",
 		studio: "סטודיו",
 		brand: "Topsyde Studios",

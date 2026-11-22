@@ -15,10 +15,10 @@ export function Header() {
 			<TextLink href="#/demo">{t("liveDemo")}</TextLink>
 			<TextLink href="#/packages">{t("packages")}</TextLink>
 		</nav>
-		<div className="account-links">
-			<TextLink href="#/account">{context.session ? t("myAccount") : t("booking:signIn")}</TextLink>
+		{!context.loading && <div className="account-links">
+			<TextLink href="#/account">{context.session ? t("myAccount") : t("signIn")}</TextLink>
 			{getStudioAccess(context) === "manager" && <TextLink href="#/studio">{t("studio")}</TextLink>}
-		</div>
+		</div>}
 		<LanguageSwitch />
 		<Ticket href="#/book" stub={t("ticketNumber")} small data-desk>{t("bookMeeting")}</Ticket>
 	</header>;

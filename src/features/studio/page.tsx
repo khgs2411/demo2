@@ -1,5 +1,5 @@
-import { useProductContext } from "@class-kit/react";
 import { useTranslation } from "react-i18next";
+import { useProductContext } from "../../lib/product-provider";
 import { getStudioAccess, type StudioAccess } from "../../lib/studio-access";
 import { AccountStep } from "../booking";
 import { Ticket } from "../../ui/ticket";

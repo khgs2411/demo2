@@ -8,11 +8,25 @@ import { Header } from "./header";
 let context: ReturnType<typeof useBookingContext>;
 vi.mock("@class-kit/react", () => ({ useProductContext: () => context }));
 
+const session: NonNullable<typeof context.session> = {
+	access_token: "test", refresh_token: "test", token_type: "bearer", expires_in: 3600,
+	user: { id: "visitor", app_metadata: {}, user_metadata: {}, aud: "authenticated", created_at: "2026-11-07" },
+};
+
 beforeEach(async () => {
 	context = makeBookingContext();
 	await i18n.changeLanguage("en");
 });
 afterEach(cleanup);
+
+it.each([false, true])("hides account links while loading (session present: %s)", sessionPresent => {
+	context.loading = true;
+	context.session = sessionPresent ? session : null;
+	render(<Header />);
+
+	expect(screen.queryByRole("link", { name: "Sign in" })).toBeNull();
+	expect(screen.queryByRole("link", { name: "My account" })).toBeNull();
+});
 
 it("links signed-out visitors to sign in", () => {
 	render(<Header />);
@@ -27,10 +41,7 @@ it.each([
 	{ role: "manager", permissions: [], studio: true },
 	{ role: "client", permissions: ["registrations.manage"], studio: true },
 ])("links signed-in visitors to their account with Studio access $studio ($role, $permissions)", ({ role, permissions, studio }) => {
-	context.session = {
-		access_token: "test", refresh_token: "test", token_type: "bearer", expires_in: 3600,
-		user: { id: "visitor", app_metadata: {}, user_metadata: {}, aud: "authenticated", created_at: "2026-11-07" },
-	};
+	context.session = session;
 	context.productUser = { role, status: "active" };
 	context.capabilities.permissions = permissions;
 	render(<Header />);

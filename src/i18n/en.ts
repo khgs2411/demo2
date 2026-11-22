@@ -8,6 +8,7 @@ export const en = {
 		bookMeeting: "Book a meeting",
 		ticketNumber: "№ 01",
 		myRequests: "My requests",
+		signIn: "Sign in",
 		myAccount: "My account",
 		studio: "Studio",
 		brand: "Topsyde Studios",
