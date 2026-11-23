@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { git, readBaseFile, readDiff } from "./diff.mjs";
 
 const isTest = path => /^src\/.+\.test\.tsx?$/.test(path);
@@ -16,6 +16,7 @@ const exceptionKey = key => key.startsWith(exceptionsSection + "/");
 const protectedScripts = {
   "package.json": ["check", "check:floor", "test", "build"],
 };
+const gitleaksConfigs = [".gitleaks.toml", ".gitleaksignore"];
 const protectedConfigs = new Set([
   "src/test-setup.ts",
   "tsconfig.json",
@@ -24,6 +25,14 @@ const protectedConfigs = new Set([
 ]);
 
 function checkFloorMechanism(base, files, flag) {
+  for (const path of gitleaksConfigs) {
+    // Gitleaks also reads these files when Git ignores them.
+    if (files.some(file => file.path === path) ||
+        (existsSync(path) && readBaseFile(base, path) === undefined)) {
+      flag(path, "changed Gitleaks configuration");
+    }
+  }
+
   for (const { path, deleted } of files) {
     if (Object.hasOwn(protectedScripts, path)) {
       const previousScripts = JSON.parse(readBaseFile(base, path) ?? "{}").scripts ?? {};
