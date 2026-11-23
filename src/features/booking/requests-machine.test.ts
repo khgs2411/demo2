@@ -31,3 +31,9 @@ it("keeps separate historical requests for one class and respects their cancella
  for (const registrationId of ["rejected", "cancelled", "approved"]) expect(requestsTransition(state,{type:"cancel_started",registrationId})).toBe(state);
  expect(requestsTransition(state,{type:"cancel_started",registrationId:"pending"})).toMatchObject({cancellingId:"pending"});
 });
+
+it("clears the ledger when product access is denied", () => {
+	const state = requestsTransition(ready, { type: "no_access" });
+	expect(state).toEqual({ step: "no_access" });
+	expect(requestsTransition(state, { type: "cancel_started", registrationId: "registration" })).toBe(state);
+});

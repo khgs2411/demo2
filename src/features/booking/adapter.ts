@@ -193,6 +193,7 @@ export function createBookingAdapter(client: BookingSdk | null, refreshProductCo
 		try {
 			if (!client) return { type: "failed" };
 			const response = await client.classes.listMyRegistrations({ range });
+			if (response.error?.code === "forbidden") return { type: "no_access" };
 			if (response.error) return { type: ["unauthorized", "session_revoked"].includes(response.error.code) ? "signed_out" : "failed" };
 			return { type: "loaded", requests: response.data.registrations.map(registration => ({
 				id: registration.classId, name: registration.class.name, startsAt: registration.class.startsAt,

@@ -82,3 +82,16 @@ it("restarts Google sign-in without a visible error when the account session is 
 	expect(adapter.signInWithGoogle).toHaveBeenCalledOnce();
 	expect(screen.queryByRole("alert")).toBeNull();
 });
+
+it.each([
+	["en", "This account does not have access to this product."],
+	["he", "לחשבון הזה אין גישה למוצר הזה."],
+])("explains missing product access in %s without offering a retry", async (language, message) => {
+	await i18n.changeLanguage(language);
+	listRequests.mockResolvedValueOnce({ type: "no_access" });
+	render(<AccountPage />);
+
+	expect((await screen.findByRole("alert")).textContent).toBe(message);
+	expect(screen.queryByRole("button", { name: i18n.t("retry", { ns: "booking" }) })).toBeNull();
+	expect(screen.getByRole("button", { name: i18n.t("signOut", { ns: "booking" }) })).toBeDefined();
+});

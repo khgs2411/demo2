@@ -280,6 +280,7 @@ export const he = {
 		myRequests: "הבקשות שלי",
 		cancel: "ביטול הבקשה",
 		accTitle: "הבקשות שלי",
+		accNoAccess: "לחשבון הזה אין גישה למוצר הזה.",
 		accLede: "כל פגישה שביקשת, והסטטוס שלה.",
 		accSignInLede: "התחברו כדי לצפות בבקשות הפגישה שלכם.",
 		accBookToCreate: "אין לכם חשבון? קבעו פגישה ונפתח לכם חשבון.",

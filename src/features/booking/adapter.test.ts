@@ -279,6 +279,14 @@ describe("my meeting requests", () => {
 		expect(await adapter.cancelRequest("request-1", range)).toEqual([{ type: "cancel_failed" }, { type: "loaded", requests: [] }]);
 		expect(sdk.classes.cancelRegistration).toHaveBeenCalledOnce();
 	});
+	it("reports a forbidden request read as no product access", async () => {
+		sdk.classes.listMyRegistrations.mockResolvedValueOnce({ data: null, error: { code: "forbidden", message: "Active product user access is required." } });
+		expect(await adapter.listRequests(range)).toEqual({ type: "no_access" });
+	});
+	it("keeps a server error retryable", async () => {
+		sdk.classes.listMyRegistrations.mockResolvedValueOnce({ data: null, error: { code: "internal_error", message: "Unavailable" } });
+		expect(await adapter.listRequests(range)).toEqual({ type: "failed" });
+	});
 	it("handles expired sessions and generic reads", async () => {
 		sdk.classes.listMyRegistrations.mockResolvedValueOnce({ data: null, error: { code: "unauthorized", message: "Expired" } });
 		expect(await adapter.listRequests(range)).toEqual({ type: "signed_out" });

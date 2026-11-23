@@ -280,6 +280,7 @@ export const en = {
 		myRequests: "My requests",
 		cancel: "Cancel request",
 		accTitle: "My requests",
+		accNoAccess: "This account does not have access to this product.",
 		accLede: "Every meeting you asked for, and where it stands.",
 		accSignInLede: "Sign in to view your meeting requests.",
 		accBookToCreate: "No account? Book a meeting and we'll create one.",
