@@ -47,6 +47,7 @@ h1 { font: 900 clamp(2.4rem, 1.2rem + 3.6vw, 4.4rem)/.95 var(--font-display); le
 .field input { border: 0; border-block-end: 1.5px solid var(--ink); background: transparent; padding: 6px 0 8px; font-size: 1.1rem; outline: 0; }
 .field input:focus { border-color: var(--coral); }
 .hint { font: 500 12px/1.4 var(--font-mono); opacity: .55; }
+.forgot-link { display: inline-block; margin-block-start: 10px; font-size: .9rem; }
 .or { display: flex; align-items: center; gap: 14px; max-inline-size: 460px; margin-block: 24px; }
 .or::before, .or::after { content: ""; flex: 1; border-block-start: 1px solid var(--rule); }
 .switch { margin-block-start: 18px; font-size: .95rem; }

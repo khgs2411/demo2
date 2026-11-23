@@ -1,7 +1,7 @@
 import { useEffect, useSyncExternalStore } from "react";
 
 export type Route =
-	| { page: "showcase" | "packages" | "admin-sim" | "account" | "studio" }
+	| { page: "showcase" | "packages" | "admin-sim" | "account" | "studio" | "forgot-password" | "reset-password" }
 	| { page: "booking"; packageId?: string };
 
 export function parseHash(hash: string): Route | null {
@@ -12,6 +12,8 @@ export function parseHash(hash: string): Route | null {
 		case "#/book": return { page: "booking" };
 		case "#/studio": return { page: "studio" };
 		case "#/account": return { page: "account" };
+		case "#/forgot-password": return { page: "forgot-password" };
+		case "#/reset-password": return { page: "reset-password" };
 	}
 	const booking = hash.match(/^#\/book\/([^/]+)$/);
 	if (booking) {

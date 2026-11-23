@@ -6,6 +6,8 @@ import { AdminSimPage } from "../features/admin-sim/page";
 import { BookingPage } from "../features/booking/page";
 import { AccountPage } from "../features/booking/account-page";
 import { BookingReturn } from "../features/booking/booking-return";
+import { ForgotPasswordPage } from "../features/booking/password-reset/forgot-page";
+import { ResetPasswordPage } from "../features/booking/password-reset/reset-page";
 import { useRoute } from "./router";
 
 export function Routes() {
@@ -21,6 +23,8 @@ function RoutePage() {
 		case "booking": return <BookingPage key={route.packageId ?? "book"} packageId={route.packageId} />;
 		case "studio": return <StudioPage />;
 		case "account": return <AccountPage />;
+		case "forgot-password": return <ForgotPasswordPage />;
+		case "reset-password": return <ResetPasswordPage />;
 		default: return null;
 	}
 }
