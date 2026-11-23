@@ -1,7 +1,9 @@
 import { existsSync, readFileSync } from "node:fs";
 import { git, readBaseFile, readDiff } from "./diff.mjs";
 
-const isTest = path => /^src\/.+\.test\.tsx?$/.test(path);
+const isTest = path => /\.test\.tsx?$/.test(path) &&
+  !path.startsWith(".worktrees/") &&
+  !/(^|\/)(?:node_modules|\.git)\//.test(path);
 const jsOrTs = /\.[cm]?[jt]sx?$/;
 const sourceOrConfig = /\.(?:css|html|sh|jsonc?|toml|ya?ml|gitignore)$/;
 const commentStart = /\/\/|\/\*|^\s*\*|(?:^|\s)#|<!--/;
