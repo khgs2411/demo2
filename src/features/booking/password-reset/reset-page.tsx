@@ -64,7 +64,7 @@ export function ResetPasswordPage() {
 				{state.step === "choosing" && state.notice && <p className="notice error" role="alert">{t(`completeMessages.${state.notice}`)}</p>}
 				<form onSubmit={event => void submit(event)}>
 					<fieldset className="fields" disabled={state.step === "saving"}>
-						<div><Input label={t("newPassword")} name="password" type="password" autoComplete="new-password" minLength={8} aria-describedby="reset-password-hint" required />
+						<div><Input label={t("newPassword")} name="password" type="password" autoComplete="new-password" aria-describedby="reset-password-hint" required />
 							<span className="hint" id="reset-password-hint">{t("pwHint")}</span></div>
 						<Input label={t("confirmPassword")} name="confirmation" type="password" autoComplete="new-password" required />
 					</fieldset>

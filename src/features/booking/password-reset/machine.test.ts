@@ -44,6 +44,8 @@ describe("reset password machine", () => {
 describe("password bounds", () => {
 	it.each([
 		["short", "short", "too_short"],
+		["😀".repeat(7), "😀".repeat(7), "too_short"],
+		["😀".repeat(8), "😀".repeat(8), null],
 		["a".repeat(73), "a".repeat(73), "too_long"],
 		["ש".repeat(37), "ש".repeat(37), "too_long"],
 		["password1", "password2", "mismatch"],

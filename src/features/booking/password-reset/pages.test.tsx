@@ -35,10 +35,12 @@ beforeEach(async () => {
 });
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
+// Reads the active language's own resource, so a key missing from one locale
+// fails here instead of passing through the Hebrew fallback.
 function message(key: string) {
-	const text = i18n.t(key, { ns: "passwordReset" });
-	expect(text).not.toBe(key);
-	return text;
+	const text: unknown = i18n.getResource(i18n.language, "passwordReset", key);
+	expect(typeof text, `${i18n.language} passwordReset.${key}`).toBe("string");
+	return text as string;
 }
 
 async function renderForgot({ solve = true } = {}) {
@@ -147,6 +149,20 @@ describe("forgot password screen", () => {
 		expect(requestPasswordReset).toHaveBeenCalledOnce();
 	});
 
+	it.each([
+		["en", "rate_limited", "Too many requests. Please try again later."],
+		["he", "rate_limited", "נשלחו יותר מדי בקשות. כדאי לנסות שוב מאוחר יותר."],
+		["en", "turnstile_failed", "Security verification failed. Please try again."],
+		["he", "turnstile_failed", "האימות נכשל. יש לנסות שוב."],
+	] as const)("renders the literal %s text for %s", async (language, refusal, text) => {
+		await i18n.changeLanguage(language);
+		requestPasswordReset.mockResolvedValueOnce(refusal);
+		await renderForgot();
+		fireEvent.change(screen.getByLabelText(language === "en" ? "Email" : "מייל"), { target: { value: "dana@example.com" } });
+		await act(async () => { fireEvent.click(screen.getByRole("button", { name: language === "en" ? "Send link" : "שליחת קישור" })); });
+		expect(screen.getByRole("alert").textContent).toBe(text);
+	});
+
 	it.each(["en", "he"])("has a %s message for every request refusal and stays editable", async language => {
 		await i18n.changeLanguage(language);
 		for (const refusal of requestRefusals) {
@@ -213,6 +229,31 @@ describe("reset password screen", () => {
 			expect(readResetToken()).toBeNull();
 			cleanup();
 		}
+	});
+
+	it.each([
+		["en", "reset_token_invalid", "This link has expired or was already used. Request a new link."],
+		["he", "reset_token_invalid", "תוקף הקישור פג, או שכבר נעשה בו שימוש. יש לבקש קישור חדש."],
+		["en", "too_long", "The password is too long: 72 at most, and Hebrew letters count as two."],
+		["he", "too_long", "הסיסמה ארוכה מדי: עד 72, וכל אות עברית נספרת כשתיים."],
+	] as const)("renders the literal %s text for %s", async (language, code, text) => {
+		await i18n.changeLanguage(language);
+		holdToken();
+		completePasswordReset.mockResolvedValueOnce("reset_token_invalid");
+		render(<ResetPasswordPage />);
+		await act(async () => submitPasswords(code === "too_long" ? "ש".repeat(37) : "new-password"));
+		expect(screen.getByRole("alert").textContent).toBe(text);
+	});
+
+	it.each(["rate_limited", "failed"] as const)("retries with the same token after %s and succeeds", async refusal => {
+		holdToken();
+		completePasswordReset.mockResolvedValueOnce(refusal).mockResolvedValueOnce("password_reset");
+		render(<ResetPasswordPage />);
+		await act(async () => submitPasswords("new-password"));
+		expect(screen.getByRole("alert").textContent).toBe(message(`completeMessages.${refusal}`));
+		await act(async () => submitPasswords("new-password"));
+		expect(completePasswordReset).toHaveBeenNthCalledWith(2, "emailed-token", "new-password");
+		expect(screen.getByRole("heading", { level: 1 }).textContent).toBe(message("doneTitle"));
 	});
 
 	it.each(["en", "he"])("keeps the form and the link in %s after a retryable refusal", async language => {

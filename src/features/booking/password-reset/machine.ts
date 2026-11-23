@@ -49,9 +49,10 @@ export function resetTransition(state: ResetState, event: ResetEvent): ResetStat
 	}
 }
 
-// Supabase Auth refuses passwords over 72 bytes, so Hebrew letters count twice.
+// Matches class-kit-password-reset: the minimum counts code points, the maximum
+// counts UTF-8 bytes (Auth's bcrypt limit), so a Hebrew letter costs two.
 export function passwordProblem(password: string, confirmation: string): PasswordProblem | null {
-	if (password.length < 8) return "too_short";
+	if (Array.from(password).length < 8) return "too_short";
 	if (new TextEncoder().encode(password).length > 72) return "too_long";
 	return password === confirmation ? null : "mismatch";
 }
