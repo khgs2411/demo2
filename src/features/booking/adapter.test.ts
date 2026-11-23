@@ -17,6 +17,8 @@ function mockSdk() {
 			signUp: vi.fn<BookingSdk["auth"]["signUp"]>().mockResolvedValue({ error: null }),
 			signInWithGoogle: vi.fn<BookingSdk["auth"]["signInWithGoogle"]>().mockResolvedValue({ error: null }),
 			signOut: vi.fn<BookingSdk["auth"]["signOut"]>().mockResolvedValue({ error: null }),
+			requestPasswordReset: vi.fn<BookingSdk["auth"]["requestPasswordReset"]>(),
+			completePasswordReset: vi.fn<BookingSdk["auth"]["completePasswordReset"]>(),
 			getSession: vi.fn<BookingSdk["auth"]["getSession"]>().mockResolvedValue({
 				access_token: "test", refresh_token: "test", token_type: "bearer", expires_in: 3600,
 				user: { id: "visitor", app_metadata: {}, user_metadata: {}, aud: "authenticated", created_at: "2026-11-07" },
@@ -373,5 +375,31 @@ describe("booking signup SDK adapter", () => {
 		expect(await adapter.requestWithSignup("slot-1", draft, terms, turnstileToken)).toEqual({
 			type: "sign_in_failed", email: draft.email, credentials, registration: { id: "request-1", classId: "slot-1", status: "pending" },
 		});
+	});
+});
+
+describe("password reset", () => {
+	it("asks for a link that returns to this site's reset route and passes the status through", async () => {
+		sdk.auth.requestPasswordReset.mockResolvedValueOnce({ status: "rate_limited" });
+		window.history.replaceState(null, "", "/#/forgot-password");
+		await expect(adapter.requestPasswordReset("a@b.co", "he", "verified")).resolves.toBe("rate_limited");
+		expect(sdk.auth.requestPasswordReset).toHaveBeenCalledWith({
+			email: "a@b.co", locale: "he", turnstileToken: "verified", resetUrl: `${window.location.origin}/#/reset-password`,
+		});
+	});
+
+	it("completes with the held token and maps a thrown failure to failed", async () => {
+		sdk.auth.completePasswordReset.mockResolvedValueOnce({ status: "password_reset" }).mockRejectedValueOnce(new Error("internal_error"));
+		await expect(adapter.completePasswordReset("token", "new-password")).resolves.toBe("password_reset");
+		expect(sdk.auth.completePasswordReset).toHaveBeenCalledWith({ token: "token", password: "new-password" });
+		await expect(adapter.completePasswordReset("token", "new-password")).resolves.toBe("failed");
+		sdk.auth.requestPasswordReset.mockRejectedValueOnce(new Error("network"));
+		await expect(adapter.requestPasswordReset("a@b.co", "en", "verified")).resolves.toBe("failed");
+	});
+
+	it("fails without a client", async () => {
+		const offline = createBookingAdapter(null, refresh);
+		await expect(offline.requestPasswordReset("a@b.co", "en", "verified")).resolves.toBe("failed");
+		await expect(offline.completePasswordReset("token", "new-password")).resolves.toBe("failed");
 	});
 });

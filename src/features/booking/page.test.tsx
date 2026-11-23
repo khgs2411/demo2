@@ -20,6 +20,8 @@ const fakeAdapter = {
 	loadSlots: vi.fn().mockResolvedValue({ type: "booking_not_open" }),
 	requestRegistration: vi.fn(), listRequests: vi.fn().mockResolvedValue({ type: "loaded", requests: [] }), cancelRequest: vi.fn(),
 	signOut: vi.fn(),
+	requestPasswordReset: vi.fn(),
+	completePasswordReset: vi.fn(),
 };
 beforeEach(async () => {
 	vi.stubEnv("VITE_TURNSTILE_SITE_KEY", "");

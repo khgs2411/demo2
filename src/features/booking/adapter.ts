@@ -3,9 +3,10 @@ import { getBookingOptions } from "../packages";
 import type { BookingEvent, BookingOperation, BookingProfile, BookingSelection, BookingSlot, BookingState, BookingTerms, PackageId, SignupDraft } from "./machine";
 import { clearBookingRedirect, saveBookingAuthRedirect, saveAccountRedirect, clearAccountRedirect } from "./redirect";
 import type { RequestsEvent } from "./requests-machine";
+import type { CompleteOutcome, RequestOutcome } from "./password-reset/machine";
 
 export type BookingSdk = Pick<ClassKitClient, "supabase" | "authStorageKey" | "productKey"> & {
-	auth: Pick<ClassKitClient["auth"], "signIn" | "signUp" | "getSession" | "signInWithGoogle" | "signOut">;
+	auth: Pick<ClassKitClient["auth"], "signIn" | "signUp" | "getSession" | "signInWithGoogle" | "signOut" | "requestPasswordReset" | "completePasswordReset">;
 	profile: Pick<ClassKitClient["profile"], "get" | "update">;
 	classes: Pick<ClassKitClient["classes"], "list" | "listMyRegistrations" | "register" | "registerWithSignup" | "cancelRegistration">;
 };
@@ -221,6 +222,24 @@ export function createBookingAdapter(client: BookingSdk | null, refreshProductCo
 		try { return client ? !(await client.auth.signOut()).error : false; } catch { return false; }
 	}
 
+	async function requestPasswordReset(email: string, locale: string, turnstileToken: string): Promise<RequestOutcome> {
+		try {
+			if (!client) return "failed";
+			const resetUrl = `${window.location.origin}${window.location.pathname}#/reset-password`;
+			return (await client.auth.requestPasswordReset({ email, locale, turnstileToken, resetUrl })).status;
+		} catch {
+			return "failed";
+		}
+	}
+
+	async function completePasswordReset(token: string, password: string): Promise<CompleteOutcome> {
+		try {
+			return client ? (await client.auth.completePasswordReset({ token, password })).status : "failed";
+		} catch {
+			return "failed";
+		}
+	}
+
 	return {
 		signIn: (email: string, password: string) => passwordAuth("signIn", email, password),
 		signUp: (email: string, password: string) => passwordAuth("signUp", email, password),
@@ -234,5 +253,7 @@ export function createBookingAdapter(client: BookingSdk | null, refreshProductCo
 		listRequests,
 		cancelRequest,
 		signOut,
+		requestPasswordReset,
+		completePasswordReset,
 	};
 }
