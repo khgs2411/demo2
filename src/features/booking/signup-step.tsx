@@ -4,16 +4,18 @@ import { Ticket } from "../../ui/ticket";
 import { GoogleSignIn } from "./account-step";
 import type { SignupDraft } from "./machine";
 import type { useBooking } from "./use-booking";
+import { useTurnstile } from "./use-turnstile";
 
 export function SignupStep({ flow, draft, onChange }: {
 	flow: ReturnType<typeof useBooking>; draft: SignupDraft; onChange: (draft: SignupDraft) => void;
 }) {
-	const { t } = useTranslation("booking");
+	const { t, i18n } = useTranslation("booking");
+	const turnstile = useTurnstile(i18n.language);
 	const state = flow.state;
 	if (state.step !== "signup_details" && state.step !== "sending") return null;
 	const busy = state.step === "sending";
 	const { terms } = state;
-	const notice = busy ? null : state.notice;
+	const notice = busy ? null : state.notice ?? (turnstile.unavailable ? "turnstile_unavailable" : null);
 	const accepted = busy || state.accepted;
 	const loadingTerms = !busy && state.loadingTerms;
 	return <>
@@ -23,7 +25,12 @@ export function SignupStep({ flow, draft, onChange }: {
 		{notice && <p className="notice error" role="alert">{t(`signupMessages.${notice === "terms_unavailable" && terms ? "terms_restored" : notice}`)}</p>}
 		<form onSubmit={event => {
 			event.preventDefault();
-			if (accepted && !busy) void flow.signup(draft);
+			const token = turnstile.getToken();
+			if (!accepted || busy || !token) return;
+			const pending = flow.signup(draft, token);
+			if (!pending) return;
+			turnstile.clearToken();
+			void pending.then(retry => { if (retry) turnstile.reset(); });
 		}}>
 			<fieldset className="fields" disabled={busy}>
 				<Input label={t("name")} value={draft.displayName} onChange={event => onChange({ ...draft, displayName: event.target.value })} autoComplete="name" maxLength={200} required />
@@ -35,8 +42,9 @@ export function SignupStep({ flow, draft, onChange }: {
 					<label className="check"><input type="checkbox" required checked={accepted} onChange={event => flow.send({ type: "terms_accepted", accepted: event.target.checked })} /> {t("acceptTerms")}</label>
 				</> : loadingTerms && <p role="status">{t("loading")}</p>}
 			</fieldset>
+			<div ref={turnstile.container} />
 			<div className="actions">
-				<Ticket stub="03" type="submit" disabled={busy || !accepted}>{t(busy ? "loading" : "send")}</Ticket>
+				<Ticket stub="03" type="submit" disabled={busy || !accepted || !turnstile.verified}>{t(busy ? "loading" : "send")}</Ticket>
 				<Ticket stub="" className="booking-link" disabled={busy} onClick={() => flow.send({ type: "signup_back" })}>{t("back")}</Ticket>
 			</div>
 		</form>

@@ -213,6 +213,8 @@ export const en = {
 		copied: "Password copied.",
 		copyFailed: "Could not copy the password. Select and copy it manually.",
 		signupMessages: {
+			turnstile_failed: "Security verification failed. Please try again.",
+			turnstile_unavailable: "Security verification is unavailable. Please try again shortly.",
 			terms_restored: "The previous terms were unavailable. Please read and accept the current terms.",
 			terms_changed: "The terms of service have changed. Please read and accept them again.",
 			rate_limited: "Too many requests. Please try again later.",
