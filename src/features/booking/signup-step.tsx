@@ -15,7 +15,7 @@ export function SignupStep({ flow, draft, onChange }: {
 	if (state.step !== "signup_details" && state.step !== "sending") return null;
 	const busy = state.step === "sending";
 	const { terms } = state;
-	const notice = busy ? null : state.notice ?? (turnstile.unavailable ? "turnstile_unavailable" : null);
+	const notice = busy ? null : state.notice ?? (turnstile.status === "unavailable" ? "turnstile_unavailable" : null);
 	const accepted = busy || state.accepted;
 	const loadingTerms = !busy && state.loadingTerms;
 	return <>
@@ -27,10 +27,8 @@ export function SignupStep({ flow, draft, onChange }: {
 			event.preventDefault();
 			const token = turnstile.getToken();
 			if (!accepted || busy || !token) return;
-			const pending = flow.signup(draft, token);
-			if (!pending) return;
-			turnstile.clearToken();
-			void pending.then(retry => { if (retry) turnstile.reset(); });
+			turnstile.reset();
+			void flow.signup(draft, token);
 		}}>
 			<fieldset className="fields" disabled={busy}>
 				<Input label={t("name")} value={draft.displayName} onChange={event => onChange({ ...draft, displayName: event.target.value })} autoComplete="name" maxLength={200} required />
@@ -44,7 +42,7 @@ export function SignupStep({ flow, draft, onChange }: {
 			</fieldset>
 			<div ref={turnstile.container} />
 			<div className="actions">
-				<Ticket stub="03" type="submit" disabled={busy || !accepted || !turnstile.verified}>{t(busy ? "loading" : "send")}</Ticket>
+				<Ticket stub="03" type="submit" disabled={busy || !accepted || turnstile.status !== "verified"}>{t(busy ? "loading" : "send")}</Ticket>
 				<Ticket stub="" className="booking-link" disabled={busy} onClick={() => flow.send({ type: "signup_back" })}>{t("back")}</Ticket>
 			</div>
 		</form>

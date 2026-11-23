@@ -121,8 +121,7 @@ export function useBooking(locale: string, draft: BookingSelection) {
 			const flow = current.current;
 			if (flow.step !== "signup_details" || !flow.terms || !flow.accepted) return;
 			const terms = flow.terms;
-			return run({ type: "signup_started" }, () => adapter.requestWithSignup(flow.selection.slotId, draft, terms, turnstileToken))
-				?.then(() => current.current.step === "signup_details");
+			return run({ type: "signup_started" }, () => adapter.requestWithSignup(flow.selection.slotId, draft, terms, turnstileToken));
 		},
 		choosePackage(selection: BookingSelection) {
 			const guest = !context.loading && !context.session && guestAvailable;

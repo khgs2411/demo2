@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useLayoutEffect, useReducer, useRef, useState } from "react";
 
 const scriptUrl = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
 const alwaysPassSiteKey = "1x00000000000000000000AA";
@@ -8,10 +8,9 @@ type Turnstile = {
 		sitekey: string;
 		appearance: "interaction-only";
 		theme: "light";
-		size: "compact";
+		size: "flexible";
 		language: string;
 		"response-field": false;
-		"refresh-expired": "manual";
 		callback: (token: string) => void;
 		"expired-callback": () => void;
 		"error-callback": () => void;
@@ -20,77 +19,108 @@ type Turnstile = {
 	remove(widgetId: string): void;
 };
 
-export function useTurnstile(language: string) {
-	const siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY || (import.meta.env.DEV ? alwaysPassSiteKey : undefined);
-	const container = useRef<HTMLDivElement>(null);
-	const widget = useRef<{ api: Turnstile; id: string } | null>(null);
-	const latestToken = useRef<string | null>(null);
-	const [verified, setVerified] = useState(false);
-	const [unavailable, setUnavailable] = useState(!siteKey);
+type TurnstileState =
+	| { status: "loading" }
+	| { status: "verified"; token: string }
+	| { status: "unavailable" };
 
-	// Expiry can arrive before React commits the disabled submit button.
-	function updateToken(token: string | null) {
-		latestToken.current = token;
-		setVerified(Boolean(token));
+type TurnstileEvent =
+	| { type: "render_started" | "reset_requested" | "expired" | "failed" }
+	| { type: "verified"; token: string };
+
+const initialState: TurnstileState = { status: "loading" };
+
+function transition(state: TurnstileState, event: TurnstileEvent): TurnstileState {
+	switch (event.type) {
+		case "render_started":
+		case "reset_requested": return initialState;
+		case "expired": return state.status === "verified" ? initialState : state;
+		case "failed": return { status: "unavailable" };
+		case "verified": return { status: "verified", token: event.token };
 	}
+}
 
-	function reset() {
-		updateToken(null);
-		const current = widget.current;
-		if (current) current.api.reset(current.id);
-	}
+function getApi() {
+	return (window as Window & { turnstile?: Turnstile }).turnstile;
+}
 
-	useEffect(() => {
-		const element = container.current;
-		if (!siteKey || !element) return;
-		let active = true;
-		let script: HTMLScriptElement | undefined;
-		const getApi = () => (window as Window & { turnstile?: Turnstile }).turnstile;
-		const fail = () => {
-			if (!active) return;
-			updateToken(null);
-			setUnavailable(true);
-		};
-		const render = () => {
-			const api = getApi();
-			if (!active) return;
-			if (!api) return fail();
-			try {
-				const id = api.render(element, {
-					sitekey: siteKey, appearance: "interaction-only", theme: "light", size: "compact", language,
-					"response-field": false, "refresh-expired": "manual",
-					callback: token => {
-						if (!active) return;
-						setUnavailable(false);
-						updateToken(token);
-					},
-					"expired-callback": () => { if (active) reset(); },
-					"error-callback": fail,
-				});
-				widget.current = { api, id };
-			} catch {
-				fail();
-			}
-		};
+let loadingApi: Promise<Turnstile> | undefined;
 
-		updateToken(null);
-		if (getApi()) render();
-		else {
-			script = document.createElement("script");
+function loadApi(): Promise<Turnstile> {
+	const api = getApi();
+	if (api) return Promise.resolve(api);
+	if (loadingApi) return loadingApi;
+
+	const existing = document.querySelector<HTMLScriptElement>(`script[src="${scriptUrl}"]`);
+	const script = existing ?? document.createElement("script");
+	loadingApi = new Promise<Turnstile>((resolve, reject) => {
+		script.addEventListener("load", () => {
+			const loaded = getApi();
+			if (loaded) resolve(loaded);
+			else reject(new Error("turnstile:api_missing"));
+		}, { once: true });
+		script.addEventListener("error", () => reject(new Error("turnstile:script_failed")), { once: true });
+		if (!existing) {
 			script.src = scriptUrl;
 			script.async = true;
-			script.onload = render;
-			script.onerror = fail;
 			document.head.append(script);
 		}
+	}).finally(() => {
+		script.remove();
+		loadingApi = undefined;
+	});
+	return loadingApi;
+}
+
+export function useTurnstile(language: string) {
+	const siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY || (import.meta.env.DEV ? alwaysPassSiteKey : undefined);
+	const [container, setContainer] = useState<HTMLDivElement | null>(null);
+	const widget = useRef<{ api: Turnstile; id: string } | null>(null);
+	const [state, dispatch] = useReducer(transition, initialState);
+	const current = useRef(state);
+
+	// Expiry can arrive before React commits the disabled submit button.
+	const send = useCallback((event: TurnstileEvent) => {
+		current.current = transition(current.current, event);
+		dispatch(event);
+	}, []);
+
+	useLayoutEffect(() => {
+		send({ type: "render_started" });
+		if (!container) return;
+		if (!siteKey) {
+			send({ type: "failed" });
+			return;
+		}
+		let active = true;
+		const fail = () => { if (active) send({ type: "failed" }); };
+		void loadApi().then(api => {
+			if (!active) return;
+			const id = api.render(container, {
+				sitekey: siteKey, appearance: "interaction-only", theme: "light", size: "flexible", language,
+				"response-field": false,
+				callback: token => { if (active) send({ type: "verified", token }); },
+				"expired-callback": () => { if (active) send({ type: "expired" }); },
+				"error-callback": fail,
+			});
+			widget.current = { api, id };
+		}).catch(fail);
 		return () => {
 			active = false;
-			script?.remove();
-			const current = widget.current;
+			const rendered = widget.current;
 			widget.current = null;
-			if (current) current.api.remove(current.id);
+			if (rendered) rendered.api.remove(rendered.id);
 		};
-	}, [language, siteKey]);
+	}, [container, language, send, siteKey]);
 
-	return { container, verified, unavailable, reset, getToken: () => latestToken.current, clearToken: () => updateToken(null) };
+	return {
+		container: setContainer,
+		status: state.status,
+		getToken() { return current.current.status === "verified" ? current.current.token : null; },
+		reset() {
+			send({ type: "reset_requested" });
+			const rendered = widget.current;
+			if (rendered) rendered.api.reset(rendered.id);
+		},
+	};
 }

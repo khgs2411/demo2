@@ -38,14 +38,14 @@ afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.unstubAllEnvs(); });
 const turnstileToken = "verified-token";
 const turnstileScript = () => document.querySelector<HTMLScriptElement>('script[src^="https://challenges.cloudflare.com/turnstile/"]');
 
-async function openSignup({ solve = true } = {}) {
+async function enterSignup(pendingScript: HTMLScriptElement | null = null) {
 	const date = new Date(); date.setDate(date.getDate() - (date.getDay()+6)%7 + 1); date.setHours(9,0,0,0);
 	const slot = { id: "s", startsAt: date.toISOString(), canRegister: true, canCancelRegistration: false, userRegistrationState: null };
 	const terms = { title: "Studio terms", text: "Published studio terms", version: 3, locale: "en" };
 	fakeAdapter.loadSlots.mockResolvedValueOnce({ type: "slots_loaded", slots: [slot] });
 	fakeAdapter.loadTerms.mockResolvedValueOnce({ type: "terms_loaded", terms });
-	render(<BookingPage packageId="system" />);
-	expect(turnstileScript()).toBeNull();
+	const page = render(<BookingPage packageId="system" />);
+	expect(turnstileScript()).toBe(pendingScript);
 	fireEvent.click(screen.getByRole("button", { name: "Continue" }));
 	fireEvent.click(await screen.findByRole("button", { name: /\d{2}:\d{2}/ }));
 	fireEvent.click(screen.getByRole("button", { name: "Continue" }));
@@ -54,23 +54,87 @@ async function openSignup({ solve = true } = {}) {
 	for (const [label, value] of [["Full name", "Dana"], ["Email", "test@example.com"], ["Phone", "0501234567"]]) {
 		fireEvent.change(screen.getByLabelText(label), { target: { value } });
 	}
-	const script = turnstileScript();
-	expect(script?.src).toBe("https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit");
+	return { terms, slot, page };
+}
+
+function mockTurnstile() {
 	const turnstile = {
-		render: vi.fn<(container: HTMLElement, options: { callback: (token: string) => void; "expired-callback": () => void }) => string>().mockReturnValue("widget"),
+		render: vi.fn<(container: HTMLElement, options: {
+			callback: (token: string) => void;
+			"expired-callback": () => void;
+			"error-callback": () => void;
+		}) => string>().mockReturnValue("widget"),
 		reset: vi.fn(),
 		remove: vi.fn(),
 	};
 	vi.stubGlobal("turnstile", turnstile);
-	fireEvent.load(script!);
+	return turnstile;
+}
+
+async function openSignup({ solve = true } = {}) {
+	const { terms, slot } = await enterSignup();
+	const script = turnstileScript();
+	expect(script?.src).toBe("https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit");
+	const turnstile = mockTurnstile();
+	await act(async () => { fireEvent.load(script!); });
 	expect(turnstile.render).toHaveBeenCalledExactlyOnceWith(expect.any(HTMLElement), expect.objectContaining({
-		appearance: "interaction-only", theme: "light", sitekey: "1x00000000000000000000AA", language: "en",
+		appearance: "interaction-only", theme: "light", size: "flexible", sitekey: "1x00000000000000000000AA", language: "en",
 	}));
 	const [container, options] = turnstile.render.mock.calls[0];
 	expect(container.nextElementSibling?.querySelector('button[type="submit"]')).toBe(screen.getByRole("button", { name: "Send request" }));
 	if (solve) act(() => options.callback(turnstileToken));
 	return { terms, slot, turnstile, options };
 }
+
+it("disables submit when the Turnstile script fails and retries on a new signup mount", async () => {
+	const { page } = await enterSignup();
+	fireEvent.click(screen.getByRole("checkbox", { name: "I accept the terms of service" }));
+	await act(async () => { fireEvent.error(turnstileScript()!); });
+	expect(screen.getByRole("alert").textContent).toContain("Security verification is unavailable.");
+	expect(screen.getByRole<HTMLButtonElement>("button", { name: "Send request" }).disabled).toBe(true);
+	page.unmount();
+	const { options } = await openSignup({ solve: false });
+	fireEvent.click(screen.getByRole("checkbox", { name: "I accept the terms of service" }));
+	act(() => options.callback(turnstileToken));
+	expect(screen.queryByRole("alert")).toBeNull();
+	expect(screen.getByRole<HTMLButtonElement>("button", { name: "Send request" }).disabled).toBe(false);
+});
+
+it("clears the widget unavailable alert and enables submit when verification recovers", async () => {
+	const { options } = await openSignup();
+	fireEvent.click(screen.getByRole("checkbox", { name: "I accept the terms of service" }));
+	const send = screen.getByRole<HTMLButtonElement>("button", { name: "Send request" });
+	act(() => options["error-callback"]());
+	expect(screen.getByRole("alert").textContent).toContain("Security verification is unavailable.");
+	expect(send.disabled).toBe(true);
+	act(() => options.callback(turnstileToken));
+	expect(screen.queryByRole("alert")).toBeNull();
+	expect(send.disabled).toBe(false);
+});
+
+it("reuses the pending script if signup unmounts and remounts before it loads", async () => {
+	const { page } = await enterSignup();
+	const script = turnstileScript();
+	expect(script).not.toBeNull();
+	page.unmount();
+	expect(turnstileScript()).toBe(script);
+	const { page: remountedPage } = await enterSignup(script);
+	expect(document.querySelectorAll(`script[src="${script!.src}"]`)).toHaveLength(1);
+	const turnstile = mockTurnstile();
+	await act(async () => { fireEvent.load(script!); });
+	expect(turnstile.render).toHaveBeenCalledTimes(1);
+	expect(remountedPage.container.contains(turnstile.render.mock.calls[0][0])).toBe(true);
+});
+
+it("clears a stale unavailable alert when rendering the widget in another language", async () => {
+	const { turnstile, options } = await openSignup();
+	act(() => options["error-callback"]());
+	expect(screen.getByRole("alert").textContent).toContain("Security verification is unavailable.");
+	await act(async () => { await i18n.changeLanguage("he"); });
+	expect(turnstile.render).toHaveBeenLastCalledWith(expect.any(HTMLElement), expect.objectContaining({ language: "he" }));
+	expect(screen.queryByRole("alert")).toBeNull();
+	expect(screen.getByRole<HTMLButtonElement>("button", { name: i18n.t("booking:send") }).disabled).toBe(true);
+});
 
 it("books from published terms and shows the copyable generated password on the receipt", async () => {
 	fakeAdapter.requestWithSignup.mockResolvedValueOnce({
@@ -89,6 +153,7 @@ it("books from published terms and shows the copyable generated password on the 
 	act(() => options.callback(turnstileToken));
 	expect((send as HTMLButtonElement).disabled).toBe(false);
 	fireEvent.submit(send.closest("form")!);
+	expect(turnstile.reset).toHaveBeenCalledExactlyOnceWith("widget");
 	fireEvent.submit(send.closest("form")!);
 	await screen.findByText("Request sent.");
 	expect(fakeAdapter.requestWithSignup).toHaveBeenCalledExactlyOnceWith("s", { displayName: "Dana", email: "test@example.com", phone: "0501234567" }, terms, turnstileToken);
@@ -129,7 +194,7 @@ it.each([
 	}
 });
 
-it("drops an expired token and resets the mounted widget", async () => {
+it("drops an expired token even if expiry and submit land together", async () => {
 	fakeAdapter.requestWithSignup.mockResolvedValueOnce({ type: "signup_failed" });
 	const { turnstile, options } = await openSignup();
 	fireEvent.click(screen.getByRole("checkbox", { name: "I accept the terms of service" }));
@@ -139,7 +204,7 @@ it("drops an expired token and resets the mounted widget", async () => {
 		options["expired-callback"]();
 		fireEvent.submit(send.closest("form")!);
 	});
-	expect(turnstile.reset).toHaveBeenCalledExactlyOnceWith("widget");
+	expect(turnstile.reset).not.toHaveBeenCalled();
 	expect(send.disabled).toBe(true);
 	expect(fakeAdapter.requestWithSignup).not.toHaveBeenCalled();
 	expect((screen.getByLabelText("Full name") as HTMLInputElement).value).toBe("Dana");
