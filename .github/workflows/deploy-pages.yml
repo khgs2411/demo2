@@ -30,6 +30,10 @@ jobs:
         run: |
           node -e 'const source = require("./package.json").dependencies["@class-kit/react"]; if (!/^git\+ssh:\/\/git@github\.com\/khgs2411\/class-kit-sdk\.git#v\d+\.\d+\.\d+$/.test(source)) { console.error("demo2 must pin a remote SDK release."); process.exit(1); }'
 
+      - name: Verify Turnstile site key
+        run: |
+          test -n "$VITE_TURNSTILE_SITE_KEY" || { echo "::error::Set the VITE_TURNSTILE_SITE_KEY repository variable before deploying demo2."; exit 1; }
+
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
