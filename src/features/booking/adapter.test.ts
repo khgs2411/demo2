@@ -411,3 +411,29 @@ describe("password reset", () => {
 		await expect(offline.completePasswordReset("token", "new-password")).resolves.toBe("failed");
 	});
 });
+
+describe("account details", () => {
+	it("updates only the two contact fields through the profile API", async () => {
+		sdk.profile.update.mockResolvedValueOnce({ data: {
+			profile: { customer_id: "customer-1", user_id: "visitor", display_name: profile.displayName, contact_email: null, phone_number: profile.phoneNumber },
+			product_user: { customer_id: "customer-1", user_id: "visitor", metadata: { business_name: profile.businessName } },
+		}, error: null });
+		expect(await adapter.saveAccountDetails(profile)).toEqual({ type: "saved" });
+		expect(sdk.profile.update).toHaveBeenCalledExactlyOnceWith({
+			displayName: profile.displayName, phoneNumber: profile.phoneNumber,
+		});
+	});
+
+	it.each([
+		["unauthorized", "signed_out"], ["session_revoked", "signed_out"],
+		["forbidden", "save_failed"], ["internal_error", "save_failed"],
+	] as const)("maps a %s update to %s", async (code, type) => {
+		sdk.profile.update.mockResolvedValueOnce({ data: null, error: { code, message: "Update failed" } });
+		expect(await adapter.saveAccountDetails(profile)).toEqual({ type });
+	});
+
+	it("reports a rejected update as a save failure", async () => {
+		sdk.profile.update.mockRejectedValueOnce(new Error("offline"));
+		expect(await adapter.saveAccountDetails(profile)).toEqual({ type: "save_failed" });
+	});
+});

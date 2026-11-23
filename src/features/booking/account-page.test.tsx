@@ -8,15 +8,17 @@ import { makeBookingContext } from "./context-fixture";
 vi.mock("@class-kit/react", () => ({ useProductContext: vi.fn() }));
 let context: ReturnType<typeof adapterModule.useBookingContext>;
 const request = { id:"s", name:"Business meeting", startsAt:"2026-11-10T09:00:00Z", canRegister:false, canCancelRegistration:true, userRegistrationState:{id:"r",status:"pending" as const} };
+const profile = { displayName: "Maya Cohen", phoneNumber: "0501234567", businessName: "Studio" };
 const listRequests = vi.fn();
 const cancelRequest = vi.fn();
-const adapter = { loadProfile:vi.fn(), loadTerms:vi.fn(), requestWithSignup:vi.fn(), signIn:vi.fn(), signUp:vi.fn(), signInWithGoogle:vi.fn(), saveProfile:vi.fn(),loadSlots:vi.fn(),requestRegistration:vi.fn(),listRequests,cancelRequest,signOut:vi.fn(),requestPasswordReset:vi.fn(),completePasswordReset:vi.fn() };
+const adapter = { loadProfile:vi.fn(), saveAccountDetails:vi.fn(), loadTerms:vi.fn(), requestWithSignup:vi.fn(), signIn:vi.fn(), signUp:vi.fn(), signInWithGoogle:vi.fn(), saveProfile:vi.fn(),loadSlots:vi.fn(),requestRegistration:vi.fn(),listRequests,cancelRequest,signOut:vi.fn(),requestPasswordReset:vi.fn(),completePasswordReset:vi.fn() };
 beforeEach(async () => {
 	vi.restoreAllMocks(); vi.resetAllMocks();
 	context = { ...makeBookingContext(), session:{access_token:"test",refresh_token:"test",token_type:"bearer",expires_in:3600,user:{id:"visitor",app_metadata:{},user_metadata:{},aud:"authenticated",created_at:"2026-11-07"}} };
 	vi.spyOn(adapterModule,"useBookingContext").mockImplementation(() => context);
 	vi.spyOn(adapterModule,"createBookingAdapter").mockReturnValue(adapter);
 	listRequests.mockResolvedValue({type:"loaded",requests:[request]});
+	adapter.loadProfile.mockResolvedValue({ type: "profile_loaded", profile });
 	await i18n.changeLanguage("en");
 });
 afterEach(cleanup);
@@ -92,6 +94,88 @@ it.each([
 	render(<AccountPage />);
 
 	expect((await screen.findByRole("alert")).textContent).toBe(message);
+	expect(screen.queryByRole("textbox")).toBeNull();
+	expect(screen.queryByRole("link")).toBeNull();
+	expect(screen.getAllByRole("button")).toHaveLength(1);
 	expect(screen.queryByRole("button", { name: i18n.t("retry", { ns: "booking" }) })).toBeNull();
 	expect(screen.getByRole("button", { name: i18n.t("signOut", { ns: "booking" }) })).toBeDefined();
+});
+
+it("loads and saves the signed-in user's required contact fields beside the ledger", async () => {
+	adapter.saveAccountDetails.mockResolvedValueOnce({ type: "saved" });
+	render(<AccountPage />);
+
+	const name = await screen.findByLabelText(i18n.t("name", { ns: "booking" }));
+	const phone = screen.getByLabelText(i18n.t("phone", { ns: "booking" }));
+	expect(screen.getByRole("heading", { name: "Your details" })).toBeDefined();
+	expect(screen.getByText("Business meeting")).toBeDefined();
+	expect(adapter.loadProfile).toHaveBeenCalledWith("visitor");
+	expect(name).toHaveProperty("value", profile.displayName);
+	expect(name).toHaveProperty("autocomplete", "name");
+	expect(name).toHaveProperty("required", true);
+	expect(phone).toHaveProperty("value", profile.phoneNumber);
+	expect(phone).toHaveProperty("autocomplete", "tel");
+	expect(phone).toHaveProperty("dir", "ltr");
+	expect(phone).toHaveProperty("required", true);
+
+	fireEvent.change(name, { target: { value: "Maya Levi" } });
+	fireEvent.change(phone, { target: { value: "0507654321" } });
+	fireEvent.click(screen.getByRole("button", { name: "Save details" }));
+
+	await screen.findByText("Your details were saved.");
+	expect(adapter.saveAccountDetails).toHaveBeenCalledExactlyOnceWith({ displayName: "Maya Levi", phoneNumber: "0507654321" });
+});
+
+it("shows a profile load error without rendering empty fields", async () => {
+	adapter.loadProfile.mockResolvedValueOnce({ type: "profile_loaded", profile: null });
+	render(<AccountPage />);
+
+	await screen.findByText("We couldn't load your details.");
+	expect(screen.queryByRole("textbox")).toBeNull();
+	expect(screen.queryByRole("button", { name: "Save details" })).toBeNull();
+});
+
+it("keeps the edited input after a failed save", async () => {
+	adapter.saveAccountDetails.mockResolvedValueOnce({ type: "save_failed" });
+	render(<AccountPage />);
+	const name = await screen.findByLabelText(i18n.t("name", { ns: "booking" }));
+	const phone = screen.getByLabelText(i18n.t("phone", { ns: "booking" }));
+	fireEvent.change(name, { target: { value: "Maya Levi" } });
+	fireEvent.change(phone, { target: { value: "0507654321" } });
+	fireEvent.click(screen.getByRole("button", { name: "Save details" }));
+
+	await screen.findByText("We couldn't save your details. Try again.");
+	expect(name).toHaveProperty("value", "Maya Levi");
+	expect(phone).toHaveProperty("value", "0507654321");
+	expect(screen.getByRole("button", { name: "Save details" })).toHaveProperty("disabled", false);
+});
+
+it("returns to sign-in when a details save loses its session", async () => {
+	adapter.saveAccountDetails.mockResolvedValueOnce({ type: "signed_out" });
+	render(<AccountPage />);
+
+	fireEvent.click(await screen.findByRole("button", { name: "Save details" }));
+
+	await screen.findByRole("heading", { name: "Sign in" });
+	expect(screen.queryByRole("heading", { name: "Your details" })).toBeNull();
+	expect(screen.queryByText("Business meeting")).toBeNull();
+});
+
+it("keeps the editor available when an earlier save rejects a replaced session", async () => {
+	let finishSave!: (result: { type: "signed_out" }) => void;
+	adapter.saveAccountDetails.mockImplementationOnce(() => new Promise(resolve => { finishSave = resolve; }));
+	const page = render(<AccountPage />);
+	const name = await screen.findByLabelText(i18n.t("name", { ns: "booking" }));
+	fireEvent.change(name, { target: { value: "Maya Levi" } });
+	fireEvent.click(screen.getByRole("button", { name: "Save details" }));
+
+	context = { ...context, session: { ...context.session!, access_token: "renewed-test-session" } };
+	page.rerender(<AccountPage />);
+	await act(async () => { finishSave({ type: "signed_out" }); });
+
+	expect(screen.queryByRole("heading", { name: "Sign in" })).toBeNull();
+	expect(name).toHaveProperty("value", "Maya Levi");
+	adapter.saveAccountDetails.mockResolvedValueOnce({ type: "saved" });
+	fireEvent.click(screen.getByRole("button", { name: "Save details" }));
+	await screen.findByText("Your details were saved.");
 });
