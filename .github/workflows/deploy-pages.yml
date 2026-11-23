@@ -19,7 +19,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      VITE_BASE_PATH: /demo2/
+      VITE_BASE_PATH: /
       VITE_CLASS_KIT_TARGET: remote
     steps:
       - name: Checkout
