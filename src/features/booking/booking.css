@@ -122,6 +122,11 @@ h1 { font: 900 clamp(2.4rem, 1.2rem + 3.6vw, 4.4rem)/.95 var(--font-display); le
 .next-list li span { font: 500 12px/1.6 var(--font-mono); opacity: .55; }
 
 /* #/account: my requests, a ledger with status in the machine voice */
+.account-columns { display: grid; align-items: start; gap: 40px; }
+.account-details h2 { font: 700 1.5rem/1.1 var(--font-display); margin-block-end: 22px; }
+@media (min-width: 1000px) {
+	.account-columns { grid-template-columns: minmax(0, 1fr) 380px; column-gap: clamp(40px, 6vw, 110px); }
+}
 .reqs { border-block-start: 2px solid var(--ink); max-inline-size: 760px; }
 .req { display: grid; grid-template-columns: 1fr auto; gap: 6px 20px; padding-block: 20px; border-block-end: 1px solid var(--rule); align-items: baseline; }
 .req b { font: 700 1.35rem/1.15 var(--font-display); }
@@ -168,4 +173,5 @@ h1 { font: 900 clamp(2.4rem, 1.2rem + 3.6vw, 4.4rem)/.95 var(--font-display); le
 }
 
 .booking-page .booking-terms { white-space: pre-wrap; overflow-wrap: anywhere; }
+.shell-content > main.account-page { grid-template-columns: minmax(0, 1fr); }
 .booking-page .issued-password { font-family: var(--font-mono); }

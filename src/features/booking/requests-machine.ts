@@ -4,11 +4,13 @@ export type MeetingRequest = BookingSlot & { name: string };
 export type RequestsState =
 	| { step: "loading" }
 	| { step: "signed_out" }
+	| { step: "no_access" }
 	| { step: "failed"; lastCancellation?: BookingRegistration }
 	| { step: "ready"; requests: readonly MeetingRequest[]; cancellingId: string | null; cancellationFailed: boolean; lastCancellation?: BookingRegistration };
 export type RequestsEvent =
 	| { type: "loading" }
 	| { type: "signed_out" }
+	| { type: "no_access" }
 	| { type: "failed" }
 	| { type: "loaded"; requests: readonly MeetingRequest[] }
 	| { type: "cancel_started"; registrationId: string }
@@ -20,6 +22,7 @@ export function requestsTransition(state: RequestsState, event: RequestsEvent): 
 	switch (event.type) {
 		case "loading": return { step: "loading" };
 		case "signed_out": return { step: "signed_out" };
+		case "no_access": return { step: "no_access" };
 		case "failed": return { step: "failed", ...receipt };
 		case "loaded": return {
 			step: "ready", requests: event.requests, cancellingId: null,

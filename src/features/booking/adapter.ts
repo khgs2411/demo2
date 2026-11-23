@@ -1,6 +1,7 @@
 import { invokeProductFunction, useProductContext, type ClassKitClient, type ClassRegistrationResponse, type ClassSummary, type ProductDocument } from "@class-kit/react";
 import { getBookingOptions } from "../packages";
-import type { BookingEvent, BookingOperation, BookingProfile, BookingSelection, BookingSlot, BookingState, BookingTerms, PackageId, SignupDraft } from "./machine";
+import type { BookingContact, BookingEvent, BookingOperation, BookingProfile, BookingSelection, BookingSlot, BookingState, BookingTerms, PackageId, SignupDraft } from "./machine";
+import type { AccountDetailsSaveEvent } from "./account-details-machine";
 import { clearBookingRedirect, saveBookingAuthRedirect, saveAccountRedirect, clearAccountRedirect } from "./redirect";
 import type { RequestsEvent } from "./requests-machine";
 import type { CompleteOutcome, RequestOutcome } from "./password-reset/machine";
@@ -21,6 +22,10 @@ function failure(operation: BookingOperation): BookingEvent {
 
 function apiFailure(operation: BookingOperation, error: { code: string }): BookingEvent {
 	return error.code === "unauthorized" ? { type: "unauthenticated" } : failure(operation);
+}
+
+function isSignedOutError(code: string): boolean {
+	return code === "unauthorized" || code === "session_revoked";
 }
 
 function mapRegistration(registration: ClassRegistrationResponse["registration"]) {
@@ -68,7 +73,7 @@ export function createBookingAdapter(client: BookingSdk | null, refreshProductCo
 		return failure("auth");
 	}
 
-	async function loadProfile(userId: string): Promise<BookingEvent> {
+	async function loadProfile(userId: string): Promise<Extract<BookingEvent, { type: "profile_loaded" }>> {
 		try {
 			const response = await client?.profile.get();
 			const user = response?.data?.user;
@@ -118,6 +123,17 @@ export function createBookingAdapter(client: BookingSdk | null, refreshProductCo
 				: { type: "slots_loaded", slots: response.data.classes.map(mapSlot) };
 		} catch {
 			return failure("slots");
+		}
+	}
+
+	async function saveAccountDetails({ displayName, phoneNumber }: BookingContact): Promise<AccountDetailsSaveEvent | { type: "signed_out" }> {
+		try {
+			if (!client) return { type: "save_failed" };
+			const response = await client.profile.update({ displayName, phoneNumber });
+			if (response.error) return { type: isSignedOutError(response.error.code) ? "signed_out" : "save_failed" };
+			return { type: "saved" };
+		} catch {
+			return { type: "save_failed" };
 		}
 	}
 
@@ -193,7 +209,8 @@ export function createBookingAdapter(client: BookingSdk | null, refreshProductCo
 		try {
 			if (!client) return { type: "failed" };
 			const response = await client.classes.listMyRegistrations({ range });
-			if (response.error) return { type: ["unauthorized", "session_revoked"].includes(response.error.code) ? "signed_out" : "failed" };
+			if (response.error?.code === "forbidden") return { type: "no_access" };
+			if (response.error) return { type: isSignedOutError(response.error.code) ? "signed_out" : "failed" };
 			return { type: "loaded", requests: response.data.registrations.map(registration => ({
 				id: registration.classId, name: registration.class.name, startsAt: registration.class.startsAt,
 				canRegister: false, canCancelRegistration: registration.canCancel,
@@ -246,6 +263,7 @@ export function createBookingAdapter(client: BookingSdk | null, refreshProductCo
 		signInWithGoogle,
 		loadProfile,
 		saveProfile,
+		saveAccountDetails,
 		loadSlots,
 		requestRegistration,
 		loadTerms,

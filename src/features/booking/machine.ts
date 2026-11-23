@@ -8,7 +8,7 @@ export type BookingSelection = {
 	readonly slotId: string | null;
 };
 
-type BookingContact = Pick<BookingProfile, "displayName" | "phoneNumber">;
+export type BookingContact = Pick<BookingProfile, "displayName" | "phoneNumber">;
 export type SignupContinuation =
 	| { kind: "book"; slot: BookingSlot; contact?: BookingContact }
 	| { kind: "show_request"; slot: BookingSlot; registration: BookingRegistration }

@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Ticket } from "../../ui/ticket";
 import { IssuedPassword } from "./issued-password";
+import { RetryTicket } from "./retry-ticket";
 import { useRequests } from "./use-requests";
 import type { useBooking } from "./use-booking";
 
@@ -25,7 +26,7 @@ export function RequestedStep({ flow }: { flow: ReturnType<typeof useBooking> })
 		{requests.state.step === "signed_out" && <p role="status">{t("messages.auth_failed")}</p>}
 		<div className="done-actions"><Ticket href="#/account" stub={`№ ${state.registration.id}`}>{t("myRequests")}</Ticket>
 			{request?.canCancelRegistration && <Ticket stub="" className="booking-link" disabled={requests.state.step === "ready" && requests.state.cancellingId !== null} onClick={() => void requests.cancel(state.registration.id)}>{t("cancel")}</Ticket>}
-			{requests.state.step === "failed" && <Ticket stub="↻" className="booking-link" onClick={() => void requests.refresh()}>{t("retry")}</Ticket>}
+			{requests.state.step === "failed" && <RetryTicket className="booking-link" onClick={() => void requests.refresh()} />}
 		</div>
 	</>;
 }

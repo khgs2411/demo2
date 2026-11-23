@@ -279,6 +279,14 @@ describe("my meeting requests", () => {
 		expect(await adapter.cancelRequest("request-1", range)).toEqual([{ type: "cancel_failed" }, { type: "loaded", requests: [] }]);
 		expect(sdk.classes.cancelRegistration).toHaveBeenCalledOnce();
 	});
+	it("reports a forbidden request read as no product access", async () => {
+		sdk.classes.listMyRegistrations.mockResolvedValueOnce({ data: null, error: { code: "forbidden", message: "Active product user access is required." } });
+		expect(await adapter.listRequests(range)).toEqual({ type: "no_access" });
+	});
+	it("keeps a server error retryable", async () => {
+		sdk.classes.listMyRegistrations.mockResolvedValueOnce({ data: null, error: { code: "internal_error", message: "Unavailable" } });
+		expect(await adapter.listRequests(range)).toEqual({ type: "failed" });
+	});
 	it("handles expired sessions and generic reads", async () => {
 		sdk.classes.listMyRegistrations.mockResolvedValueOnce({ data: null, error: { code: "unauthorized", message: "Expired" } });
 		expect(await adapter.listRequests(range)).toEqual({ type: "signed_out" });
@@ -401,5 +409,31 @@ describe("password reset", () => {
 		const offline = createBookingAdapter(null, refresh);
 		await expect(offline.requestPasswordReset("a@b.co", "en", "verified")).resolves.toBe("failed");
 		await expect(offline.completePasswordReset("token", "new-password")).resolves.toBe("failed");
+	});
+});
+
+describe("account details", () => {
+	it("updates only the two contact fields through the profile API", async () => {
+		sdk.profile.update.mockResolvedValueOnce({ data: {
+			profile: { customer_id: "customer-1", user_id: "visitor", display_name: profile.displayName, contact_email: null, phone_number: profile.phoneNumber },
+			product_user: { customer_id: "customer-1", user_id: "visitor", metadata: { business_name: profile.businessName } },
+		}, error: null });
+		expect(await adapter.saveAccountDetails(profile)).toEqual({ type: "saved" });
+		expect(sdk.profile.update).toHaveBeenCalledExactlyOnceWith({
+			displayName: profile.displayName, phoneNumber: profile.phoneNumber,
+		});
+	});
+
+	it.each([
+		["unauthorized", "signed_out"], ["session_revoked", "signed_out"],
+		["forbidden", "save_failed"], ["internal_error", "save_failed"],
+	] as const)("maps a %s update to %s", async (code, type) => {
+		sdk.profile.update.mockResolvedValueOnce({ data: null, error: { code, message: "Update failed" } });
+		expect(await adapter.saveAccountDetails(profile)).toEqual({ type });
+	});
+
+	it("reports a rejected update as a save failure", async () => {
+		sdk.profile.update.mockRejectedValueOnce(new Error("offline"));
+		expect(await adapter.saveAccountDetails(profile)).toEqual({ type: "save_failed" });
 	});
 });

@@ -15,6 +15,7 @@ const fakeAdapter = {
 	signIn: vi.fn().mockResolvedValue({ type: "signed_in", userId: "visitor" }),
 	signUp: vi.fn().mockResolvedValue({ type: "signed_in", userId: "visitor" }),
 	loadTerms: vi.fn(), requestWithSignup: vi.fn(), loadProfile: vi.fn().mockResolvedValue({ type: "profile_loaded", profile: null }),
+	saveAccountDetails: vi.fn(),
 	signInWithGoogle: vi.fn().mockResolvedValue({ type: "auth_redirect_started" }),
 	saveProfile: vi.fn().mockResolvedValue({ type: "profile_saved" }),
 	loadSlots: vi.fn().mockResolvedValue({ type: "booking_not_open" }),

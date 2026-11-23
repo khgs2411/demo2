@@ -12,6 +12,7 @@ import { ProfileStep } from "./profile-step";
 import { SlotStep } from "./slot-step";
 import { RequestedStep } from "./requested-step";
 import { SummaryTicket } from "./summary-ticket";
+import { RetryTicket } from "./retry-ticket";
 import "./booking.css";
 
 export function BookingPage({ packageId }: { packageId?: string }) {
@@ -62,7 +63,7 @@ export function BookingPage({ packageId }: { packageId?: string }) {
 			<div className="step shown" key={isSignup ? "signup_details" : view.step} aria-busy={view.step === "recovering_session" || view.step === "signing_in" || view.step === "signing_up" || view.step === "submitting" || view.step === "sending" || view.step === "signing_in_for_signup" || profileBusy}>
 				{state.step === "failed" ? <><h1 tabIndex={-1}>{t(stepIndex === 1 ? "aTitle" : stepIndex === 2 ? "prTitle" : "sTitle")}</h1>
 					<p role="alert" className="notice error">{t(`messages.${state.reason === "redirect_storage" ? "redirect_storage" : `${state.operation}_failed`}`)}</p>
-					<Ticket stub="↻" onClick={() => flow.send({ type:"retry_requested" })}>{t("retry")}</Ticket></> : <>
+					<RetryTicket onClick={() => flow.send({ type:"retry_requested" })} /></> : <>
 					{view.step === "choosing_package" && <PackageStep selection={draft} onChange={setDraft} onContinue={() => flow.choosePackage(draft)} />}
 					{isAccount && <>
 						{"continuation" in view && view.continuation && <p role="alert" className="notice">
