@@ -134,12 +134,12 @@ export function createBookingAdapter(client: BookingSdk | null, refreshProductCo
 		}
 	}
 
-	async function requestWithSignup(classId: string, draft: SignupDraft, terms: BookingTerms): Promise<BookingEvent> {
+	async function requestWithSignup(classId: string, draft: SignupDraft, terms: BookingTerms, turnstileToken: string): Promise<BookingEvent> {
 		try {
 			if (!client) return { type: "signup_failed" };
 			const existingSession = await client.auth.getSession();
 			if (existingSession) return { type: "signed_in", userId: existingSession.user.id };
-			const result = await client.classes.registerWithSignup({ classId, ...draft, termsVersion: terms.version, termsLocale: terms.locale });
+			const result = await client.classes.registerWithSignup({ classId, ...draft, termsVersion: terms.version, termsLocale: terms.locale, turnstileToken });
 			switch (result.status) {
 				case "account_exists": return {
 					type: result.status, email: draft.email.trim().toLowerCase(),
@@ -147,6 +147,8 @@ export function createBookingAdapter(client: BookingSdk | null, refreshProductCo
 				};
 				case "terms_changed":
 				case "terms_unavailable":
+				case "turnstile_failed":
+				case "turnstile_unavailable":
 				case "rate_limited":
 				case "disabled":
 				case "not_found":

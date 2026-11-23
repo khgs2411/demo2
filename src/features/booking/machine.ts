@@ -40,7 +40,8 @@ type SlotState = {
 	availability: "loading" | "ready" | "not_open";
 	notice: "slot_full" | null;
 };
-type SignupRejection = "terms_changed" | "terms_unavailable" | "rate_limited" | "disabled" | "not_found" | "bad_request" | "signup_failed";
+type SignupRejection = "terms_changed" | "terms_unavailable" | "turnstile_failed" | "turnstile_unavailable"
+	| "rate_limited" | "disabled" | "not_found" | "bad_request" | "signup_failed";
 type SignupSlot = {
 	selection: BookingSelection & { slotId: string };
 	slot: BookingSlot;
@@ -291,6 +292,8 @@ export function transition(state: BookingState, event: BookingEvent): BookingSta
 			case "signed_in": return { step: "completing_profile", selection: state.selection, userId: event.userId };
 			case "terms_changed":
 			case "terms_unavailable": return { ...state, step: "signup_details", terms: null, accepted: false, loadingTerms: true, notice: event.type };
+			case "turnstile_failed":
+			case "turnstile_unavailable":
 			case "rate_limited":
 			case "disabled":
 			case "not_found":

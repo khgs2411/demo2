@@ -307,6 +307,7 @@ it("refreshes after a thrown cancellation error with no automatic retry", async 
 });
 
 describe("booking signup SDK adapter", () => {
+	const turnstileToken = "verified-token";
 	const terms = { title: "Studio terms", text: "Published text", version: 8, locale: "he" };
 	const draft = { email: "dana@example.com", displayName: "Dana", phone: "+972501234567" };
 	const issued = { password: "abCDefGhIjKlmNop", formatPassword: () => "abCD efGh IjKl mNop" };
@@ -328,15 +329,21 @@ describe("booking signup SDK adapter", () => {
 		getSession.mockRestore();
 	});
 
-	it("sends the shown publication and maps the SDK receipt and formatted password", async () => {
+	it("sends the token and shown publication and maps the SDK receipt and formatted password", async () => {
 		sdk.auth.getSession.mockResolvedValueOnce(null);
 		sdk.classes.registerWithSignup.mockResolvedValueOnce({ status: "registered", ...issued, registration: registered.registration });
-		expect(await adapter.requestWithSignup("slot-1", draft, terms)).toEqual({
+		expect(await adapter.requestWithSignup("slot-1", draft, terms, turnstileToken)).toEqual({
 			type: "signup_registered", userId: "visitor", registration: { id: "request-1", classId: "slot-1", status: "pending" }, credentials,
 		});
 		expect(sdk.classes.registerWithSignup).toHaveBeenCalledExactlyOnceWith({
-			classId: "slot-1", ...draft, termsVersion: 8, termsLocale: "he",
+			classId: "slot-1", ...draft, termsVersion: 8, termsLocale: "he", turnstileToken,
 		});
+	});
+
+	it.each(["turnstile_failed", "turnstile_unavailable"] as const)("preserves the SDK %s status", async status => {
+		sdk.auth.getSession.mockResolvedValueOnce(null);
+		sdk.classes.registerWithSignup.mockResolvedValueOnce({ status });
+		expect(await adapter.requestWithSignup("slot-1", draft, terms, turnstileToken)).toEqual({ type: status });
 	});
 
 	it("distinguishes unavailable classes with and without a new account", async () => {
@@ -344,26 +351,26 @@ describe("booking signup SDK adapter", () => {
 		sdk.classes.registerWithSignup.mockResolvedValueOnce({ status: "class_unavailable" });
 		sdk.auth.getSession.mockResolvedValueOnce(null);
 		sdk.classes.registerWithSignup.mockResolvedValueOnce({ status: "class_unavailable", ...issued });
-		expect(await adapter.requestWithSignup("slot-1", draft, terms)).toEqual({ type: "class_unavailable" });
-		expect(await adapter.requestWithSignup("slot-1", draft, terms)).toEqual({ type: "account_created_class_unavailable", userId: "visitor", credentials });
+		expect(await adapter.requestWithSignup("slot-1", draft, terms, turnstileToken)).toEqual({ type: "class_unavailable" });
+		expect(await adapter.requestWithSignup("slot-1", draft, terms, turnstileToken)).toEqual({ type: "account_created_class_unavailable", userId: "visitor", credentials });
 	});
 
 	it("preserves the new credentials and confirmed registration if automatic sign-in fails", async () => {
 		sdk.auth.getSession.mockResolvedValueOnce(null);
 		sdk.classes.registerWithSignup.mockResolvedValueOnce({ status: "sign_in_failed", ...issued, registration: registered.registration });
-		expect(await adapter.requestWithSignup("slot-1", draft, terms)).toEqual({
+		expect(await adapter.requestWithSignup("slot-1", draft, terms, turnstileToken)).toEqual({
 			type: "sign_in_failed", email: draft.email, credentials, registration: { id: "request-1", classId: "slot-1", status: "pending" },
 		});
 	});
 	it("keeps the current account when a session starts while the guest form is open", async () => {
-		expect(await adapter.requestWithSignup("slot-1", draft, terms)).toEqual({ type: "signed_in", userId: "visitor" });
+		expect(await adapter.requestWithSignup("slot-1", draft, terms, turnstileToken)).toEqual({ type: "signed_in", userId: "visitor" });
 		expect(sdk.classes.registerWithSignup).not.toHaveBeenCalled();
 	});
 
 	it("preserves the receipt and password when registration succeeded but no session was established", async () => {
 		sdk.auth.getSession.mockResolvedValueOnce(null).mockResolvedValueOnce(null);
 		sdk.classes.registerWithSignup.mockResolvedValueOnce({ status: "registered", ...issued, registration: registered.registration });
-		expect(await adapter.requestWithSignup("slot-1", draft, terms)).toEqual({
+		expect(await adapter.requestWithSignup("slot-1", draft, terms, turnstileToken)).toEqual({
 			type: "sign_in_failed", email: draft.email, credentials, registration: { id: "request-1", classId: "slot-1", status: "pending" },
 		});
 	});
