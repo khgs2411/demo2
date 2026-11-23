@@ -3,6 +3,7 @@ import { Input } from "../../ui/input";
 import { Ticket } from "../../ui/ticket";
 import { GoogleSignIn } from "./account-step";
 import type { SignupDraft } from "./machine";
+import { RetryTicket } from "./retry-ticket";
 import type { useBooking } from "./use-booking";
 import { useTurnstile } from "./use-turnstile";
 
@@ -46,7 +47,7 @@ export function SignupStep({ flow, draft, onChange }: {
 				<Ticket stub="" className="booking-link" disabled={busy} onClick={() => flow.send({ type: "signup_back" })}>{t("back")}</Ticket>
 			</div>
 		</form>
-		{!terms && !loadingTerms && <Ticket stub="↻" className="booking-link" onClick={() => flow.send({ type: "terms_reload_requested" })}>{t("retry")}</Ticket>}
+		{!terms && !loadingTerms && <RetryTicket className="booking-link" onClick={() => flow.send({ type: "terms_reload_requested" })} />}
 		<p className="switch">{t("haveAccount")} <Ticket stub="" className="booking-link" disabled={busy} onClick={() => flow.send({ type: "signup_auth_chosen", email: draft.email })}>{t("signIn")}</Ticket></p>
 	</>;
 }

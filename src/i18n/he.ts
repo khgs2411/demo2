@@ -283,6 +283,7 @@ export const he = {
 		accNoAccess: "לחשבון הזה אין גישה למוצר הזה.",
 		accDetailsTitle: "הפרטים שלך",
 		accDetailsSave: "שמירת הפרטים",
+		accDetailsSaving: "שומרים…",
 		accDetailsSaved: "הפרטים שלך נשמרו.",
 		accDetailsLoadFailed: "לא הצלחנו לטעון את הפרטים שלך.",
 		accDetailsSaveFailed: "לא הצלחנו לשמור את הפרטים שלך. אפשר לנסות שוב.",

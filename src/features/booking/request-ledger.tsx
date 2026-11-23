@@ -2,12 +2,13 @@ import { useTranslation } from "react-i18next";
 import { Ticket } from "../../ui/ticket";
 import { formatWhen } from "./calendar";
 import type { RequestsState } from "./requests-machine";
+import { RetryTicket } from "./retry-ticket";
 
 export function RequestLedger({ state, refresh, cancel, timeZone }: { state: RequestsState; refresh: () => void; cancel: (id: string) => void; timeZone: string }) {
 	const { t, i18n } = useTranslation("booking");
 	if (state.step === "loading") return <p role="status">{t("loading")}</p>;
 	if (state.step === "no_access") return <p role="alert" className="notice error">{t("accNoAccess")}</p>;
-	if (state.step === "failed") return <>{state.lastCancellation && <p role="status">{t(state.lastCancellation.status)}</p>}<p role="alert" className="notice error">{t("messages.slots_failed")}</p><Ticket stub="↻" onClick={refresh}>{t("retry")}</Ticket></>;
+	if (state.step === "failed") return <>{state.lastCancellation && <p role="status">{t(state.lastCancellation.status)}</p>}<p role="alert" className="notice error">{t("messages.slots_failed")}</p><RetryTicket onClick={refresh} /></>;
 	if (state.step !== "ready") return null;
 	return <>
 		{state.cancellationFailed && <p role="alert" className="notice error">{t("cancelFailed")}</p>}

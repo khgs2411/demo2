@@ -4,7 +4,7 @@ import { accountDetailsTransition, type AccountDetailsState } from "./account-de
 const loading = { step: "loading" } as const;
 const details = { displayName: "Maya Cohen", phoneNumber: "0501234567" };
 const editing = { step: "editing", details } as const;
-const saving = { step: "saving", details } as const;
+const saving = { step: "saving", details, submission: details } as const;
 
 it("opens the editor with the loaded contact fields", () => {
 	expect(accountDetailsTransition(loading, { type: "profile_loaded", profile: { ...details, businessName: "Studio" } })).toEqual(editing);
@@ -12,6 +12,13 @@ it("opens the editor with the loaded contact fields", () => {
 
 it("fails the load when there is no profile", () => {
 	expect(accountDetailsTransition(loading, { type: "profile_loaded", profile: null })).toEqual({ step: "failed", operation: "load" });
+});
+
+it("re-enters loading only after a load failure when retry is requested", () => {
+	const failed = accountDetailsTransition(loading, { type: "profile_loaded", profile: null });
+	expect(accountDetailsTransition(failed, { type: "load_retry_requested" })).toEqual(loading);
+	expect(accountDetailsTransition(loading, { type: "load_retry_requested" })).toBe(loading);
+	expect(accountDetailsTransition(editing, { type: "load_retry_requested" })).toBe(editing);
 });
 
 it.each(["displayName", "phoneNumber"] as const)("requires a nonblank %s before saving", field => {

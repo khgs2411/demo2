@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { i18n } from "../../i18n";
 import * as adapterModule from "./adapter";
@@ -94,6 +94,8 @@ it.each([
 	render(<AccountPage />);
 
 	expect((await screen.findByRole("alert")).textContent).toBe(message);
+	expect(adapter.loadProfile, "no profile read without product access").not.toHaveBeenCalled();
+	expect(screen.queryByRole("heading", { name: i18n.t("accDetailsTitle", { ns: "booking" }) })).toBeNull();
 	expect(screen.queryByRole("textbox")).toBeNull();
 	expect(screen.queryByRole("link")).toBeNull();
 	expect(screen.getAllByRole("button")).toHaveLength(1);
@@ -135,18 +137,69 @@ it("shows a profile load error without rendering empty fields", async () => {
 	expect(screen.queryByRole("button", { name: "Save details" })).toBeNull();
 });
 
+it("retries a failed details load and opens the editor when it succeeds", async () => {
+	let finishLoad!: () => void;
+	adapter.loadProfile
+		.mockResolvedValueOnce({ type: "profile_loaded", profile: null })
+		.mockImplementationOnce(() => new Promise(resolve => {
+			finishLoad = () => resolve({ type: "profile_loaded", profile });
+		}));
+	render(<AccountPage />);
+
+	const details = within(await screen.findByRole("region", { name: "Your details" }));
+	await details.findByRole("alert");
+	fireEvent.click(details.getByRole("button", { name: "Try again" }));
+
+	expect(details.getByRole("status").textContent).toBe("Loading…");
+	expect(details.queryByRole("button", { name: "Try again" })).toBeNull();
+	expect(adapter.loadProfile.mock.calls).toEqual([["visitor"], ["visitor"]]);
+	await act(async () => { finishLoad(); });
+	expect(details.getByLabelText(i18n.t("name", { ns: "booking" }))).toHaveProperty("value", profile.displayName);
+});
+
+it.each([
+	["en", "Save details", "Saving…"],
+	["he", "שמירת הפרטים", "שומרים…"],
+])("shows a dedicated saving label in %s while the update is pending", async (language, saveLabel, savingLabel) => {
+	await i18n.changeLanguage(language);
+	let finishSave!: (result: { type: "saved" }) => void;
+	adapter.saveAccountDetails.mockImplementationOnce(() => new Promise(resolve => { finishSave = resolve; }));
+	render(<AccountPage />);
+
+	fireEvent.click(await screen.findByRole("button", { name: saveLabel }));
+
+	expect(screen.getByRole("button", { name: savingLabel })).toHaveProperty("disabled", true);
+	await act(async () => { finishSave({ type: "saved" }); });
+});
+
+it("submits trimmed details and shows them after the save succeeds", async () => {
+	adapter.saveAccountDetails.mockResolvedValueOnce({ type: "saved" });
+	render(<AccountPage />);
+	const name = await screen.findByLabelText(i18n.t("name", { ns: "booking" }));
+	const phone = screen.getByLabelText(i18n.t("phone", { ns: "booking" }));
+	fireEvent.change(name, { target: { value: "  Maya Levi " } });
+	fireEvent.change(phone, { target: { value: " 0507654321  " } });
+
+	fireEvent.click(screen.getByRole("button", { name: "Save details" }));
+
+	await screen.findByText("Your details were saved.");
+	expect(adapter.saveAccountDetails).toHaveBeenCalledExactlyOnceWith({ displayName: "Maya Levi", phoneNumber: "0507654321" });
+	expect(name).toHaveProperty("value", "Maya Levi");
+	expect(phone).toHaveProperty("value", "0507654321");
+});
+
 it("keeps the edited input after a failed save", async () => {
 	adapter.saveAccountDetails.mockResolvedValueOnce({ type: "save_failed" });
 	render(<AccountPage />);
 	const name = await screen.findByLabelText(i18n.t("name", { ns: "booking" }));
 	const phone = screen.getByLabelText(i18n.t("phone", { ns: "booking" }));
-	fireEvent.change(name, { target: { value: "Maya Levi" } });
-	fireEvent.change(phone, { target: { value: "0507654321" } });
+	fireEvent.change(name, { target: { value: "  Maya Levi " } });
+	fireEvent.change(phone, { target: { value: " 0507654321  " } });
 	fireEvent.click(screen.getByRole("button", { name: "Save details" }));
 
 	await screen.findByText("We couldn't save your details. Try again.");
-	expect(name).toHaveProperty("value", "Maya Levi");
-	expect(phone).toHaveProperty("value", "0507654321");
+	expect(name).toHaveProperty("value", "  Maya Levi ");
+	expect(phone).toHaveProperty("value", " 0507654321  ");
 	expect(screen.getByRole("button", { name: "Save details" })).toHaveProperty("disabled", false);
 });
 

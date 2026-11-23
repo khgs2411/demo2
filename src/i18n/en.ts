@@ -283,6 +283,7 @@ export const en = {
 		accNoAccess: "This account does not have access to this product.",
 		accDetailsTitle: "Your details",
 		accDetailsSave: "Save details",
+		accDetailsSaving: "Saving…",
 		accDetailsSaved: "Your details were saved.",
 		accDetailsLoadFailed: "We couldn't load your details.",
 		accDetailsSaveFailed: "We couldn't save your details. Try again.",
