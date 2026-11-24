@@ -65,6 +65,11 @@ function submitPasswords(password: string, confirmation = password) {
 	fireEvent.submit(screen.getByRole("button", { name: message("save") }).closest("form")!);
 }
 
+function expectPassStep(pass: HTMLElement, serial: string, label: string) {
+	expect(within(pass).getByText(serial)).toBeDefined();
+	expect(pass.querySelector("dl > .now > dt")?.textContent).toBe(label);
+}
+
 describe("routing on reset_token", () => {
 	it("takes the token from the address bar once and routes to the reset screen", () => {
 		const client = createClassKitClient({ supabaseUrl: "http://localhost:54321", supabasePublishableKey: "test-key", authStorageKey: "reset-test", debug: false });
@@ -121,7 +126,7 @@ describe("forgot password screen", () => {
 		expect(main.classList.contains("gate")).toBe(true);
 		const pass = within(main).getByRole("complementary");
 		expect(within(pass).getByText("RESET")).toBeDefined();
-		expect(within(pass).getByText("01/03")).toBeDefined();
+		expectPassStep(pass, "01/03", "01 · Email");
 	});
 
 	it("sends the carried email with the locale and the Turnstile token, then answers neutrally", async () => {
@@ -192,20 +197,20 @@ describe("reset password screen", () => {
 		const main = screen.getByRole("main");
 		expect(main.classList.contains("gate")).toBe(true);
 		const pass = within(main).getByRole("complementary");
-		expect(within(pass).getByText("01/03")).toBeDefined();
+		expectPassStep(pass, "01/03", "01 · Email");
 	});
 
 	it("advances the pass from choosing a password to saved", async () => {
 		holdToken();
 		completePasswordReset.mockResolvedValueOnce("password_reset");
 		render(<ResetPasswordPage />);
-		const pass = within(screen.getByRole("complementary"));
-		expect(pass.getByText("02/03")).toBeDefined();
-		expect(pass.queryByText("Saved")).toBeNull();
+		const pass = screen.getByRole("complementary");
+		expectPassStep(pass, "02/03", "02 · New password");
+		expect(within(pass).queryByText("Saved")).toBeNull();
 
 		await act(async () => submitPasswords("new-password"));
-		expect(pass.getByText("03/03")).toBeDefined();
-		expect(pass.getByText("Saved")).toBeDefined();
+		expectPassStep(pass, "03/03", "03 · Sign in");
+		expect(within(pass).getByText("Saved")).toBeDefined();
 	});
 
 	it("explains a missing link and offers to request one", () => {
