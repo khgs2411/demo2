@@ -28,6 +28,20 @@ it.each(["rtl", "ltr"])("renders the primitives with native semantics in %s", (d
 	expect(screen.getByRole("status").textContent).toBe("agent ▸ idle");
 });
 
+it("uses the coral ticket style by default and provides ink and ghost classes", () => {
+	render(<>
+		<Ticket stub="01">Default</Ticket>
+		<Ticket stub="02" tone="coral">Primary</Ticket>
+		<Ticket stub="03" tone="ink">Commit</Ticket>
+		<Ticket stub="04" tone="ghost" small href="#/account">Undo</Ticket>
+	</>);
+
+	expect([...screen.getByRole("button", { name: "Default" }).classList]).toEqual(["ticket"]);
+	expect([...screen.getByRole("button", { name: "Primary" }).classList]).toEqual(["ticket"]);
+	expect([...screen.getByRole("button", { name: "Commit" }).classList]).toEqual(["ticket", "ticket-ink"]);
+	expect([...screen.getByRole("link", { name: "Undo" }).classList]).toEqual(["ticket", "ticket-small", "ticket-ghost"]);
+});
+
 it("uses logical layout properties rather than physical left/right classes in primitives", () => {
 	const directory = join(process.cwd(), "src/ui");
 	for (const file of readdirSync(directory).filter((file) => file.endsWith(".tsx") && !file.includes(".test."))) {

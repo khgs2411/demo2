@@ -73,6 +73,12 @@ a { color: inherit; }
 :focus-visible { outline: 2px solid var(--fg); outline-offset: 4px; }
 .ticket:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--ink); }
 
+/* Ticket tones: coral is the one primary action, ink the other commits, ghost the small or undoing ones. */
+.ticket-ink { background: var(--ink); color: var(--paper); }
+.ticket-ink .stub { border-inline-start-color: color-mix(in srgb, var(--paper), transparent 60%); }
+.ticket-ink:focus-visible { box-shadow: inset 0 0 0 2px var(--coral); }
+.ticket-ghost { background: var(--paper-2); color: var(--ink); }
+
 .primitives-sample { padding: 32px var(--gutter); display: grid; gap: 26px; }
 .primitives-sample h1 { font: 900 var(--text-h2)/1 var(--font-display); letter-spacing: -.02em; }
 .primitives-sample .ledger { margin-block-start: 0; }
