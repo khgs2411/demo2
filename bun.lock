@@ -5,7 +5,7 @@
     "": {
       "name": "class-kit-demo2",
       "dependencies": {
-        "@class-kit/react": "git+ssh://git@github.com/khgs2411/class-kit-sdk.git#v0.1.32",
+        "@class-kit/react": "git+ssh://git@github.com/khgs2411/class-kit-sdk.git#v0.1.33",
         "@fontsource/frank-ruhl-libre": "^5.3.0",
         "@fontsource/ibm-plex-mono": "^5.3.0",
         "@fontsource/ibm-plex-sans": "^5.3.0",
@@ -41,7 +41,7 @@
 
     "@babel/runtime": ["@babel/runtime@7.29.7", "", {}, "sha512-Nq8OhGWiZIZGV6hLHoyAKLLcJihP/xFeBMGJoUrxTX2psI8dCifzLhZISFb+VWS3wFMRDmCGw5R+dOySCqPLhw=="],
 
-    "@class-kit/react": ["@class-kit/react@git+ssh://git@github.com/khgs2411/class-kit-sdk.git#f090741e747ec1f85c599d6b8fd057659c30bc72", { "peerDependencies": { "@supabase/supabase-js": "^2.106.1", "react": "^19.2.6", "react-dom": "^19.2.6" } }, "f090741e747ec1f85c599d6b8fd057659c30bc72"],
+    "@class-kit/react": ["@class-kit/react@git+ssh://git@github.com/khgs2411/class-kit-sdk.git#2359932e029660c2337532cc99a873e866b417e3", { "peerDependencies": { "@supabase/supabase-js": "^2.106.1", "react": "^19.2.6", "react-dom": "^19.2.6" } }, "2359932e029660c2337532cc99a873e866b417e3"],
 
     "@exodus/bytes": ["@exodus/bytes@1.16.0", "", { "peerDependencies": { "@noble/hashes": "^1.8.0 || ^2.0.0" }, "optionalPeers": ["@noble/hashes"] }, "sha512-IcpW84uEn3N7ETtNZMlxKhfl6Pec8rUNGOTBtWbK1FKhJxIFAptZyVrvVRVBimAJxJCgc3PxepxkdWWG4DVzfA=="],
 
