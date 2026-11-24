@@ -10,7 +10,6 @@ export const he = {
 		myRequests: "הבקשות שלי",
 		signIn: "כניסה",
 		myAccount: "החשבון שלי",
-		studio: "סטודיו",
 		brand: "Topsyde Studios",
 		sample: { kicker: "ClassKit", meeting: "פגישה עסקית", request: "בקשה", name: "שם", log: "agent ▸ idle", book: "קביעת פגישה", demo: "לראות את זה עובד", ticketNumber: "№ 01" },
 		description: "בניית אתרים ומערכות עם ClassKit. בחרו חבילה וקבעו פגישה עסקית.",

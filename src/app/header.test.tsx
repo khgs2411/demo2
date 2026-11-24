@@ -37,17 +37,16 @@ it("links signed-out visitors to sign in", () => {
 });
 
 it.each([
-	{ role: "client", permissions: [], studio: false },
-	{ role: "manager", permissions: [], studio: true },
-	{ role: "client", permissions: ["registrations.manage"], studio: true },
-])("links signed-in visitors to their account with Studio access $studio ($role, $permissions)", ({ role, permissions, studio }) => {
+	{ role: "client", permissions: [], accountHref: "#/account" },
+	{ role: "manager", permissions: [], accountHref: "#/studio" },
+	{ role: "coordinator", permissions: ["registrations.manage"], accountHref: "#/studio" },
+])("links the signed-in $role to $accountHref", ({ role, permissions, accountHref }) => {
 	context.session = session;
 	context.productUser = { role, status: "active" };
 	context.capabilities.permissions = permissions;
 	render(<Header />);
 
-	expect(screen.getByRole("link", { name: "My account" }).getAttribute("href")).toBe("#/account");
+	expect(screen.getByRole("link", { name: "My account" }).getAttribute("href")).toBe(accountHref);
 	expect(screen.queryByRole("link", { name: "Sign in" })).toBeNull();
-	if (studio) expect(screen.getByRole("link", { name: "Studio" }).getAttribute("href")).toBe("#/studio");
-	else expect(screen.queryByRole("link", { name: "Studio" })).toBeNull();
+	expect(screen.queryByRole("link", { name: "Studio" })).toBeNull();
 });
