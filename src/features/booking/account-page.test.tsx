@@ -1,5 +1,5 @@
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
-import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { i18n } from "../../i18n";
 import * as adapterModule from "./adapter";
 import { AccountPage } from "./account-page";
@@ -305,4 +305,218 @@ it("keeps the editor available when an earlier save rejects a replaced session",
 	adapter.saveAccountDetails.mockResolvedValueOnce({ type: "saved" });
 	fireEvent.click(screen.getByRole("button", { name: "Save details" }));
 	await screen.findByText("Your details were saved.");
+});
+
+function allowPasswordChange(...providers: string[]) {
+	const session = context.session!;
+	context.session = { ...session, user: {
+		...session.user,
+		identities: providers.map(provider => ({ id: provider, identity_id: provider, user_id: session.user.id, provider })),
+	} };
+}
+
+it.each(["no identities", "Google only", "disabled", "no product", "no access", "signed out"])("hides the password section with %s", async reason => {
+	if (reason === "Google only") allowPasswordChange("google");
+	if (reason !== "no identities" && reason !== "Google only") allowPasswordChange("email");
+	if (reason === "disabled") context.product = { ...context.product!, email_password_enabled: false };
+	if (reason === "no product") context.product = null;
+	if (reason === "no access") listRequests.mockResolvedValueOnce({ type: "no_access" });
+	if (reason === "signed out") context.session = null;
+	await act(async () => { render(<AccountPage />); });
+
+	expect(screen.queryByRole("region", { name: "Password" })).toBeNull();
+});
+
+function fillPasswordChange(form: ReturnType<typeof within>, fields: readonly [string, string, string], confirmation = "new-password") {
+	const inputs = fields.map(label => form.getByLabelText(label) as HTMLInputElement);
+	["current-password", "new-password", confirmation].forEach((value, index) => fireEvent.change(inputs[index], { target: { value } }));
+	return inputs;
+}
+
+const passwordCopy = {
+	en: {
+		title: "Password", save: "Change password", forgot: "Forgot your password?", signIn: "Sign in",
+		fields: ["Current password", "New password", "New password, again"],
+		outcomes: {
+			password_changed: "Your password was changed.",
+			signed_out: "Your password was changed. Sign in with your new password.",
+			current_password_invalid: "The current password is incorrect.",
+			bad_request: "Choose a different new password and try again.",
+			rate_limited: "Too many attempts. Please try again later.",
+			disabled: "Password changes are unavailable for this account.",
+			failed: "We could not change your password. Please try again.",
+		},
+	},
+	he: {
+		title: "סיסמה", save: "שינוי סיסמה", forgot: "שכחת את הסיסמה?", signIn: "כניסה",
+		fields: ["הסיסמה הנוכחית", "סיסמה חדשה", "הסיסמה החדשה, שוב"],
+		outcomes: {
+			password_changed: "הסיסמה שלך שונתה.",
+			signed_out: "הסיסמה שלך שונתה. אפשר להיכנס עם הסיסמה החדשה.",
+			current_password_invalid: "הסיסמה הנוכחית שגויה.",
+			bad_request: "יש לבחור סיסמה חדשה אחרת ולנסות שוב.",
+			rate_limited: "יותר מדי ניסיונות. כדאי לנסות שוב מאוחר יותר.",
+			disabled: "שינוי סיסמה אינו זמין לחשבון הזה.",
+			failed: "לא הצלחנו לשנות את הסיסמה. כדאי לנסות שוב.",
+		},
+	},
+} as const;
+
+describe.each(["en", "he"] as const)("password change in %s", language => {
+	const copy = passwordCopy[language];
+	beforeEach(async () => {
+		await i18n.changeLanguage(language);
+		allowPasswordChange("google", "email");
+	});
+
+	it.each(Object.entries(copy.outcomes))("shows the %s outcome and clears every password", async (outcome, message) => {
+		let finish!: (value: string) => void;
+		adapter.changePassword.mockReturnValueOnce(new Promise(resolve => { finish = resolve; }));
+		const page = render(<AccountPage />);
+		const section = within(await screen.findByRole("region", { name: copy.title }));
+		expect(section.getByRole("link", { name: copy.forgot }).getAttribute("href")).toBe("#/forgot-password");
+		const inputs = fillPasswordChange(section, copy.fields);
+		const submit = section.getByRole("button", { name: copy.save });
+		fireEvent.click(submit);
+		fireEvent.click(submit);
+		expect(adapter.changePassword).toHaveBeenCalledExactlyOnceWith("current-password", "new-password");
+		for (const input of inputs) expect(input.disabled || input.matches(":disabled")).toBe(true);
+
+		if (outcome === "password_changed") {
+			context.session = { ...context.session!, access_token: "renewed" };
+			page.rerender(<AccountPage />);
+		}
+		await act(async () => { finish(outcome); });
+
+		await screen.findByText(message);
+		for (const input of inputs) expect(input.value).toBe("");
+		if (outcome === "signed_out") {
+			expect(screen.getByRole("heading", { name: copy.signIn })).toBeDefined();
+			expect(screen.queryByRole("region", { name: copy.title })).toBeNull();
+		} else {
+			expect(screen.getByRole("region", { name: copy.title })).toBeDefined();
+			expect(screen.queryByRole("heading", { name: copy.signIn })).toBeNull();
+		}
+	});
+});
+
+it("clears mismatched passwords and keeps the SDK out of local validation", async () => {
+	allowPasswordChange("email");
+	render(<AccountPage />);
+	const form = within(await screen.findByRole("region", { name: "Password" }));
+	const inputs = fillPasswordChange(form, passwordCopy.en.fields, "different-password");
+	fireEvent.click(form.getByRole("button", { name: "Change password" }));
+
+	await form.findByText("The two passwords don't match.");
+	expect(adapter.changePassword).not.toHaveBeenCalled();
+	for (const input of inputs) expect(input.value).toBe("");
+});
+
+it.each(["provider clears the session", "another user signs in"])("handles a late signed-out password result when %s", async situation => {
+	allowPasswordChange("email");
+	let finish!: (value: "signed_out") => void;
+	adapter.changePassword.mockReturnValueOnce(new Promise(resolve => { finish = resolve; }));
+	const page = render(<AccountPage />);
+	const form = within(await screen.findByRole("region", { name: "Password" }));
+	fillPasswordChange(form, passwordCopy.en.fields);
+	fireEvent.click(form.getByRole("button", { name: "Change password" }));
+
+	const cleared = situation === "provider clears the session";
+	const session = context.session!;
+	context.session = cleared ? null : { ...session, access_token: "other", user: { ...session.user, id: "other" } };
+	await act(async () => { page.rerender(<AccountPage />); });
+	await act(async () => { finish("signed_out"); });
+
+	if (cleared) {
+		expect(screen.getByRole("heading", { name: "Sign in" })).toBeDefined();
+		expect(screen.getByText(passwordCopy.en.outcomes.signed_out)).toBeDefined();
+	} else {
+		expect(screen.getByRole("region", { name: "Password" })).toBeDefined();
+		expect(screen.queryByText(passwordCopy.en.outcomes.signed_out)).toBeNull();
+		context.session = null;
+		await act(async () => { page.rerender(<AccountPage />); });
+		expect(screen.queryByText(passwordCopy.en.outcomes.signed_out)).toBeNull();
+	}
+});
+
+function accessToken(sessionId: string, issuedAt: number) {
+	return ["test", btoa(JSON.stringify({ session_id: sessionId, iat: issuedAt })).replace(/=+$/, ""), "test"].join(".");
+}
+
+it.each(["same session", "new session"])("scopes signed_out to the submitting session after a token change to a %s", async replacement => {
+	allowPasswordChange("email");
+	context.session = { ...context.session!, access_token: accessToken("original", 1) };
+	let finish!: (value: "signed_out") => void;
+	adapter.changePassword.mockReturnValueOnce(new Promise(resolve => { finish = resolve; }));
+	const page = render(<AccountPage />);
+	const form = within(await screen.findByRole("region", { name: "Password" }));
+	fillPasswordChange(form, passwordCopy.en.fields);
+	fireEvent.click(form.getByRole("button", { name: "Change password" }));
+
+	const sameSession = replacement === "same session";
+	context.session = { ...context.session, access_token: accessToken(sameSession ? "original" : "new", 2) };
+	page.rerender(<AccountPage />);
+	await act(async () => { finish("signed_out"); });
+
+	expect(Boolean(screen.queryByText(passwordCopy.en.outcomes.signed_out))).toBe(sameSession);
+	expect(Boolean(screen.queryByRole("heading", { name: "Sign in" }))).toBe(sameSession);
+});
+
+it.each(["before renewal", "after renewal"])("keeps the successful change when an old requests read finishes %s", async timing => {
+	allowPasswordChange("email");
+	let finishRead!: (value: { type: "signed_out" }) => void;
+	let finishChange!: (value: "password_changed") => void;
+	adapter.changePassword.mockReturnValueOnce(new Promise(resolve => { finishChange = resolve; }));
+	const page = render(<AccountPage />);
+	const form = within(await screen.findByRole("region", { name: "Password" }));
+	listRequests.mockReturnValueOnce(new Promise(resolve => { finishRead = resolve; }));
+	fireEvent(window, new Event("focus"));
+	fillPasswordChange(form, passwordCopy.en.fields);
+	fireEvent.click(form.getByRole("button", { name: "Change password" }));
+
+	const signOut = screen.getByRole<HTMLButtonElement>("button", { name: "Sign out" });
+	expect(signOut.disabled).toBe(true);
+	fireEvent.click(signOut);
+	expect(adapter.signOut).not.toHaveBeenCalled();
+	if (timing === "before renewal") await act(async () => { finishRead({ type: "signed_out" }); });
+	context.session = { ...context.session!, access_token: "renewed" };
+	page.rerender(<AccountPage />);
+	await act(async () => { finishChange("password_changed"); });
+	if (timing === "after renewal") await act(async () => { finishRead({ type: "signed_out" }); });
+
+	expect(screen.getByText(passwordCopy.en.outcomes.password_changed)).toBeDefined();
+	expect(screen.queryByRole("heading", { name: "Sign in" })).toBeNull();
+	expect(signOut.disabled).toBe(false);
+});
+
+it("shows success after the provider briefly clears the old session during renewal", async () => {
+	allowPasswordChange("email");
+	let finish!: (value: "password_changed") => void;
+	adapter.changePassword.mockReturnValueOnce(new Promise(resolve => { finish = resolve; }));
+	const page = render(<AccountPage />);
+	const form = within(await screen.findByRole("region", { name: "Password" }));
+	fillPasswordChange(form, passwordCopy.en.fields);
+	fireEvent.click(form.getByRole("button", { name: "Change password" }));
+
+	const session = context.session!;
+	context = { ...context, session: null, loading: true };
+	await act(async () => { page.rerender(<AccountPage />); });
+	context = { ...context, session: { ...session, access_token: "renewed" }, loading: false };
+	await act(async () => { page.rerender(<AccountPage />); finish("password_changed"); });
+
+	await screen.findByText(passwordCopy.en.outcomes.password_changed);
+	expect(screen.queryByRole("heading", { name: "Sign in" })).toBeNull();
+});
+
+it("retries the initial requests read when a renewed token supersedes its sign-out response", async () => {
+	allowPasswordChange("email");
+	let finishRead!: (value: { type: "signed_out" }) => void;
+	listRequests.mockReturnValueOnce(new Promise(resolve => { finishRead = resolve; }));
+	const page = render(<AccountPage />);
+	context.session = { ...context.session!, access_token: "renewed" };
+	await act(async () => { page.rerender(<AccountPage />); });
+	await act(async () => { finishRead({ type: "signed_out" }); });
+
+	await screen.findByRole("region", { name: "Password" });
+	expect(listRequests).toHaveBeenCalledTimes(2);
 });

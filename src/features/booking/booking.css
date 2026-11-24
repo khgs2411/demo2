@@ -123,8 +123,8 @@ h1 { font: 900 clamp(2.4rem, 1.2rem + 3.6vw, 4.4rem)/.95 var(--font-display); le
 
 /* #/account: my requests, a ledger with status in the machine voice */
 .account-columns { display: grid; align-items: start; gap: 40px; }
-.account-details h2, .accepted-terms h2 { font: 700 1.5rem/1.1 var(--font-display); margin-block-end: 22px; }
-.accepted-terms { margin-block-start: 40px; max-inline-size: 760px; }
+.account-details h2, .accepted-terms h2, .password-change h2 { font: 700 1.5rem/1.1 var(--font-display); margin-block-end: 22px; }
+.accepted-terms, .password-change { margin-block-start: 40px; max-inline-size: 760px; }
 .accepted-terms ul { padding: 0; margin: 0; list-style: none; border-block-start: 2px solid var(--ink); }
 .accepted-terms li { border-block-end: 1px solid var(--rule); }
 .accepted-terms .booking-terms { margin-block-end: 16px; }

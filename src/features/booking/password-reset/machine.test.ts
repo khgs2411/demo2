@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { forgotTransition, initialForgotState, initialResetState, passwordProblem, resetTransition } from "./machine";
+import { passwordProblem } from "../password-validation";
+import { forgotTransition, initialForgotState, initialResetState, resetTransition } from "./machine";
 
 describe("forgot password machine", () => {
 	it("sends once and lands on the neutral sent state", () => {
