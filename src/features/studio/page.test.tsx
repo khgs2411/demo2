@@ -1,5 +1,6 @@
 import { cleanup, render, screen, fireEvent, waitFor, act, within } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { useState } from "react";
 import { useProductContext, type ClassKitClient } from "@class-kit/react";
 import { i18n } from "../../i18n";
 import { StudioPage } from "./page";
@@ -418,4 +419,61 @@ it.each(["he", "en"])("renders stored rejected and cancelled decisions in a read
  expect(section.querySelectorAll("li")).toHaveLength(2);
  expect(section.querySelector("button")).toBeNull();
  expect(listHistory).toHaveBeenCalledWith();
+});
+
+function submitManagerSignIn() {
+	fireEvent.change(screen.getByLabelText("Email"), { target: { value: "maya@example.com" } });
+	fireEvent.change(screen.getByLabelText("Password"), { target: { value: "password1" } });
+	fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
+}
+
+it("reaches the studio when the same manager signs back in after an unauthorized load (#59)", async () => {
+	managerWithIdentities("email");
+	listPending.mockRejectedValueOnce({ code: "unauthorized", message: "Session expired" });
+	signIn.mockResolvedValue({ data: {}, error: null });
+	const view = render(<StudioPage />);
+	await screen.findByText("Session expired");
+	submitManagerSignIn();
+	await waitFor(() => expect(signIn).toHaveBeenCalled());
+	context = { ...context, session: { ...context.session!, access_token: "renewed" } };
+	view.rerender(<StudioPage />);
+	expect(await screen.findByRole("heading", { name: "Pending requests" }, { timeout: 2000 })).toBeDefined();
+});
+
+it("lets the manager sign out while the lists reload after signing back in", async () => {
+	managerWithIdentities("email");
+	let finishReload!: () => void;
+	listPending.mockRejectedValueOnce({ code: "unauthorized", message: "Session expired" })
+		.mockImplementationOnce(() => new Promise(resolve => {
+			finishReload = () => resolve({ registrations: [] });
+		}));
+	signIn.mockResolvedValue({ data: {}, error: null });
+	signOut.mockResolvedValue({ error: null });
+	render(<StudioPage />);
+	await screen.findByText("Session expired");
+	submitManagerSignIn();
+	fireEvent.click(await screen.findByRole("button", { name: "Sign out" }));
+	await screen.findByRole("button", { name: "Sign in" });
+	await act(async () => finishReload());
+	expect(screen.getByRole("button", { name: "Sign in" })).toBeDefined();
+});
+
+it("does not reload the lists when signing back in refreshes access to non-manager", async () => {
+	managerWithIdentities("email");
+	listPending.mockRejectedValueOnce({ code: "unauthorized", message: "Session expired" });
+	signIn.mockResolvedValue({ data: {}, error: null });
+	function PageWithPermissionRefresh() {
+		const [isManager, setIsManager] = useState(true);
+		context = {
+			...context,
+			capabilities: { ...context.capabilities, permissions: isManager ? ["registrations.manage"] : [] },
+			refreshProductContext: async () => setIsManager(false),
+		};
+		return <StudioPage />;
+	}
+	render(<PageWithPermissionRefresh />);
+	await screen.findByText("Session expired");
+	submitManagerSignIn();
+	await screen.findByText("This page is for the studio manager.");
+	expect(listPending).toHaveBeenCalledOnce();
 });
