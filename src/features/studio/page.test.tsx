@@ -41,15 +41,17 @@ beforeEach(async () => {
 	await i18n.changeLanguage("en");
 });
 afterEach(cleanup);
-function signedIn() {
+function signedIn(...providers: string[]) {
 	context.session = {access_token:"test",refresh_token:"test",token_type:"bearer",expires_in:3600,user:{id:"manager",app_metadata:{},user_metadata:{},aud:"authenticated",created_at:"2026-11-15"}};
+	if (providers.length) {
+		const { user } = context.session;
+		user.identities = providers.map(provider => ({ id: provider, identity_id: provider, user_id: user.id, provider }));
+	}
 }
 
 function managerWithIdentities(...providers: string[]) {
-	signedIn();
+	signedIn(...providers);
 	context.capabilities.permissions = ["registrations.manage"];
-	const { user } = context.session!;
-	user.identities = providers.map(provider => ({ id: provider, identity_id: provider, user_id: user.id, provider }));
 }
 
 async function submitPasswordChange() {
@@ -69,6 +71,7 @@ it.each(["he","en"])("offers only sign-in while signed out, without registration
 	expect(screen.queryByText(i18n.t("createAccount",{ns:"booking"}))).toBeNull();
 	expect(screen.queryByText(i18n.t("aLede",{ns:"booking"}))).toBeNull();
 	expect(screen.queryByRole("region", { name: i18n.t("accDetailsTitle", { ns: "booking" }) })).toBeNull();
+	expect(screen.queryByRole("region", { name: i18n.t("passwordChange.title", { ns: "booking" }) })).toBeNull();
 	expect(getProfile).not.toHaveBeenCalled();
 	expect(listPending).not.toHaveBeenCalled(); expect(listRegistered).not.toHaveBeenCalled();
 });
@@ -79,10 +82,11 @@ it("waits for context and denies non-managers without reading registrations", as
 	expect(screen.getByRole("status").textContent).toBe("Loading…");
 	expect(screen.queryByRole("region", { name: "Your details" })).toBeNull();
 	expect(listPending).not.toHaveBeenCalled();
-	context.loading = false; signedIn(); view.rerender(<StudioPage />);
+	context.loading = false; signedIn("email"); view.rerender(<StudioPage />);
 	expect(screen.getByText("This page is for the studio manager.")).toBeDefined();
 	expect(screen.getByRole("button",{name:"Sign out"})).toBeDefined();
 	expect(screen.queryByRole("region", { name: "Your details" })).toBeNull();
+	expect(screen.queryByRole("region", { name: "Password" })).toBeNull();
 	expect(getProfile).not.toHaveBeenCalled();
 	expect(listPending).not.toHaveBeenCalled(); expect(listRegistered).not.toHaveBeenCalled();
 });
@@ -305,13 +309,25 @@ it.each(["forbidden","unauthorized","network"])("keeps the row and shows a decis
 	expect(screen.getByText("Dana")).toBeDefined();
 	expect(approve).toHaveBeenCalledOnce(); expect(listPending).toHaveBeenCalledOnce();
 });
-it("shows a failed read and retries only the lists", async () => {
-	signedIn(); context.capabilities.permissions = ["registrations.manage"];
+it("shows account controls below the failed-read retry and can reload the lists", async () => {
+	managerWithIdentities("email");
 	listPending.mockRejectedValueOnce(new TypeError("offline"));
 	render(<StudioPage />);
-	const retry = await screen.findByRole("button",{name:"Try again"});
+	expect(screen.getByRole("status").textContent).toBe("Loading…");
 	expect(screen.queryByRole("region", { name: "Your details" })).toBeNull();
+	expect(screen.queryByRole("region", { name: "Password" })).toBeNull();
 	expect(getProfile).not.toHaveBeenCalled();
+
+	const retry = await screen.findByRole("button",{name:"Try again"});
+	const alert = screen.getByRole("alert");
+	const details = screen.getByRole("region", { name: "Your details" });
+	await within(details).findByDisplayValue("Maya");
+	const password = screen.getByRole("region", { name: "Password" });
+	expect(alert.textContent).toBe("Could not reach ClassKit. Please try again.");
+	expect(alert.compareDocumentPosition(retry) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+	expect(retry.compareDocumentPosition(details) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+	expect(details.compareDocumentPosition(password) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
 	fireEvent.click(retry);
 	await screen.findByText("No requests waiting.");
 	expect(approve).not.toHaveBeenCalled(); expect(reject).not.toHaveBeenCalled();
@@ -352,12 +368,22 @@ it("drops a manager's late response after the session changes", async () => {
 	expect(screen.getByRole("button",{name:"Sign in"})).toBeDefined();
 });
 it.each(["forbidden","unauthorized"])("renders backend access loss on a read (%s)", async code => {
-	signedIn(); context.capabilities.permissions = ["registrations.manage"];
+	managerWithIdentities("email");
 	listPending.mockRejectedValue({code,message:"Access lost"});
 	render(<StudioPage />);
-	await screen.findByText("Access lost");
-	if (code === "forbidden") expect(screen.getByText("This page is for the studio manager.")).toBeDefined();
-	else expect(screen.getByRole("button",{name:"Sign in"})).toBeDefined();
+	const alert = await screen.findByText("Access lost");
+	if (code === "forbidden") {
+		expect(screen.getByText("This page is for the studio manager.")).toBeDefined();
+		const details = screen.getByRole("region", { name: "Your details" });
+		await within(details).findByDisplayValue("Maya");
+		const password = screen.getByRole("region", { name: "Password" });
+		expect(alert.compareDocumentPosition(details) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+		expect(details.compareDocumentPosition(password) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+	} else {
+		expect(screen.getByRole("button",{name:"Sign in"})).toBeDefined();
+		expect(screen.queryByRole("region", { name: "Your details" })).toBeNull();
+		expect(screen.queryByRole("region", { name: "Password" })).toBeNull();
+	}
 });
 it("a failed refetch after approval retries the read without replaying approval", async () => {
 	signedIn(); context.capabilities.permissions = ["registrations.manage"];
