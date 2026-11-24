@@ -40,6 +40,13 @@ type SlotState = {
 	availability: "loading" | "ready" | "not_open";
 	notice: "slot_full" | null;
 };
+type SignedInSlot = Omit<SlotState, "step" | "userId"> & { userId: string };
+export type SignedInTermsState = SignedInSlot & (
+	| { step: "checking_terms" | "terms_check_failed"; termsChanged?: true }
+	| { step: "reviewing_terms"; terms: BookingTerms; accepted: boolean; termsChanged?: true }
+	| { step: "accepting_terms"; terms: BookingTerms }
+	| { step: "terms_accept_failed"; terms: BookingTerms; documentUnavailable?: true }
+);
 type SignupRejection = "terms_changed" | "terms_unavailable" | "turnstile_failed" | "turnstile_unavailable"
 	| "rate_limited" | "disabled" | "not_found" | "bad_request" | "signup_failed";
 type SignupSlot = {
@@ -77,7 +84,8 @@ export type BookingState =
 	| AccountState | ResumingSignup | ProfileState | SlotState | SignupState | SendingState | PasswordState
 	| { step: "recovering_session"; selection: BookingSelection }
 	| { step: "session_recovery_failed"; selection: BookingSelection }
-	| (Omit<SlotState, "step"> & { step: "submitting"; userId: string })
+	| SignedInTermsState
+	| (SignedInSlot & { step: "submitting" })
 	| { step: "requested"; selection: BookingSelection; userId: string; registration: BookingRegistration; slot?: BookingSlot; credentials?: BookingCredentials }
 	| { step: "failed"; operation: BookingOperation; reason: FailureReason; resume: AccountState | ResumingSignup | ProfileState | SlotState };
 export type BookingRedirectRestored = {
@@ -99,6 +107,12 @@ export type BookingEvent =
 	| { type: "terms_load_failed" }
 	| { type: "terms_reload_requested" }
 	| { type: "terms_accepted"; accepted: boolean }
+	| { type: "terms_checked"; terms: BookingTerms; alreadyAccepted: boolean }
+	| { type: "acceptance_submitted" }
+	| { type: "acceptance_recorded" }
+	| { type: "acceptance_failed" }
+	| { type: "document_changed" }
+	| { type: "terms_locale_changed" }
 	| { type: SignupRejection }
 	| { type: "signup_auth_chosen"; email: string }
 	| { type: "account_exists"; email: string; contact: BookingContact }
@@ -128,8 +142,17 @@ export type BookingEvent =
 
 export const initialState: BookingState = { step: "choosing_package" };
 
+export function isSignedInTermsState(state: BookingState): state is SignedInTermsState {
+	return state.step === "checking_terms" || state.step === "terms_check_failed" || state.step === "reviewing_terms"
+		|| state.step === "accepting_terms" || state.step === "terms_accept_failed";
+}
+
 function chooseSlot(selection: BookingSelection, userId: string | null): SlotState {
 	return { step: "choosing_slot", selection, userId, slots: [], availability: "loading", notice: null };
+}
+
+function checkTermsFor({ selection, userId, slots, availability, notice }: SignedInSlot) {
+	return { step: "checking_terms", selection, userId, slots, availability, notice } as const;
 }
 
 function openSignup(selection: BookingSelection, slot: BookingSlot): SignupState {
@@ -245,7 +268,7 @@ export function transition(state: BookingState, event: BookingEvent): BookingSta
 		const { selection, userId, pendingRequest } = state;
 		const slots = chooseSlot(selection, userId);
 		return pendingRequest
-			? { ...slots, step: "submitting", userId, slots: [pendingRequest.slot], availability: "ready" }
+			? checkTermsFor({ ...slots, userId, slots: [pendingRequest.slot], availability: "ready" })
 			: slots;
 	}
 	if (state.step === "completing_profile" && event.type === "profile_save_started") return { ...state, saving: true };
@@ -271,8 +294,38 @@ export function transition(state: BookingState, event: BookingEvent): BookingSta
 				return state.availability === "ready" && state.slots.some((slot) => slot.id === event.slotId && slot.canRegister)
 					? { ...state, selection: { ...state.selection, slotId: event.slotId }, notice: null } : state;
 			case "submit_requested":
-				return state.userId !== null && state.availability === "ready" && state.selection.slotId !== null ? { ...state, step: "submitting", userId: state.userId } : state;
+				return state.userId !== null && state.availability === "ready" && state.selection.slotId !== null
+					? checkTermsFor({ ...state, userId: state.userId }) : state;
 		}
+	}
+	if (event.type === "terms_locale_changed" && isSignedInTermsState(state)) return checkTermsFor(state);
+	if (state.step === "checking_terms") {
+		if (event.type === "terms_load_failed") return { ...state, step: "terms_check_failed" };
+		if ((event.type === "terms_checked" && !state.termsChanged) || (event.type === "terms_loaded" && state.termsChanged)) {
+			if (event.type === "terms_checked" && event.alreadyAccepted) return { ...state, step: "submitting" };
+			return { ...state, step: "reviewing_terms", terms: event.terms, accepted: false };
+		}
+	}
+	if (state.step === "terms_check_failed" && event.type === "retry_requested") return { ...state, step: "checking_terms" };
+	if (state.step === "reviewing_terms") {
+		if (event.type === "terms_accepted") return { ...state, accepted: event.accepted };
+		if (event.type === "acceptance_submitted" && state.accepted) {
+			const { accepted, termsChanged, ...booking } = state;
+			return { ...booking, step: "accepting_terms" };
+		}
+	}
+	if (state.step === "accepting_terms") {
+		const { terms, ...booking } = state;
+		switch (event.type) {
+			case "acceptance_recorded": return { ...booking, step: "submitting" };
+			case "acceptance_failed": return { ...state, step: "terms_accept_failed" };
+			case "terms_unavailable": return { ...state, step: "terms_accept_failed", documentUnavailable: true };
+			case "document_changed": return { ...checkTermsFor(state), termsChanged: true };
+		}
+	}
+	if (state.step === "terms_accept_failed" && event.type === "retry_requested") {
+		const { documentUnavailable, ...booking } = state;
+		return documentUnavailable ? checkTermsFor(state) : { ...booking, step: "accepting_terms" };
 	}
 	if (state.step === "signup_password" && event.type === "password_saved") return state.next;
 	if (state.step === "signup_details") {

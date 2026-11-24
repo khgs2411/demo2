@@ -208,6 +208,8 @@ export const he = {
 	booking: {
 		signupTitle: "הפרטים שלך לפגישה.",
 		acceptTerms: "אני מאשר/ת את תנאי השירות",
+		termsTitle: "תנאי השירות",
+		termsAcceptFailed: "לא הצלחנו לשמור את האישור. כדאי לנסות שוב.",
 		savePassword: "כדאי לשמור את הסיסמה עכשיו. היא מוצגת פעם אחת בלבד.",
 		copyPassword: "העתקת סיסמה",
 		copied: "הסיסמה הועתקה.",
@@ -306,7 +308,7 @@ export const he = {
 		accTermsLoading: "טוענים את התנאים שאישרת…",
 		accTermsEmpty: "עדיין לא אישרת תנאים.",
 		accTermsLoadFailed: "לא הצלחנו לטעון את התנאים שאישרת.",
-		accTermsVersion: "גרסה {{version}}",
+		termsVersion: "גרסה {{version}}",
 		accLede: "כל פגישה שביקשת, והסטטוס שלה.",
 		accSignInLede: "התחברו כדי לצפות בבקשות הפגישה שלכם.",
 		accBookToCreate: "אין לכם חשבון? קבעו פגישה ונפתח לכם חשבון.",

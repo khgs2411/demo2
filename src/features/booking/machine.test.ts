@@ -52,6 +52,7 @@ const loading: BookingState = {
 };
 const ready: BookingState = { ...loading, slots: [slot], availability: "ready" };
 const selected: BookingState = { ...ready, selection: { ...selection, slotId: slot.id } };
+const checkingTerms = { ...selected, step: "checking_terms", userId: "visitor" } as const;
 const submitting: BookingState = { ...selected, step: "submitting", userId: "visitor" };
 const registration = { id: "request-1", classId: slot.id, status: "pending" } as const;
 
@@ -78,7 +79,10 @@ describe("booking slot selection and request", () => {
 		expect(transition(loading, { type: "slots_loaded", slots: [slot] })).toEqual(ready);
 		expect(transition(ready, { type: "slot_chosen", slotId: slot.id })).toEqual(selected);
 		expect(transition(ready, { type: "submit_requested" })).toBe(ready);
-		expect(transition(selected, { type: "submit_requested" })).toEqual(submitting);
+		expect(transition(selected, { type: "submit_requested" })).toEqual(checkingTerms);
+		expect(transition(checkingTerms, {
+			type: "terms_checked", alreadyAccepted: true, terms: { title: "Studio terms", text: "Terms", version: 3, locale: "en" },
+		})).toEqual(submitting);
 		expect(transition(submitting, { type: "submit_requested" })).toBe(submitting);
 		expect(transition(submitting, { type: "registration_requested", registration })).toEqual({
 			step: "requested", selection: selected.selection, userId: "visitor", registration, slot,
@@ -159,6 +163,13 @@ describe("booking transition table", () => {
 	const signInAfterSignup = {
 		step: "resuming_signup", selection: selected.selection, email, continuation: { kind: "show_request", slot, registration },
 	} satisfies BookingState;
+	const checkingChangedTerms = { ...checkingTerms, termsChanged: true } as const;
+	const termsCheckFailed = { ...checkingTerms, step: "terms_check_failed" } as const;
+	const reviewingTerms = { ...checkingTerms, step: "reviewing_terms", terms, accepted: false } as const;
+	const checkedConsent = { ...reviewingTerms, accepted: true } as const;
+	const acceptingTerms = { ...checkingTerms, step: "accepting_terms", terms } as const;
+	const termsAcceptFailed = { ...acceptingTerms, step: "terms_accept_failed" } as const;
+	const termsUnavailable = { ...termsAcceptFailed, documentUnavailable: true } as const;
 	const stateCases = {
 		initialState: { step: "choosing_package" } as const,
 		account, signingIn, signingUp, profile, saving, loading, ready, selected, submitting, requested,
@@ -166,6 +177,7 @@ describe("booking transition table", () => {
 		guestLoading, guestReady, guestSelected, signupForm, signupWithTerms, signupAccepted, signupNoTerms, sending,
 		resuming, signingToResume, resumeAuthFailure, profileForRequest, recovery, recoveryFailure, passwordShown,
 		signInAfterSignup,
+		checkingTerms, checkingChangedTerms, termsCheckFailed, reviewingTerms, checkedConsent, acceptingTerms, termsAcceptFailed, termsUnavailable,
 	};
 	const eventCases = {
 		chosen,
@@ -182,6 +194,13 @@ describe("booking transition table", () => {
 		termsReload: { type: "terms_reload_requested" },
 		termsAccepted: { type: "terms_accepted", accepted: true },
 		termsChanged: { type: "terms_changed" },
+		currentTermsAccepted: { type: "terms_checked", terms, alreadyAccepted: true },
+		currentTermsUnaccepted: { type: "terms_checked", terms, alreadyAccepted: false },
+		acceptanceSubmitted: { type: "acceptance_submitted" },
+		acceptanceRecorded: { type: "acceptance_recorded" },
+		acceptanceFailed: { type: "acceptance_failed" },
+		documentChanged: { type: "document_changed" },
+		termsLocaleChanged: { type: "terms_locale_changed" },
 		termsUnavailable: { type: "terms_unavailable" },
 		turnstileFailed: { type: "turnstile_failed" },
 		turnstileUnavailable: { type: "turnstile_unavailable" },
@@ -239,7 +258,21 @@ describe("booking transition table", () => {
 		saving: { profileLoaded: { ...saving, prefill: eventCases.profileLoaded.profile }, profileSaved: loading, profileFailed: profileFailure, profileSaveStarted: saving },
 		loading: { notOpen: closed, refresh: loading, loaded: ready, slotsFailed: slotsFailure, profileReopened: profile },
 		ready: { notOpen: closed, refresh: loading, loaded: ready, slotChosen: selected, slotsFailed: slotsFailure, profileReopened: profile },
-		selected: { notOpen: closed, refresh: loading, loaded: selected, slotChosen: selected, submit: submitting, slotsFailed: slotsFailure, profileReopened: { ...profile, selection:selected.selection } },
+		selected: { notOpen: closed, refresh: loading, loaded: selected, slotChosen: selected, submit: checkingTerms, slotsFailed: slotsFailure, profileReopened: { ...profile, selection:selected.selection } },
+		checkingTerms: { currentTermsAccepted: submitting, currentTermsUnaccepted: reviewingTerms, termsFailed: termsCheckFailed, termsLocaleChanged: checkingTerms },
+		checkingChangedTerms: {
+			termsLoaded: { ...reviewingTerms, termsChanged: true },
+			termsFailed: { ...termsCheckFailed, termsChanged: true }, termsLocaleChanged: checkingTerms,
+		},
+		termsCheckFailed: { retry: checkingTerms, termsLocaleChanged: checkingTerms },
+		reviewingTerms: { termsAccepted: checkedConsent, termsLocaleChanged: checkingTerms },
+		checkedConsent: { termsAccepted: checkedConsent, acceptanceSubmitted: acceptingTerms, termsLocaleChanged: checkingTerms },
+		acceptingTerms: {
+			acceptanceRecorded: submitting, acceptanceFailed: termsAcceptFailed, documentChanged: checkingChangedTerms,
+			termsUnavailable, termsLocaleChanged: checkingTerms,
+		},
+		termsAcceptFailed: { retry: acceptingTerms, termsLocaleChanged: checkingTerms },
+		termsUnavailable: { retry: checkingTerms, termsLocaleChanged: checkingTerms },
 		submitting: { registered: requested, full: { ...loading, notice: "slot_full" }, registrationFailed: registrationFailure },
 		requested: { registrationUpdated: { ...requested, registration: { ...registration, status:"approved" } } },
 		authFailure: { retry: account }, profileFailure: { retry: profile },
@@ -302,7 +335,7 @@ describe("booking transition table", () => {
 		profileForRequest: {
 			profileLoaded: { ...profileForRequest, prefill: eventCases.profileLoaded.profile },
 			profileSaveStarted: { ...profileForRequest, saving: true },
-			profileSaved: submitting, profileFailed: { ...profileFailure, resume: profileForRequest }, unauthenticated: resuming,
+			profileSaved: checkingTerms, profileFailed: { ...profileFailure, resume: profileForRequest }, unauthenticated: resuming,
 		},
 		recovery: { recoveryFailed: recoveryFailure },
 		recoveryFailure: { revocationCleared: account, accountBack: initialState, signIn: signingIn, signUp: signingIn, google: signingIn },
@@ -378,7 +411,10 @@ describe("signed-out booking recovery", () => {
 		const resumed = transition(signing, { type: "signed_in", userId: "visitor" });
 		expect(resumed).toMatchObject({ step: "completing_profile", userId: "visitor", selection: { slotId: slot.id } });
 		expect(transition(resumed, { type: "registration_requested", registration })).toBe(resumed);
-		const submitted = transition(resumed, { type: "profile_saved" });
+		const checking = transition(resumed, { type: "profile_saved" });
+		expect(checking).toMatchObject({ step: "checking_terms", userId: "visitor", selection: { slotId: slot.id } });
+		expect(transition(checking, { type: "registration_requested", registration })).toBe(checking);
+		const submitted = transition(checking, { type: "terms_checked", alreadyAccepted: true, terms });
 		expect(submitted).toMatchObject({ step: "submitting", userId: "visitor", selection: { slotId: slot.id } });
 		expect(transition(submitted, { type: "registration_requested", registration })).toMatchObject({ step: "requested", registration });
 	});
