@@ -1,5 +1,7 @@
 export { AccountStep } from "./account-step";
 export { AccountDetails } from "./account-details";
-export { createAccountDetailsAdapter } from "./adapter";
+export { createBookingAdapter } from "./adapter";
+export { PasswordChange } from "./password-change";
+export { usePasswordChange } from "./use-password-change";
 import "./booking.css";
 export { clearBookingRedirect, clearAccountRedirect } from "./redirect";
