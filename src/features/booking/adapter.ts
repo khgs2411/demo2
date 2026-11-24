@@ -45,6 +45,41 @@ function mapSlot(slot: ClassSummary): BookingSlot {
 	};
 }
 
+export function createAccountDetailsAdapter(client: Pick<BookingSdk, "profile"> | null) {
+	async function loadProfile(userId: string): Promise<Extract<BookingEvent, { type: "profile_loaded" }>> {
+		try {
+			const response = await client?.profile.get();
+			const user = response?.data?.user;
+			if (user && user.user_id === userId) {
+				const { business_name: business, website_url: website } = user.metadata;
+				const profile: BookingProfile = {
+					displayName: user.display_name ?? "",
+					phoneNumber: user.phone_number ?? "",
+					businessName: typeof business === "string" ? business : "",
+					websiteUrl: typeof website === "string" ? website : undefined,
+				};
+				return { type: "profile_loaded", profile };
+			}
+		} catch {
+			return { type: "profile_loaded", profile: null };
+		}
+		return { type: "profile_loaded", profile: null };
+	}
+
+	async function saveAccountDetails({ displayName, phoneNumber }: BookingContact): Promise<AccountDetailsSaveEvent | { type: "signed_out" }> {
+		try {
+			if (!client) return { type: "save_failed" };
+			const response = await client.profile.update({ displayName, phoneNumber });
+			if (response.error) return { type: isSignedOutError(response.error.code) ? "signed_out" : "save_failed" };
+			return { type: "saved" };
+		} catch {
+			return { type: "save_failed" };
+		}
+	}
+
+	return { loadProfile, saveAccountDetails };
+}
+
 export function createBookingAdapter(client: BookingSdk | null, refreshProductContext: () => Promise<void>) {
 	async function passwordAuth(method: "signIn" | "signUp", email: string, password: string): Promise<BookingEvent> {
 		try {
@@ -79,26 +114,6 @@ export function createBookingAdapter(client: BookingSdk | null, refreshProductCo
 		return failure("auth");
 	}
 
-	async function loadProfile(userId: string): Promise<Extract<BookingEvent, { type: "profile_loaded" }>> {
-		try {
-			const response = await client?.profile.get();
-			const user = response?.data?.user;
-			if (user && user.user_id === userId) {
-				const { business_name: business, website_url: website } = user.metadata;
-				const profile: BookingProfile = {
-					displayName: user.display_name ?? "",
-					phoneNumber: user.phone_number ?? "",
-					businessName: typeof business === "string" ? business : "",
-					websiteUrl: typeof website === "string" ? website : undefined,
-				};
-				return { type: "profile_loaded", profile };
-			}
-		} catch {
-			return { type: "profile_loaded", profile: null };
-		}
-		return { type: "profile_loaded", profile: null };
-	}
-
 	async function saveProfile(profile: BookingProfile, selection: BookingSelection): Promise<BookingEvent> {
 		try {
 			if (!client) return failure("profile");
@@ -129,17 +144,6 @@ export function createBookingAdapter(client: BookingSdk | null, refreshProductCo
 				: { type: "slots_loaded", slots: response.data.classes.map(mapSlot) };
 		} catch {
 			return failure("slots");
-		}
-	}
-
-	async function saveAccountDetails({ displayName, phoneNumber }: BookingContact): Promise<AccountDetailsSaveEvent | { type: "signed_out" }> {
-		try {
-			if (!client) return { type: "save_failed" };
-			const response = await client.profile.update({ displayName, phoneNumber });
-			if (response.error) return { type: isSignedOutError(response.error.code) ? "signed_out" : "save_failed" };
-			return { type: "saved" };
-		} catch {
-			return { type: "save_failed" };
 		}
 	}
 
@@ -332,12 +336,11 @@ export function createBookingAdapter(client: BookingSdk | null, refreshProductCo
 	}
 
 	return {
+		...createAccountDetailsAdapter(client),
 		signIn: (email: string, password: string) => passwordAuth("signIn", email, password),
 		signUp: (email: string, password: string) => passwordAuth("signUp", email, password),
 		signInWithGoogle,
-		loadProfile,
 		saveProfile,
-		saveAccountDetails,
 		loadSlots,
 		requestRegistration,
 		loadTerms,

@@ -1,13 +1,17 @@
-import { cleanup, render, screen, act } from "@testing-library/react";
+import { cleanup, render, screen, act, fireEvent, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Routes } from "./routes";
-import "../i18n";
+import { i18n } from "../i18n";
 import { makeBookingContext } from "../features/booking/context-fixture";
 import { saveBookingRedirect } from "../features/booking/redirect";
 import * as packages from "../features/packages";
 import type { useBookingContext } from "../features/booking/adapter";
 
 let bookingContext: ReturnType<typeof useBookingContext>;
+const managerSession: NonNullable<typeof bookingContext.session> = {
+	access_token: "test", refresh_token: "test", token_type: "bearer", expires_in: 3600,
+	user: { id: "manager", app_metadata: {}, user_metadata: {}, aud: "authenticated", created_at: "2026-11-07" },
+};
 vi.mock("@class-kit/react", () => ({ useProductContext: () => bookingContext }));
 beforeEach(() => { bookingContext = makeBookingContext(); sessionStorage.clear(); });
 
@@ -68,4 +72,87 @@ it("restores booking after the provider receives an OAuth session without a hash
 	});
 	expect(await screen.findByText("היומן עוד לא פתוח.")).toBeDefined();
 	expect(window.location.hash).toBe("#/book");
+});
+
+it("replaces a manager's account entry so Back returns to the previous page", async () => {
+	window.history.replaceState(null, "", "#/packages");
+	window.history.pushState(null, "", "#/account");
+	bookingContext.session = managerSession;
+	bookingContext.productUser = { role: "manager", status: "active" };
+	render(<Routes />);
+
+	expect(window.location.hash).toBe("#/studio");
+	expect(screen.getByRole("main").dataset.module).toBe("studio");
+	await act(async () => {
+		const back = new Promise<void>(resolve => window.addEventListener("hashchange", () => resolve(), { once: true }));
+		window.history.back();
+		await back;
+	});
+	expect(window.location.hash).toBe("#/packages");
+	expect(screen.getByRole("main").dataset.module).toBe("packages");
+});
+
+it("waits on the account page until studio access finishes loading", () => {
+	window.history.replaceState(null, "", "#/account");
+	bookingContext.session = managerSession;
+	bookingContext.capabilities.permissions = ["registrations.manage"];
+	bookingContext.loading = true;
+	const view = render(<Routes />);
+
+	expect(window.location.hash).toBe("#/account");
+	expect(screen.getByRole("status")).toBeDefined();
+
+	bookingContext = { ...bookingContext, loading: false };
+	view.rerender(<Routes />);
+	expect(window.location.hash).toBe("#/studio");
+	expect(screen.getByRole("main").dataset.module).toBe("studio");
+});
+
+it("takes a visitor signing in with a password on the account page to their studio", async () => {
+	window.history.replaceState(null, "", "#/account");
+	bookingContext.client = {
+		auth: {
+			signIn: async () => ({ error: null }),
+			getSession: async () => managerSession,
+		},
+		management: { registrations: {} },
+	} as unknown as NonNullable<typeof bookingContext.client>;
+	bookingContext.refreshProductContext = async () => {
+		bookingContext = { ...bookingContext, session: managerSession, productUser: { role: "manager", status: "active" } };
+		view.rerender(<Routes />);
+	};
+	const view = render(<Routes />);
+	expect(screen.getByRole("heading", { name: i18n.t("signIn", { ns: "booking" }) })).toBeDefined();
+	fireEvent.change(screen.getByLabelText(i18n.t("email", { ns: "booking" })), { target: { value: "manager@example.test" } });
+	fireEvent.change(screen.getByLabelText(i18n.t("password", { ns: "booking" })), { target: { value: "test-password" } });
+	await act(async () => fireEvent.click(screen.getByRole("button", { name: i18n.t("signIn", { ns: "booking" }) })));
+
+	expect(window.location.hash).toBe("#/studio");
+	expect(screen.getByRole("main").dataset.module).toBe("studio");
+});
+
+it("replaces the restored account entry after the Google sign-in callback", async () => {
+	window.history.replaceState(null, "", "#/account");
+	bookingContext.client = {
+		auth: { signInWithGoogle: async () => ({ error: null }) },
+		management: { registrations: {} },
+	} as unknown as NonNullable<typeof bookingContext.client>;
+	const view = render(<Routes />);
+	await act(async () => fireEvent.click(screen.getByRole("button", { name: i18n.t("google", { ns: "booking" }) })));
+
+	act(() => {
+		// The OAuth return is a new document entry. Model that entry before the app restores the hash.
+		window.history.pushState(null, "", window.location.pathname);
+		bookingContext = { ...bookingContext, session: managerSession, productUser: { role: "manager", status: "active" } };
+		view.rerender(<Routes />);
+	});
+	await waitFor(() => expect(window.location.hash).toBe("#/studio"));
+	expect(screen.getByRole("main").dataset.module).toBe("studio");
+	await act(async () => {
+		const back = new Promise<void>(resolve => window.addEventListener("hashchange", () => resolve(), { once: true }));
+		window.history.back();
+		await back;
+	});
+	expect(window.location.hash).toBe("#/");
+	expect(screen.getByRole("main").dataset.module).toBe("showcase");
 });
