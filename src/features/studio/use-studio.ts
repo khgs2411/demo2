@@ -44,6 +44,7 @@ export function useStudio(context: ReturnType<typeof useProductContext>, access:
 		if (active.current) send(result);
 	}
 	return { state, decide, retry,
+		onSignedOut: () => send({ type: "access_resolved", access: "signed_out" }),
 		signIn: (email: string, password: string) => auth && authenticate(() => auth.signIn(email,password)),
 		signOut: () => auth && authenticate(() => auth.signOut()),
 		signInWithGoogle: () => auth && authenticate(() => auth.signInWithGoogle()),
