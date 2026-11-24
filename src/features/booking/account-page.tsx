@@ -5,6 +5,7 @@ import { Ticket } from "../../ui/ticket";
 import { createBookingAdapter, useBookingContext } from "./adapter";
 import type { BookingEvent } from "./machine";
 import { AccountDetails } from "./account-details";
+import { AcceptedTerms } from "./accepted-terms";
 import { AccountStep } from "./account-step";
 import { RequestLedger } from "./request-ledger";
 import { useRequests } from "./use-requests";
@@ -70,6 +71,7 @@ export function AccountPage() {
 	}
 	const signedOut = !session || !userId || requests.state.step === "signed_out";
 	const noAccess = requests.state.step === "no_access";
+	const showAccountSections = !noAccess && requests.state.step !== "loading";
 	return <main data-module="booking" className="booking-page account-page">
 		<section>
 			{!revoked && auth.error && <p role="alert" className="notice error">{t(auth.error)}</p>}
@@ -81,9 +83,10 @@ export function AccountPage() {
 				{!noAccess && <><h1>{t("accTitle")}</h1><p className="lede">{t("accLede")}</p></>}
 				<div className={noAccess ? undefined : "account-columns"}>
 					<div><RequestLedger {...requests} timeZone={Intl.DateTimeFormat().resolvedOptions().timeZone} /></div>
-					{!noAccess && requests.state.step !== "loading" && <AccountDetails key={userId}
+					{showAccountSections && <AccountDetails key={userId}
 						adapter={adapter} userId={userId} onSignedOut={() => dispatch({ type: "profile_signed_out", accessToken: session.access_token })} />}
 				</div>
+				{showAccountSections && <AcceptedTerms key={userId} adapter={adapter} />}
 				<div className="actions">
 					{!noAccess && <Ticket href="#/book" stub="+">{t("bookAnother")}</Ticket>}
 					<Ticket className="booking-link" stub="" disabled={auth.busy} onClick={() => void signOut()}>{t("signOut")}</Ticket>

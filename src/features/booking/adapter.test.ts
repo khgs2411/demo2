@@ -25,6 +25,7 @@ function mockSdk() {
 			}),
 		},
 		profile: { get: vi.fn<BookingSdk["profile"]["get"]>(), update: vi.fn<BookingSdk["profile"]["update"]>() },
+		productDocuments: { listMyAcceptances: vi.fn<BookingSdk["productDocuments"]["listMyAcceptances"]>() },
 		classes: {
 			listMyRegistrations: vi.fn<BookingSdk["classes"]["listMyRegistrations"]>(),
 			list: vi.fn<BookingSdk["classes"]["list"]>(),
@@ -314,6 +315,37 @@ it("refreshes after a thrown cancellation error with no automatic retry", async 
 	sdk.classes.listMyRegistrations.mockResolvedValueOnce({data:{registrations:[]},error:null});
 	expect(await adapter.cancelRequest("request-1",range)).toEqual([{type:"cancel_failed"},{type:"loaded",requests:[]}]);
 	expect(sdk.classes.cancelRegistration).toHaveBeenCalledOnce();
+});
+
+describe("accepted terms SDK adapter", () => {
+	it("loads the signed-in user's snapshots in server order without caching them", async () => {
+		const newest = {
+			id: "latest", documentType: "terms_of_service", documentLocale: "he", documentVersion: 8,
+			documentTitle: "Studio terms", documentContentMarkdown: "**Agreed text**", context: "registration_signup",
+			acceptedAt: "2026-11-20T10:00:00Z",
+		};
+		const older = { ...newest, id: "earlier", documentVersion: 7, acceptedAt: "2026-11-01T10:00:00Z" };
+		sdk.productDocuments.listMyAcceptances
+			.mockResolvedValueOnce({ data: { acceptances: [newest, older] }, error: null })
+			.mockResolvedValueOnce({ data: { acceptances: [] }, error: null });
+
+		expect(await adapter.loadAcceptedTerms()).toEqual({ type: "loaded", acceptances: [
+			{ id: "latest", locale: "he", version: 8, title: "Studio terms", text: "**Agreed text**", acceptedAt: "2026-11-20T10:00:00Z" },
+			{ id: "earlier", locale: "he", version: 7, title: "Studio terms", text: "**Agreed text**", acceptedAt: "2026-11-01T10:00:00Z" },
+		] });
+		expect(await adapter.loadAcceptedTerms()).toEqual({ type: "loaded", acceptances: [] });
+		expect(sdk.productDocuments.listMyAcceptances.mock.calls).toEqual([[], []]);
+	});
+
+	it("reports failure when the SDK returns an error, rejects, or is unavailable", async () => {
+		sdk.productDocuments.listMyAcceptances
+			.mockResolvedValueOnce({ data: null, error: { code: "internal_error", message: "Unavailable" } })
+			.mockRejectedValueOnce(new Error("offline"));
+
+		expect(await adapter.loadAcceptedTerms()).toEqual({ type: "load_failed" });
+		expect(await adapter.loadAcceptedTerms()).toEqual({ type: "load_failed" });
+		expect(await createBookingAdapter(null, refresh).loadAcceptedTerms()).toEqual({ type: "load_failed" });
+	});
 });
 
 describe("booking signup SDK adapter", () => {

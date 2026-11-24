@@ -4,6 +4,7 @@ import { Ticket } from "../../ui/ticket";
 import { GoogleSignIn } from "./account-step";
 import type { SignupDraft } from "./machine";
 import { RetryTicket } from "./retry-ticket";
+import { TermsReader } from "./terms-reader";
 import type { useBooking } from "./use-booking";
 import { useTurnstile } from "./use-turnstile";
 
@@ -37,7 +38,7 @@ export function SignupStep({ flow, draft, onChange }: {
 				<Input label={t("phone")} value={draft.phone} onChange={event => onChange({ ...draft, phone: event.target.value })} type="tel" dir="ltr" autoComplete="tel" minLength={7} maxLength={20} required />
 				{terms ? <>
 					<h2 className="booking-terms-heading" lang={terms.locale} dir="auto">{terms.title}</h2>
-					<p className="booking-terms" lang={terms.locale} dir="auto">{terms.text}</p>
+					<TermsReader terms={terms} />
 					<label className="check"><input type="checkbox" required checked={accepted} onChange={event => flow.send({ type: "terms_accepted", accepted: event.target.checked })} /> {t("acceptTerms")}</label>
 				</> : loadingTerms && <p role="status">{t("loading")}</p>}
 			</fieldset>

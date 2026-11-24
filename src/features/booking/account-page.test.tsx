@@ -11,7 +11,8 @@ const request = { id:"s", name:"Business meeting", startsAt:"2026-11-10T09:00:00
 const profile = { displayName: "Maya Cohen", phoneNumber: "0501234567", businessName: "Studio" };
 const listRequests = vi.fn();
 const cancelRequest = vi.fn();
-const adapter = { loadProfile:vi.fn(), saveAccountDetails:vi.fn(), loadTerms:vi.fn(), requestWithSignup:vi.fn(), signIn:vi.fn(), signUp:vi.fn(), signInWithGoogle:vi.fn(), saveProfile:vi.fn(),loadSlots:vi.fn(),requestRegistration:vi.fn(),listRequests,cancelRequest,signOut:vi.fn(),requestPasswordReset:vi.fn(),completePasswordReset:vi.fn() };
+const loadAcceptedTerms = vi.fn();
+const adapter = { loadProfile:vi.fn(), saveAccountDetails:vi.fn(), loadTerms:vi.fn(), loadAcceptedTerms, requestWithSignup:vi.fn(), signIn:vi.fn(), signUp:vi.fn(), signInWithGoogle:vi.fn(), saveProfile:vi.fn(),loadSlots:vi.fn(),requestRegistration:vi.fn(),listRequests,cancelRequest,signOut:vi.fn(),requestPasswordReset:vi.fn(),completePasswordReset:vi.fn() };
 beforeEach(async () => {
 	vi.restoreAllMocks(); vi.resetAllMocks();
 	context = { ...makeBookingContext(), session:{access_token:"test",refresh_token:"test",token_type:"bearer",expires_in:3600,user:{id:"visitor",app_metadata:{},user_metadata:{},aud:"authenticated",created_at:"2026-11-07"}} };
@@ -19,6 +20,7 @@ beforeEach(async () => {
 	vi.spyOn(adapterModule,"createBookingAdapter").mockReturnValue(adapter);
 	listRequests.mockResolvedValue({type:"loaded",requests:[request]});
 	adapter.loadProfile.mockResolvedValue({ type: "profile_loaded", profile });
+	loadAcceptedTerms.mockResolvedValue({ type: "loaded", acceptances: [] });
 	await i18n.changeLanguage("en");
 });
 afterEach(cleanup);
@@ -55,6 +57,7 @@ it("offers authentication to signed-out visitors without reading private request
 	expect(screen.queryByRole("button", { name: "Create account" })).toBeNull();
 	expect(screen.getByRole("link", { name: "No account? Book a meeting and we'll create one." }).getAttribute("href")).toBe("#/book");
 	expect(listRequests).not.toHaveBeenCalled();
+	expect(loadAcceptedTerms).not.toHaveBeenCalled();
 });
 it("ignores a stale read after the provider switches visitors", async () => {
 	let resolveOld!: (value: unknown) => void;
@@ -95,12 +98,83 @@ it.each([
 
 	expect((await screen.findByRole("alert")).textContent).toBe(message);
 	expect(adapter.loadProfile, "no profile read without product access").not.toHaveBeenCalled();
+	expect(loadAcceptedTerms, "no acceptance read without product access").not.toHaveBeenCalled();
+	expect(screen.queryByRole("region", { name: language === "en" ? "Terms you accepted" : "התנאים שאישרת" })).toBeNull();
 	expect(screen.queryByRole("heading", { name: i18n.t("accDetailsTitle", { ns: "booking" }) })).toBeNull();
 	expect(screen.queryByRole("textbox")).toBeNull();
 	expect(screen.queryByRole("link")).toBeNull();
 	expect(screen.getAllByRole("button")).toHaveLength(1);
 	expect(screen.queryByRole("button", { name: i18n.t("retry", { ns: "booking" }) })).toBeNull();
 	expect(screen.getByRole("button", { name: i18n.t("signOut", { ns: "booking" }) })).toBeDefined();
+});
+
+const acceptance = {
+	id: "snapshot-8", title: "תנאי הסטודיו", version: 8, locale: "he",
+	text: "**הנוסח שאושר**\n\n- סעיף ראשון", acceptedAt: new Date(2026, 10, 20, 12).toISOString(),
+};
+
+it("opens each acceptance's own snapshot, including rows with the same title", async () => {
+	const older = { ...acceptance, id: "snapshot-7", version: 7, text: "**נוסח קודם**", acceptedAt: new Date(2026, 9, 5, 12).toISOString() };
+	loadAcceptedTerms.mockResolvedValueOnce({ type: "loaded", acceptances: [acceptance, older] });
+	render(<AccountPage />);
+
+	const terms = within(await screen.findByRole("region", { name: "Terms you accepted" }));
+	const [latestRow, olderRow] = await terms.findAllByRole("button");
+	expect(terms.getAllByRole("listitem")).toHaveLength(2);
+	expect(latestRow.textContent).toContain("תנאי הסטודיו");
+	expect(latestRow.textContent).toContain("Version 8");
+	expect(olderRow.textContent).toContain("Version 7");
+	expect(within(latestRow).getByText("Nov 20, 2026").getAttribute("datetime")).toBe(acceptance.acceptedAt);
+	expect(within(olderRow).getByText("Oct 5, 2026").getAttribute("datetime")).toBe(older.acceptedAt);
+	expect(terms.queryByText(/הנוסח שאושר/)).toBeNull();
+
+	fireEvent.click(latestRow);
+	const reader = terms.getByText(/הנוסח שאושר/);
+	expect(reader.textContent).toBe(acceptance.text);
+	expect(reader.getAttribute("lang")).toBe("he");
+	expect(latestRow.getAttribute("aria-expanded")).toBe("true");
+
+	fireEvent.click(olderRow);
+	expect(terms.getByText(older.text).textContent).toBe(older.text);
+	expect(terms.queryByText(/הנוסח שאושר/)).toBeNull();
+	fireEvent.click(olderRow);
+	expect(terms.queryByText(older.text)).toBeNull();
+	expect(adapter.loadTerms).not.toHaveBeenCalled();
+});
+
+it.each([
+	["en", "Terms you accepted", "Loading accepted terms…", "We couldn't load your accepted terms.", "Try again", "You haven't accepted any terms yet."],
+	["he", "התנאים שאישרת", "טוענים את התנאים שאישרת…", "לא הצלחנו לטעון את התנאים שאישרת.", "ניסיון נוסף", "עדיין לא אישרת תנאים."],
+])("shows localized accepted-terms states and retries in %s", async (language, heading, loading, failure, retry, empty) => {
+	await i18n.changeLanguage(language);
+	let fail!: () => void;
+	loadAcceptedTerms.mockImplementationOnce(() => new Promise(resolve => {
+		fail = () => resolve({ type: "load_failed" });
+	}));
+	render(<AccountPage />);
+
+	const terms = within(await screen.findByRole("region", { name: heading }));
+	expect(terms.getByRole("status").textContent).toBe(loading);
+	await act(async () => { fail(); });
+	expect(terms.getByRole("alert").textContent).toBe(failure);
+	fireEvent.click(terms.getByRole("button", { name: retry }));
+	expect((await terms.findByText(empty)).getAttribute("role")).toBe("status");
+	expect(loadAcceptedTerms).toHaveBeenCalledTimes(2);
+});
+
+it("discards a pending acceptance read when the signed-in user changes", async () => {
+	let finishOldRead!: () => void;
+	loadAcceptedTerms.mockImplementationOnce(() => new Promise(resolve => {
+		finishOldRead = () => resolve({ type: "loaded", acceptances: [acceptance] });
+	}));
+	const page = render(<AccountPage />);
+	await screen.findByText("Loading accepted terms…");
+
+	context = { ...context, session: { ...context.session!, user: { ...context.session!.user, id: "other" } } };
+	page.rerender(<AccountPage />);
+	await screen.findByText("You haven't accepted any terms yet.");
+	await act(async () => { finishOldRead(); });
+	expect(screen.queryByText(acceptance.title)).toBeNull();
 });
 
 it("loads and saves the signed-in user's required contact fields beside the ledger", async () => {

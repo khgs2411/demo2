@@ -14,7 +14,7 @@ let context: ReturnType<typeof adapterModule.useBookingContext>;
 const fakeAdapter = {
 	signIn: vi.fn().mockResolvedValue({ type: "signed_in", userId: "visitor" }),
 	signUp: vi.fn().mockResolvedValue({ type: "signed_in", userId: "visitor" }),
-	loadTerms: vi.fn(), requestWithSignup: vi.fn(), loadProfile: vi.fn().mockResolvedValue({ type: "profile_loaded", profile: null }),
+	loadTerms: vi.fn(), loadAcceptedTerms: vi.fn(), requestWithSignup: vi.fn(), loadProfile: vi.fn().mockResolvedValue({ type: "profile_loaded", profile: null }),
 	saveAccountDetails: vi.fn(),
 	signInWithGoogle: vi.fn().mockResolvedValue({ type: "auth_redirect_started" }),
 	saveProfile: vi.fn().mockResolvedValue({ type: "profile_saved" }),
