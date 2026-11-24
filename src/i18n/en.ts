@@ -208,6 +208,8 @@ export const en = {
 	booking: {
 		signupTitle: "Your details for the meeting.",
 		acceptTerms: "I accept the terms of service",
+		termsTitle: "Terms of service",
+		termsAcceptFailed: "We couldn't record your acceptance. Please try again.",
 		savePassword: "Save this password now. It is shown only once.",
 		copyPassword: "Copy password",
 		copied: "Password copied.",
@@ -306,7 +308,7 @@ export const en = {
 		accTermsLoading: "Loading accepted terms…",
 		accTermsEmpty: "You haven't accepted any terms yet.",
 		accTermsLoadFailed: "We couldn't load your accepted terms.",
-		accTermsVersion: "Version {{version}}",
+		termsVersion: "Version {{version}}",
 		accLede: "Every meeting you asked for, and where it stands.",
 		accSignInLede: "Sign in to view your meeting requests.",
 		accBookToCreate: "No account? Book a meeting and we'll create one.",

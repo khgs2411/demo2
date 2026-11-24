@@ -1,4 +1,4 @@
-import { createClassKitClient } from "@class-kit/react";
+import { createClassKitClient, type ProductDocument } from "@class-kit/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createBookingAdapter, type BookingSdk } from "./adapter";
 import * as packages from "../packages";
@@ -26,7 +26,11 @@ function mockSdk() {
 			}),
 		},
 		profile: { get: vi.fn<BookingSdk["profile"]["get"]>(), update: vi.fn<BookingSdk["profile"]["update"]>() },
-		productDocuments: { listMyAcceptances: vi.fn<BookingSdk["productDocuments"]["listMyAcceptances"]>() },
+		productDocuments: {
+			get: vi.fn<BookingSdk["productDocuments"]["get"]>(),
+			accept: vi.fn<BookingSdk["productDocuments"]["accept"]>(),
+			listMyAcceptances: vi.fn<BookingSdk["productDocuments"]["listMyAcceptances"]>(),
+		},
 		classes: {
 			listMyRegistrations: vi.fn<BookingSdk["classes"]["listMyRegistrations"]>(),
 			list: vi.fn<BookingSdk["classes"]["list"]>(),
@@ -41,8 +45,30 @@ const refresh = vi.fn<() => Promise<void>>().mockResolvedValue();
 const adapter = createBookingAdapter(sdk, refresh);
 const selection = { packageId: "system", addonInterests: ["agent-voice"], slotId: null } as const;
 const profile = { displayName: "Test Visitor", phoneNumber: "+972500000000", businessName: "Test Business", websiteUrl: "https://example.com" };
+const publishedTerms: ProductDocument = {
+	id: "terms-8", product_id: "demo", document_type: "terms_of_service", locale: "en", version: 8,
+	title: "Studio terms", content_markdown: "Published terms", status: "published", effective_at: null,
+	created_by: null, created_at: "2026-11-20T10:00:00Z", updated_at: "2026-11-20T10:00:00Z",
+};
+const termsToShow = { title: "Studio terms", text: "Published terms", version: 8, locale: "en" };
+const acceptedSnapshot = {
+	id: "acceptance", documentType: "terms_of_service", documentLocale: "en", documentVersion: 8,
+	documentTitle: "Studio terms", documentContentMarkdown: "Published terms", context: "registration_signup",
+	acceptedAt: "2026-11-20T10:00:00Z",
+};
 
 beforeEach(() => { vi.restoreAllMocks(); vi.clearAllMocks(); });
+
+function mockPublishedTerms() {
+	vi.spyOn(sdk.supabase.auth, "getSession").mockResolvedValue({ data: { session: null }, error: null });
+	const functions = sdk.supabase.functions;
+	vi.spyOn(sdk.supabase, "functions", "get").mockReturnValue(functions);
+	return vi.spyOn(functions, "invoke");
+}
+
+function publicationResponse(document: ProductDocument) {
+	return { data: { data: { document }, error: null }, error: null };
+}
 
 describe("booking password authentication", () => {
 	it.each(["signIn", "signUp"] as const)("refreshes context after %s before reporting the authenticated user", async (method) => {
@@ -214,6 +240,8 @@ describe("booking slot SDK adapter", () => {
 			product_user: { customer_id: "customer-1", user_id: "visitor", metadata: {} },
 		}, error: null });
 		sdk.classes.list.mockResolvedValueOnce({ data: { classes: [sdkSlot] }, error: null });
+		mockPublishedTerms().mockResolvedValueOnce(publicationResponse(publishedTerms));
+		sdk.productDocuments.listMyAcceptances.mockResolvedValueOnce({ data: { acceptances: [acceptedSnapshot] }, error: null });
 		sdk.classes.register.mockResolvedValueOnce({ data: registered, error: null });
 		let state = transition(initialState, { type: "package_chosen", packageId: "system", addonInterests: [] });
 		state = transition(state, await adapter.signIn("visitor@example.com", "test-password"));
@@ -221,6 +249,7 @@ describe("booking slot SDK adapter", () => {
 		state = transition(state, await adapter.loadSlots("system", range));
 		state = transition(state, { type: "slot_chosen", slotId: "slot-1" });
 		state = transition(state, { type: "submit_requested" });
+		state = transition(state, await adapter.checkTerms("en"));
 		for (const event of await adapter.requestRegistration("slot-1", "system", range)) state = transition(state, event);
 		expect(state).toMatchObject({ step: "requested", registration: { id: "request-1", status: "pending" } });
 	});
@@ -349,6 +378,73 @@ describe("accepted terms SDK adapter", () => {
 		expect(await adapter.loadAcceptedTerms()).toEqual({ type: "load_failed" });
 		expect(await adapter.loadAcceptedTerms()).toEqual({ type: "load_failed" });
 		expect(await createBookingAdapter(null, refresh).loadAcceptedTerms()).toEqual({ type: "load_failed" });
+	});
+});
+
+describe("signed-in booking terms SDK adapter", () => {
+	it("recognizes the shown publication using its resolved locale and any acceptance context", async () => {
+		const invoke = mockPublishedTerms().mockResolvedValueOnce(publicationResponse(publishedTerms));
+		sdk.productDocuments.listMyAcceptances.mockResolvedValueOnce({ data: { acceptances: [acceptedSnapshot] }, error: null });
+		expect(await adapter.checkTerms("he")).toEqual({ type: "terms_checked", terms: termsToShow, alreadyAccepted: true });
+		expect(invoke).toHaveBeenCalledExactlyOnceWith("class-kit-product-documents", expect.objectContaining({
+			body: { action: "get", document_type: "terms_of_service", locale: "he", fallback_locale: "en" },
+		}));
+		expect(sdk.productDocuments.listMyAcceptances).toHaveBeenCalledExactlyOnceWith();
+		expect(sdk.productDocuments.accept).not.toHaveBeenCalled();
+	});
+
+	it("requires consent when history contains only a different document type, locale or version", async () => {
+		mockPublishedTerms().mockResolvedValueOnce(publicationResponse(publishedTerms));
+		sdk.productDocuments.listMyAcceptances.mockResolvedValueOnce({ data: { acceptances: [
+			{ ...acceptedSnapshot, documentType: "privacy_policy" },
+			{ ...acceptedSnapshot, documentLocale: "he" },
+			{ ...acceptedSnapshot, documentVersion: 7 },
+		] }, error: null });
+		expect(await adapter.checkTerms("en")).toEqual({ type: "terms_checked", terms: termsToShow, alreadyAccepted: false });
+	});
+
+	it("fails the check when either the publication or the acceptance history is unavailable", async () => {
+		mockPublishedTerms().mockResolvedValueOnce({ data: { data: null, error: { code: "not_found", message: "Missing" } }, error: null })
+			.mockResolvedValueOnce(publicationResponse(publishedTerms));
+		sdk.productDocuments.listMyAcceptances.mockResolvedValueOnce({ data: { acceptances: [] }, error: null })
+			.mockRejectedValueOnce(new Error("offline"));
+		expect(await adapter.checkTerms("en")).toEqual({ type: "terms_load_failed" });
+		expect(await adapter.checkTerms("en")).toEqual({ type: "terms_load_failed" });
+	});
+
+	it("checks the live publication before skipping consent and uses SDK get after a conflict clears its cache", async () => {
+		const updated = { ...publishedTerms, id: "terms-9", version: 9, content_markdown: "Updated terms" };
+		const updatedTerms = { ...termsToShow, text: "Updated terms", version: 9 };
+		mockPublishedTerms().mockResolvedValueOnce(publicationResponse(updated));
+		sdk.productDocuments.get.mockResolvedValueOnce({ data: { document: updated }, error: null });
+		sdk.productDocuments.listMyAcceptances.mockResolvedValueOnce({ data: { acceptances: [acceptedSnapshot] }, error: null });
+		expect(await adapter.checkTerms("en")).toEqual({ type: "terms_checked", terms: updatedTerms, alreadyAccepted: false });
+		expect(sdk.productDocuments.get).not.toHaveBeenCalled();
+		expect(await adapter.loadTerms("en", true)).toEqual({ type: "terms_loaded", terms: updatedTerms });
+		expect(sdk.productDocuments.get).toHaveBeenCalledExactlyOnceWith("terms_of_service", { locale: "en", fallbackLocale: "en" });
+	});
+
+	it("submits the shown version in its exact locale and surfaces a publication conflict separately from other failures", async () => {
+		const hebrewTerms = { ...termsToShow, locale: "he" };
+		sdk.productDocuments.accept
+			.mockResolvedValueOnce({ data: { acceptance: {
+				id: "acceptance", product_id: "demo", user_id: "visitor", document_id: "terms-8",
+				document_type: "terms_of_service", document_version: 8, document_locale: "he",
+				document_title: "Studio terms", document_content_markdown: "Published terms",
+				context: "booking", accepted_at: "2026-11-20T10:00:00Z",
+			} }, error: null })
+			.mockResolvedValueOnce({ data: null, error: { code: "document_changed", message: "Republished" } })
+			.mockResolvedValueOnce({ data: null, error: { code: "not_found", message: "Archived" } })
+			.mockResolvedValueOnce({ data: null, error: { code: "internal_error", message: "Unavailable" } })
+			.mockRejectedValueOnce(new Error("offline"));
+		expect(await adapter.acceptTerms(hebrewTerms)).toEqual({ type: "acceptance_recorded" });
+		expect(sdk.productDocuments.accept).toHaveBeenCalledExactlyOnceWith("terms_of_service", {
+			locale: "he", fallbackLocale: "he", context: "booking", version: 8,
+		});
+		expect(await adapter.acceptTerms(hebrewTerms)).toEqual({ type: "document_changed" });
+		expect(await adapter.acceptTerms(hebrewTerms)).toEqual({ type: "terms_unavailable" });
+		expect(await adapter.acceptTerms(hebrewTerms)).toEqual({ type: "acceptance_failed" });
+		expect(await adapter.acceptTerms(hebrewTerms)).toEqual({ type: "acceptance_failed" });
 	});
 });
 
