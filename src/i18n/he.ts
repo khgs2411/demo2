@@ -179,7 +179,6 @@ export const he = {
 	},
 	studio: {
 		storageError: "לא ניתן לשמור את עמוד החזרה. יש לאפשר אחסון בדפדפן לפני התחברות עם Google.",
-		retry: "ניסיון נוסף",
 		networkError: "לא ניתן להתחבר ל־ClassKit. נסו שוב.",
 		customer: "לקוח",
 		email: "אימייל",
@@ -196,6 +195,7 @@ export const he = {
 		noPending: "אין בקשות ממתינות.",
 		noUpcoming: "אין פגישות קרובות.",
 		history: "היסטוריה",
+		counts: "{{pending}} ממתינות · {{upcoming}} קרובות",
 		noHistory: "אין בקשות שנדחו או בוטלו.",
 		status: "סטטוס",
 		loading: "טוען…",

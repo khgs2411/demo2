@@ -179,7 +179,6 @@ export const en = {
 	},
 	studio: {
 		storageError: "Could not save the return page. Allow session storage before signing in with Google.",
-		retry: "Try again",
 		networkError: "Could not reach ClassKit. Please try again.",
 		customer: "Customer",
 		email: "Email",
@@ -196,6 +195,7 @@ export const en = {
 		noPending: "No requests waiting.",
 		noUpcoming: "No upcoming meetings.",
 		history: "History",
+		counts: "{{pending}} pending · {{upcoming}} upcoming",
 		noHistory: "No rejected or cancelled requests.",
 		status: "Status",
 		loading: "Loading…",

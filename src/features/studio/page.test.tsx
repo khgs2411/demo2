@@ -115,6 +115,28 @@ it.each(["role", "permission"])("loads empty sections for manager access granted
 	expect(listPending).toHaveBeenCalledWith(); expect(listRegistered).toHaveBeenCalledWith();
 });
 
+it.each([
+	["en", "2 pending · 1 upcoming", "Pending requests", "Upcoming meetings", "History"],
+	["he", "2 ממתינות · 1 קרובות", "בקשות ממתינות", "פגישות קרובות", "היסטוריה"],
+])("shows studio totals and keeps the section names accessible in %s", async (language, total, pending, upcoming, history) => {
+	await i18n.changeLanguage(language);
+	managerWithIdentities("email");
+	const rows = ["a", "b", "c"].map(id => registration(id, "2026-11-01", "2099-11-17"));
+	listPending.mockResolvedValue({ registrations: rows.slice(0, 2) });
+	listRegistered.mockResolvedValue({ registrations: [{ ...rows[2], status: "approved", registrationStatus: "approved" }] });
+	listHistory.mockResolvedValue({ registrations: rows.map(row => ({ ...row, status: "rejected", registrationStatus: "rejected" })) });
+	render(<StudioPage />);
+
+	const summary = await screen.findByText(total);
+	const header = summary.closest("header")!;
+	expect(within(header).getByRole("button", { name: i18n.t("signOut", { ns: "studio" }) })).toBeDefined();
+	for (const [name, count] of [[pending, "2"], [upcoming, "1"], [history, "3"]]) {
+		const region = screen.getByRole("region", { name });
+		const heading = within(region).getByRole("heading", { name, level: 2 });
+		expect(within(heading).getByText(count).getAttribute("aria-hidden")).toBe("true");
+	}
+});
+
 it.each(["role", "permission"])("loads and saves studio account details with manager access granted by %s", async grant => {
 	signedIn();
 	if (grant === "role") context.productUser = { role: "manager" } as NonNullable<typeof context.productUser>;
@@ -129,7 +151,7 @@ it.each(["role", "permission"])("loads and saves studio account details with man
 	const name = await within(details).findByDisplayValue("Maya");
 	const phone = within(details).getByDisplayValue("0501234567");
 	expect(screen.getByRole("region", { name: "History" }).compareDocumentPosition(details) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-	expect(details.compareDocumentPosition(screen.getByRole("button", { name: "Sign out" })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+	expect(screen.getByRole("button", { name: "Sign out" }).compareDocumentPosition(details) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 	expect(screen.queryByText("No meeting requests yet.")).toBeNull();
 	expect(screen.queryByRole("heading", { name: "Terms you accepted" })).toBeNull();
 	expect(screen.queryByRole("link", { name: "Another meeting" })).toBeNull();

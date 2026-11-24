@@ -124,11 +124,9 @@ h1 { font: 900 clamp(2.4rem, 1.2rem + 3.6vw, 4.4rem)/.95 var(--font-display); le
 /* #/account: my requests, a ledger with status in the machine voice */
 .account-columns { display: grid; align-items: start; gap: 56px; }
 .account-columns > div { display: grid; gap: 56px; align-content: start; min-inline-size: 0; }
-.account-columns :is(.accepted-terms, .password-change) { margin-block-start: 0; max-inline-size: none; }
-.account-columns .fields { max-inline-size: none; }
+.account-columns :is(.fields, .password-change) { max-inline-size: none; }
 .account-columns .side-actions { margin-block-start: 0; }
-.account-details h2, .accepted-terms h2, .password-change h2 { font: 700 1.5rem/1.1 var(--font-display); margin-block-end: 22px; }
-.accepted-terms, .password-change { margin-block-start: 40px; max-inline-size: 760px; }
+.password-change { max-inline-size: 760px; }
 .accepted-terms ul { padding: 0; margin: 0; list-style: none; }
 .accepted-terms li { border-block-end: 1px solid var(--rule); }
 .accepted-terms .booking-terms { margin-block-end: 16px; }
@@ -187,11 +185,11 @@ h1 { font: 900 clamp(2.4rem, 1.2rem + 3.6vw, 4.4rem)/.95 var(--font-display); le
 .booking-page .issued-password { font-family: var(--font-mono); }
 
 /* The section headings share a counter from the top of each ledger. */
-.booking-page.account-page { counter-reset: part; }
-.booking-page.account-page :is(.requests-part, .account-details, .password-change, .accepted-terms) > h2 {
+.booking-page:is(.account-page, .studio-page) { counter-reset: part; }
+.booking-page :is(.requests-part, .account-details, .password-change, .accepted-terms, .studio-part) > h2 {
 	counter-increment: part; display: flex; align-items: baseline; gap: 14px; padding-block-start: 14px; border-block-start: 2px solid var(--ink);
 	font: 700 clamp(1.5rem, 1.2rem + .9vw, 2rem)/1.1 var(--font-display); margin-block-end: 22px; }
-.booking-page.account-page :is(.requests-part, .account-details, .password-change, .accepted-terms) > h2::before {
+.booking-page :is(.requests-part, .account-details, .password-change, .accepted-terms, .studio-part) > h2::before {
 	content: counter(part, decimal-leading-zero) / ""; font: 500 12px/1 var(--font-mono); letter-spacing: .12em; opacity: .6; }
 .booking-page .page-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 24px 48px; margin-block-end: 56px; }
 .booking-page .page-head .lede { margin-block-end: 0; }

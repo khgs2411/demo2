@@ -10,12 +10,12 @@ export function MeetingList({ rows, busy, onDecide, showStatus }: { rows: readon
 	function date(value: string) { return <time dateTime={value}>{dates.format(new Date(value))}</time>; }
 	return <ul className="studio-meetings">{rows.map(row => <li key={row.id}>
 		<dl>
-			<div><dt>{t("customer")}</dt><dd>{row.customer?.displayName ?? row.user?.displayName ?? t("unavailable")}</dd></div>
-			<div><dt>{t("email")}</dt><dd><bdi>{row.customer?.contactEmail ?? row.user?.email ?? t("unavailable")}</bdi></dd></div>
-			<div><dt>{t("phone")}</dt><dd><bdi>{row.customer?.phoneNumber ?? t("unavailable")}</bdi></dd></div>
-			<div><dt>{t("package")}</dt><dd>{row.class?.name ?? t("unavailable")}</dd></div>
-			<div><dt>{t("startsAt")}</dt><dd>{row.class ? date(row.class.startsAt) : t("unavailable")}</dd></div>
-			<div><dt>{t("requestedAt")}</dt><dd>{date(row.createdAt)}</dd></div>
+			<div><dt>{t("customer")}</dt><dd className="customer-name">{row.customer?.displayName ?? row.user?.displayName ?? t("unavailable")}</dd></div>
+			<div><dt>{t("email")}</dt><dd className="meeting-meta"><bdi>{row.customer?.contactEmail ?? row.user?.email ?? t("unavailable")}</bdi></dd></div>
+			<div><dt>{t("phone")}</dt><dd className="meeting-meta"><bdi>{row.customer?.phoneNumber ?? t("unavailable")}</bdi></dd></div>
+			<div><dt>{t("package")}</dt><dd className="package-name">{row.class?.name ?? t("unavailable")}</dd></div>
+			<div><dt>{t("startsAt")}</dt><dd className="meeting-meta">{row.class ? date(row.class.startsAt) : t("unavailable")}</dd></div>
+			<div><dt>{t("requestedAt")}</dt><dd className="meeting-meta">{date(row.createdAt)}</dd></div>
 			{showStatus && <div><dt>{t("status")}</dt><dd>{t(row.registrationStatus, { ns: "booking" })}</dd></div>}
 		</dl>
 		{onDecide && <form onSubmit={event => {
@@ -24,8 +24,8 @@ export function MeetingList({ rows, busy, onDecide, showStatus }: { rows: readon
 		}}><fieldset disabled={busy}>
 			<Input label={t("reason")} name="reason" />
 			<div className="actions">
-				<Ticket stub="" onClick={() => onDecide(row.id,"approve")}>{t("approve")}</Ticket>
-				<Ticket stub="" type="submit" className="booking-link">{t("reject")}</Ticket>
+				<Ticket small stub="✓" onClick={() => onDecide(row.id,"approve")}>{t("approve")}</Ticket>
+				<Ticket small stub="✕" tone="ink" type="submit">{t("reject")}</Ticket>
 			</div>
 		</fieldset></form>}
 	</li>)}</ul>;
