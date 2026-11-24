@@ -24,6 +24,26 @@ beforeEach(async () => {
 	await i18n.changeLanguage("en");
 });
 afterEach(cleanup);
+it("puts Another meeting in the account header and Sign out after the account forms", async () => {
+	context.session!.user.identities = [{ id: "email", identity_id: "email", user_id: "visitor", provider: "email" }];
+	render(<AccountPage />);
+
+	const heading = await screen.findByRole("heading", { name: "My account", level: 1 });
+	const header = heading.closest("header")!;
+	expect(within(header).getByRole("link", { name: "Another meeting" }).getAttribute("href")).toBe("#/book");
+
+	const details = await screen.findByRole("region", { name: "Your details" });
+	const side = details.parentElement!;
+	const password = within(side).getByRole("region", { name: "Password" });
+	const signOut = within(side).getByRole("button", { name: "Sign out" });
+	expect(password.compareDocumentPosition(signOut) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+	const requests = screen.getByRole("region", { name: "My requests" });
+	const terms = screen.getByRole("region", { name: "Terms you accepted" });
+	expect(requests.parentElement).toBe(terms.parentElement);
+	expect(requests.parentElement).not.toBe(side);
+});
+
 it.each(["he","en"])("renders all backend statuses and only allowed cancellation controls in %s", async language => {
 	await i18n.changeLanguage(language);
 	listRequests.mockResolvedValueOnce({type:"loaded",requests:["pending","approved","rejected","cancelled"].map(status => ({...request,canCancelRegistration:status==="pending",userRegistrationState:{id:status,status}}))});

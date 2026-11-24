@@ -27,7 +27,7 @@ export function AcceptedTerms({ adapter }: { adapter: Pick<ReturnType<typeof cre
 		{state.step === "empty" && <p role="status">{t("accTermsEmpty")}</p>}
 		{state.step === "failed" && <>
 			<p role="alert" className="notice error">{t("accTermsLoadFailed")}</p>
-			<RetryTicket onClick={() => dispatch({ type: "retry_requested" })} />
+			<RetryTicket tone="ink" onClick={() => dispatch({ type: "retry_requested" })} />
 		</>}
 		{state.step === "ready" && <ul role="list">
 			{state.acceptances.map(acceptance => {
