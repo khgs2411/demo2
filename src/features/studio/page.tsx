@@ -28,6 +28,7 @@ function StudioSession({ context, access, accountAdapter, passwordChange }: {
 	const { t } = useTranslation(["studio", "booking"]);
 	const { state, decide, retry, signIn, signOut, signInWithGoogle, onSignedOut } = useStudio(context, access);
 	const busy = Boolean(state.busy) || passwordChange.busy;
+	const showAccount = access === "manager" && (state.step === "ready" || state.step === "failed" || state.step === "not_manager");
 	const { session } = context;
 	return <main data-module="studio" className="booking-page studio-page"><section>
 		{state.error && <p role="alert" className="notice error">{state.error.message ?? t(state.error.code === "redirect_storage" ? "storageError" : "networkError")}</p>}
@@ -45,6 +46,8 @@ function StudioSession({ context, access, accountAdapter, passwordChange }: {
 				<section aria-labelledby="studio-pending"><h2 id="studio-pending">{t("pending")}</h2>{state.pending.length ? <MeetingList rows={state.pending} busy={busy} onDecide={(id, action, reason) => void decide(id, action, reason)} /> : <p>{t("noPending")}</p>}</section>
 				<section aria-labelledby="studio-upcoming"><h2 id="studio-upcoming">{t("upcoming")}</h2>{state.upcoming.length ? <MeetingList rows={state.upcoming} /> : <p>{t("noUpcoming")}</p>}</section>
 				<section aria-labelledby="studio-history"><h2 id="studio-history">{t("history")}</h2>{state.history.length ? <MeetingList rows={state.history} showStatus /> : <p>{t("noHistory")}</p>}</section>
+			</>}
+			{showAccount && <>
 				{session && <AccountDetails adapter={accountAdapter} userId={session.user.id} onSignedOut={() => {
 					if (session.access_token === passwordChange.requestSessionToken()) onSignedOut();
 				}} />}
