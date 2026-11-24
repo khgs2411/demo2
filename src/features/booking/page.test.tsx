@@ -22,7 +22,7 @@ const fakeAdapter = {
 	requestRegistration: vi.fn(), listRequests: vi.fn().mockResolvedValue({ type: "loaded", requests: [] }), cancelRequest: vi.fn(),
 	signOut: vi.fn(),
 	requestPasswordReset: vi.fn(),
-	completePasswordReset: vi.fn(),
+	completePasswordReset: vi.fn(), changePassword: vi.fn(),
 };
 beforeEach(async () => {
 	vi.stubEnv("VITE_TURNSTILE_SITE_KEY", "");

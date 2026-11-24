@@ -17,7 +17,7 @@ const completePasswordReset = vi.fn<ReturnType<typeof adapterModule.createBookin
 const adapter = {
 	loadProfile: vi.fn(), saveAccountDetails: vi.fn(), loadTerms: vi.fn(), loadAcceptedTerms: vi.fn(), requestWithSignup: vi.fn(), signIn: vi.fn(), signUp: vi.fn(), signInWithGoogle: vi.fn(),
 	saveProfile: vi.fn(), loadSlots: vi.fn(), requestRegistration: vi.fn(), listRequests: vi.fn(), cancelRequest: vi.fn(), signOut: vi.fn(),
-	requestPasswordReset, completePasswordReset,
+	requestPasswordReset, completePasswordReset, changePassword: vi.fn(),
 };
 const requestRefusals = ["disabled", "bad_request", "rate_limited", "turnstile_failed", "turnstile_unavailable", "email_unavailable", "failed"] as const;
 const completeRefusals = ["disabled", "rate_limited", "failed"] as const;

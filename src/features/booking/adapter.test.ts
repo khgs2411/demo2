@@ -19,6 +19,7 @@ function mockSdk() {
 			signOut: vi.fn<BookingSdk["auth"]["signOut"]>().mockResolvedValue({ error: null }),
 			requestPasswordReset: vi.fn<BookingSdk["auth"]["requestPasswordReset"]>(),
 			completePasswordReset: vi.fn<BookingSdk["auth"]["completePasswordReset"]>(),
+			changePassword: vi.fn<BookingSdk["auth"]["changePassword"]>(),
 			getSession: vi.fn<BookingSdk["auth"]["getSession"]>().mockResolvedValue({
 				access_token: "test", refresh_token: "test", token_type: "bearer", expires_in: 3600,
 				user: { id: "visitor", app_metadata: {}, user_metadata: {}, aud: "authenticated", created_at: "2026-11-07" },
@@ -441,6 +442,20 @@ describe("password reset", () => {
 		const offline = createBookingAdapter(null, refresh);
 		await expect(offline.requestPasswordReset("a@b.co", "en", "verified")).resolves.toBe("failed");
 		await expect(offline.completePasswordReset("token", "new-password")).resolves.toBe("failed");
+	});
+});
+
+describe("signed-in password change", () => {
+	it.each(["password_changed", "signed_out", "current_password_invalid", "bad_request", "rate_limited", "disabled"] as const)("returns the SDK's %s outcome", async status => {
+		sdk.auth.changePassword.mockResolvedValueOnce({ status });
+		await expect(adapter.changePassword("current-password", "new-password")).resolves.toBe(status);
+		expect(sdk.auth.changePassword).toHaveBeenCalledExactlyOnceWith({ currentPassword: "current-password", newPassword: "new-password" });
+	});
+
+	it("maps a thrown failure or missing client to a generic failure", async () => {
+		sdk.auth.changePassword.mockRejectedValueOnce(new Error("offline"));
+		await expect(adapter.changePassword("current-password", "new-password")).resolves.toBe("failed");
+		await expect(createBookingAdapter(null, refresh).changePassword("current-password", "new-password")).resolves.toBe("failed");
 	});
 });
 

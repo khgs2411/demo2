@@ -8,11 +8,12 @@ import type { RequestsEvent } from "./requests-machine";
 import type { CompleteOutcome, RequestOutcome } from "./password-reset/machine";
 
 export type BookingSdk = Pick<ClassKitClient, "supabase" | "authStorageKey" | "productKey"> & {
-	auth: Pick<ClassKitClient["auth"], "signIn" | "signUp" | "getSession" | "signInWithGoogle" | "signOut" | "requestPasswordReset" | "completePasswordReset">;
+	auth: Pick<ClassKitClient["auth"], "signIn" | "signUp" | "getSession" | "signInWithGoogle" | "signOut" | "requestPasswordReset" | "completePasswordReset" | "changePassword">;
 	profile: Pick<ClassKitClient["profile"], "get" | "update">;
 	productDocuments: Pick<ClassKitClient["productDocuments"], "listMyAcceptances">;
 	classes: Pick<ClassKitClient["classes"], "list" | "listMyRegistrations" | "register" | "registerWithSignup" | "cancelRegistration">;
 };
+export type PasswordChangeOutcome = Awaited<ReturnType<BookingSdk["auth"]["changePassword"]>>["status"] | "failed";
 export type BookingRange = { start: string; end: string };
 export function useBookingContext() {
 	return useProductContext();
@@ -279,6 +280,14 @@ export function createBookingAdapter(client: BookingSdk | null, refreshProductCo
 		}
 	}
 
+	async function changePassword(currentPassword: string, newPassword: string): Promise<PasswordChangeOutcome> {
+		try {
+			return client ? (await client.auth.changePassword({ currentPassword, newPassword })).status : "failed";
+		} catch {
+			return "failed";
+		}
+	}
+
 	return {
 		signIn: (email: string, password: string) => passwordAuth("signIn", email, password),
 		signUp: (email: string, password: string) => passwordAuth("signUp", email, password),
@@ -296,5 +305,6 @@ export function createBookingAdapter(client: BookingSdk | null, refreshProductCo
 		signOut,
 		requestPasswordReset,
 		completePasswordReset,
+		changePassword,
 	};
 }
