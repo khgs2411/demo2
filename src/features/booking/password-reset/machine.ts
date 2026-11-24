@@ -1,6 +1,7 @@
+import type { PasswordProblem } from "../password-validation";
+
 export type RequestOutcome = "sent" | "disabled" | "bad_request" | "rate_limited" | "turnstile_failed" | "turnstile_unavailable" | "email_unavailable" | "failed";
 export type CompleteOutcome = "password_reset" | "disabled" | "bad_request" | "reset_token_invalid" | "rate_limited" | "failed";
-export type PasswordProblem = "too_short" | "too_long" | "mismatch";
 
 export type ForgotState =
 	| { step: "editing"; notice: Exclude<RequestOutcome, "sent"> | null }
@@ -47,12 +48,4 @@ export function resetTransition(state: ResetState, event: ResetEvent): ResetStat
 				default: return { step: "choosing", notice: event.outcome };
 			}
 	}
-}
-
-// Matches class-kit-password-reset: the minimum counts code points, the maximum
-// counts UTF-8 bytes (Auth's bcrypt limit), so a Hebrew letter costs two.
-export function passwordProblem(password: string, confirmation: string): PasswordProblem | null {
-	if (Array.from(password).length < 8) return "too_short";
-	if (new TextEncoder().encode(password).length > 72) return "too_long";
-	return password === confirmation ? null : "mismatch";
 }

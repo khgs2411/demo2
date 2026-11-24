@@ -19,12 +19,14 @@ function mockSdk() {
 			signOut: vi.fn<BookingSdk["auth"]["signOut"]>().mockResolvedValue({ error: null }),
 			requestPasswordReset: vi.fn<BookingSdk["auth"]["requestPasswordReset"]>(),
 			completePasswordReset: vi.fn<BookingSdk["auth"]["completePasswordReset"]>(),
+			changePassword: vi.fn<BookingSdk["auth"]["changePassword"]>(),
 			getSession: vi.fn<BookingSdk["auth"]["getSession"]>().mockResolvedValue({
 				access_token: "test", refresh_token: "test", token_type: "bearer", expires_in: 3600,
 				user: { id: "visitor", app_metadata: {}, user_metadata: {}, aud: "authenticated", created_at: "2026-11-07" },
 			}),
 		},
 		profile: { get: vi.fn<BookingSdk["profile"]["get"]>(), update: vi.fn<BookingSdk["profile"]["update"]>() },
+		productDocuments: { listMyAcceptances: vi.fn<BookingSdk["productDocuments"]["listMyAcceptances"]>() },
 		classes: {
 			listMyRegistrations: vi.fn<BookingSdk["classes"]["listMyRegistrations"]>(),
 			list: vi.fn<BookingSdk["classes"]["list"]>(),
@@ -316,6 +318,37 @@ it("refreshes after a thrown cancellation error with no automatic retry", async 
 	expect(sdk.classes.cancelRegistration).toHaveBeenCalledOnce();
 });
 
+describe("accepted terms SDK adapter", () => {
+	it("loads the signed-in user's snapshots in server order without caching them", async () => {
+		const newest = {
+			id: "latest", documentType: "terms_of_service", documentLocale: "he", documentVersion: 8,
+			documentTitle: "Studio terms", documentContentMarkdown: "**Agreed text**", context: "registration_signup",
+			acceptedAt: "2026-11-20T10:00:00Z",
+		};
+		const older = { ...newest, id: "earlier", documentVersion: 7, acceptedAt: "2026-11-01T10:00:00Z" };
+		sdk.productDocuments.listMyAcceptances
+			.mockResolvedValueOnce({ data: { acceptances: [newest, older] }, error: null })
+			.mockResolvedValueOnce({ data: { acceptances: [] }, error: null });
+
+		expect(await adapter.loadAcceptedTerms()).toEqual({ type: "loaded", acceptances: [
+			{ id: "latest", locale: "he", version: 8, title: "Studio terms", text: "**Agreed text**", acceptedAt: "2026-11-20T10:00:00Z" },
+			{ id: "earlier", locale: "he", version: 7, title: "Studio terms", text: "**Agreed text**", acceptedAt: "2026-11-01T10:00:00Z" },
+		] });
+		expect(await adapter.loadAcceptedTerms()).toEqual({ type: "loaded", acceptances: [] });
+		expect(sdk.productDocuments.listMyAcceptances.mock.calls).toEqual([[], []]);
+	});
+
+	it("reports failure when the SDK returns an error, rejects, or is unavailable", async () => {
+		sdk.productDocuments.listMyAcceptances
+			.mockResolvedValueOnce({ data: null, error: { code: "internal_error", message: "Unavailable" } })
+			.mockRejectedValueOnce(new Error("offline"));
+
+		expect(await adapter.loadAcceptedTerms()).toEqual({ type: "load_failed" });
+		expect(await adapter.loadAcceptedTerms()).toEqual({ type: "load_failed" });
+		expect(await createBookingAdapter(null, refresh).loadAcceptedTerms()).toEqual({ type: "load_failed" });
+	});
+});
+
 describe("booking signup SDK adapter", () => {
 	const turnstileToken = "verified-token";
 	const terms = { title: "Studio terms", text: "Published text", version: 8, locale: "he" };
@@ -409,6 +442,20 @@ describe("password reset", () => {
 		const offline = createBookingAdapter(null, refresh);
 		await expect(offline.requestPasswordReset("a@b.co", "en", "verified")).resolves.toBe("failed");
 		await expect(offline.completePasswordReset("token", "new-password")).resolves.toBe("failed");
+	});
+});
+
+describe("signed-in password change", () => {
+	it.each(["password_changed", "signed_out", "current_password_invalid", "bad_request", "rate_limited", "disabled"] as const)("returns the SDK's %s outcome", async status => {
+		sdk.auth.changePassword.mockResolvedValueOnce({ status });
+		await expect(adapter.changePassword("current-password", "new-password")).resolves.toBe(status);
+		expect(sdk.auth.changePassword).toHaveBeenCalledExactlyOnceWith({ currentPassword: "current-password", newPassword: "new-password" });
+	});
+
+	it("maps a thrown failure or missing client to a generic failure", async () => {
+		sdk.auth.changePassword.mockRejectedValueOnce(new Error("offline"));
+		await expect(adapter.changePassword("current-password", "new-password")).resolves.toBe("failed");
+		await expect(createBookingAdapter(null, refresh).changePassword("current-password", "new-password")).resolves.toBe("failed");
 	});
 });
 

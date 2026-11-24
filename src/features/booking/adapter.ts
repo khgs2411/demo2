@@ -2,15 +2,18 @@ import { invokeProductFunction, useProductContext, type ClassKitClient, type Cla
 import { getBookingOptions } from "../packages";
 import type { BookingContact, BookingEvent, BookingOperation, BookingProfile, BookingSelection, BookingSlot, BookingState, BookingTerms, PackageId, SignupDraft } from "./machine";
 import type { AccountDetailsSaveEvent } from "./account-details-machine";
+import type { AcceptedTermsLoadEvent } from "./accepted-terms-machine";
 import { clearBookingRedirect, saveBookingAuthRedirect, saveAccountRedirect, clearAccountRedirect } from "./redirect";
 import type { RequestsEvent } from "./requests-machine";
 import type { CompleteOutcome, RequestOutcome } from "./password-reset/machine";
 
 export type BookingSdk = Pick<ClassKitClient, "supabase" | "authStorageKey" | "productKey"> & {
-	auth: Pick<ClassKitClient["auth"], "signIn" | "signUp" | "getSession" | "signInWithGoogle" | "signOut" | "requestPasswordReset" | "completePasswordReset">;
+	auth: Pick<ClassKitClient["auth"], "signIn" | "signUp" | "getSession" | "signInWithGoogle" | "signOut" | "requestPasswordReset" | "completePasswordReset" | "changePassword">;
 	profile: Pick<ClassKitClient["profile"], "get" | "update">;
+	productDocuments: Pick<ClassKitClient["productDocuments"], "listMyAcceptances">;
 	classes: Pick<ClassKitClient["classes"], "list" | "listMyRegistrations" | "register" | "registerWithSignup" | "cancelRegistration">;
 };
+export type PasswordChangeOutcome = Awaited<ReturnType<BookingSdk["auth"]["changePassword"]>>["status"] | "failed";
 export type BookingRange = { start: string; end: string };
 export function useBookingContext() {
 	return useProductContext();
@@ -151,6 +154,26 @@ export function createBookingAdapter(client: BookingSdk | null, refreshProductCo
 		}
 	}
 
+	async function loadAcceptedTerms(): Promise<AcceptedTermsLoadEvent> {
+		try {
+			const response = await client?.productDocuments.listMyAcceptances();
+			if (!response || response.error) return { type: "load_failed" };
+			return {
+				type: "loaded",
+				acceptances: response.data.acceptances.map(snapshot => ({
+					id: snapshot.id,
+					title: snapshot.documentTitle,
+					text: snapshot.documentContentMarkdown,
+					locale: snapshot.documentLocale,
+					version: snapshot.documentVersion,
+					acceptedAt: snapshot.acceptedAt,
+				})),
+			};
+		} catch {
+			return { type: "load_failed" };
+		}
+	}
+
 	async function requestWithSignup(classId: string, draft: SignupDraft, terms: BookingTerms, turnstileToken: string): Promise<BookingEvent> {
 		try {
 			if (!client) return { type: "signup_failed" };
@@ -257,6 +280,14 @@ export function createBookingAdapter(client: BookingSdk | null, refreshProductCo
 		}
 	}
 
+	async function changePassword(currentPassword: string, newPassword: string): Promise<PasswordChangeOutcome> {
+		try {
+			return client ? (await client.auth.changePassword({ currentPassword, newPassword })).status : "failed";
+		} catch {
+			return "failed";
+		}
+	}
+
 	return {
 		signIn: (email: string, password: string) => passwordAuth("signIn", email, password),
 		signUp: (email: string, password: string) => passwordAuth("signUp", email, password),
@@ -267,11 +298,13 @@ export function createBookingAdapter(client: BookingSdk | null, refreshProductCo
 		loadSlots,
 		requestRegistration,
 		loadTerms,
+		loadAcceptedTerms,
 		requestWithSignup,
 		listRequests,
 		cancelRequest,
 		signOut,
 		requestPasswordReset,
 		completePasswordReset,
+		changePassword,
 	};
 }

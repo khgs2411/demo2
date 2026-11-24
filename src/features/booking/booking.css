@@ -123,14 +123,18 @@ h1 { font: 900 clamp(2.4rem, 1.2rem + 3.6vw, 4.4rem)/.95 var(--font-display); le
 
 /* #/account: my requests, a ledger with status in the machine voice */
 .account-columns { display: grid; align-items: start; gap: 40px; }
-.account-details h2 { font: 700 1.5rem/1.1 var(--font-display); margin-block-end: 22px; }
+.account-details h2, .accepted-terms h2, .password-change h2 { font: 700 1.5rem/1.1 var(--font-display); margin-block-end: 22px; }
+.accepted-terms, .password-change { margin-block-start: 40px; max-inline-size: 760px; }
+.accepted-terms ul { padding: 0; margin: 0; list-style: none; border-block-start: 2px solid var(--ink); }
+.accepted-terms li { border-block-end: 1px solid var(--rule); }
+.accepted-terms .booking-terms { margin-block-end: 16px; }
 @media (min-width: 1000px) {
 	.account-columns { grid-template-columns: minmax(0, 1fr) 380px; column-gap: clamp(40px, 6vw, 110px); }
 }
 .reqs { border-block-start: 2px solid var(--ink); max-inline-size: 760px; }
 .req { display: grid; grid-template-columns: 1fr auto; gap: 6px 20px; padding-block: 20px; border-block-end: 1px solid var(--rule); align-items: baseline; }
 .req b { font: 700 1.35rem/1.15 var(--font-display); }
-.req .when { font: 500 14px/1.4 var(--font-mono); }
+.req .when, .accepted-terms .when { font: 500 14px/1.4 var(--font-mono); }
 .req .state { font: 500 11px/1 var(--font-mono); letter-spacing: .12em; display: inline-flex; gap: 8px; align-items: center; }
 .req .state::before { content: ""; inline-size: 8px; block-size: 8px; background: currentColor; }
 .state.pending { color: color-mix(in srgb, var(--mustard), var(--ink) 35%); }
@@ -173,5 +177,9 @@ h1 { font: 900 clamp(2.4rem, 1.2rem + 3.6vw, 4.4rem)/.95 var(--font-display); le
 }
 
 .booking-page .booking-terms { white-space: pre-wrap; overflow-wrap: anywhere; }
+.booking-page .acceptance-row { inline-size: 100%; text-align: start; text-decoration: none; overflow-wrap: anywhere; }
+.booking-page .acceptance-row:hover { transform: none; }
+.booking-page .acceptance-row .main { display: grid; gap: 6px; padding-block: 16px; }
+.booking-page .acceptance-row bdi { font-weight: 600; text-decoration: underline; text-underline-offset: 4px; }
 .shell-content > main.account-page { grid-template-columns: minmax(0, 1fr); }
 .booking-page .issued-password { font-family: var(--font-mono); }

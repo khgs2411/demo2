@@ -15,9 +15,9 @@ vi.mock("@class-kit/react", async importOriginal => ({ ...await importOriginal<t
 const requestPasswordReset = vi.fn<ReturnType<typeof adapterModule.createBookingAdapter>["requestPasswordReset"]>();
 const completePasswordReset = vi.fn<ReturnType<typeof adapterModule.createBookingAdapter>["completePasswordReset"]>();
 const adapter = {
-	loadProfile: vi.fn(), saveAccountDetails: vi.fn(), loadTerms: vi.fn(), requestWithSignup: vi.fn(), signIn: vi.fn(), signUp: vi.fn(), signInWithGoogle: vi.fn(),
+	loadProfile: vi.fn(), saveAccountDetails: vi.fn(), loadTerms: vi.fn(), loadAcceptedTerms: vi.fn(), requestWithSignup: vi.fn(), signIn: vi.fn(), signUp: vi.fn(), signInWithGoogle: vi.fn(),
 	saveProfile: vi.fn(), loadSlots: vi.fn(), requestRegistration: vi.fn(), listRequests: vi.fn(), cancelRequest: vi.fn(), signOut: vi.fn(),
-	requestPasswordReset, completePasswordReset,
+	requestPasswordReset, completePasswordReset, changePassword: vi.fn(),
 };
 const requestRefusals = ["disabled", "bad_request", "rate_limited", "turnstile_failed", "turnstile_unavailable", "email_unavailable", "failed"] as const;
 const completeRefusals = ["disabled", "rate_limited", "failed"] as const;

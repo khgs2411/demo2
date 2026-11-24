@@ -3,7 +3,8 @@ import { useTranslation } from "react-i18next";
 import { Input } from "../../../ui/input";
 import { Ticket } from "../../../ui/ticket";
 import { createBookingAdapter, useBookingContext } from "../adapter";
-import { initialResetState, passwordProblem, resetTransition } from "./machine";
+import { passwordProblem } from "../password-validation";
+import { initialResetState, resetTransition } from "./machine";
 import { dropResetToken, readResetToken } from "./memory";
 import "../booking.css";
 
