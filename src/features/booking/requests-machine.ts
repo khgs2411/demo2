@@ -1,6 +1,6 @@
 import type { BookingRegistration, BookingSlot } from "./machine";
 
-export type MeetingRequest = BookingSlot & { name: string };
+export type MeetingRequest = BookingSlot & { name: string; endsAt: string };
 export type RequestsState =
 	| { step: "loading" }
 	| { step: "signed_out" }

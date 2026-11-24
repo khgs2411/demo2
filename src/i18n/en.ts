@@ -312,6 +312,7 @@ export const en = {
 		accBookToCreate: "No account? Book a meeting and we'll create one.",
 		pending: "Awaiting confirmation",
 		approved: "Confirmed",
+		addToGoogleCalendar: "Add to Google Calendar",
 		cancelled: "Cancelled",
 		rejected: "Declined",
 		bookAnother: "Another meeting",

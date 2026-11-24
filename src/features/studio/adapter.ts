@@ -1,6 +1,7 @@
 import { clearBookingRedirect, clearAccountRedirect } from "../booking";
 import { studioRedirectKey, clearStudioRedirect } from "./redirect";
 import type { ClassKitClient } from "@class-kit/react";
+import { upcomingStartTime } from "../../lib/slot-time";
 
 export type StudioRegistrations = Pick<ClassKitClient["management"]["registrations"], "listPending" | "listRegistered" | "listHistory" | "approve" | "reject">;
 
@@ -20,7 +21,7 @@ export function createStudioAdapter(registrations: StudioRegistrations) {
 			return { type: "lists_loaded" as const,
 				history: history.registrations,
 				pending: [...pending.registrations].sort((a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt)),
-				upcoming: registered.registrations.filter(row => row.class && Date.parse(row.class.startsAt) > now.getTime())
+				upcoming: registered.registrations.filter(row => row.class && upcomingStartTime(row.class.startsAt, now.getTime()) !== null)
 					.sort((a, b) => Date.parse(a.class!.startsAt) - Date.parse(b.class!.startsAt)),
 			};
 		} catch (error) { return { type: "load_failed" as const, error: mapError(error) }; }

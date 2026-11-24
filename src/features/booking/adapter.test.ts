@@ -107,9 +107,6 @@ const sdkSlot = {
 	location: null, locationSnapshot: null, capacity: 3, registrationPolicy: "approval_required", temporalStatus: "upcoming",
 	registrationOpen: true, canRegister: true, canCancelRegistration: false, userRegistrationState: null,
 } as const;
-const projectedSlot = {
-	id: sdkSlot.id, startsAt: sdkSlot.startsAt, canRegister: true, canCancelRegistration: false, userRegistrationState: null,
-};
 const registered = {
 	registration_id: "request-1", status: "pending", stock_consumed: 0,
 	registration: { id: "request-1", class_id: "slot-1", customer_id: "customer-1", user_id: "visitor", status: "pending" },
@@ -130,6 +127,10 @@ function provideTemplate() {
 }
 
 describe("booking slot SDK adapter", () => {
+	const projectedSlot = {
+		id: sdkSlot.id, startsAt: sdkSlot.startsAt, canRegister: true, canCancelRegistration: false, userRegistrationState: null,
+	};
+
 	it.each(["site", "system"] as const)("treats a null %s template as booking not open without an SDK call", async (packageId) => {
 		withoutTemplates();
 		expect(await adapter.loadSlots(packageId, range)).toEqual({ type: "booking_not_open" });
@@ -264,6 +265,8 @@ describe("booking Google redirect", () => {
 });
 
 describe("my meeting requests", () => {
+	const projectedSlot = { id: sdkSlot.id, startsAt: sdkSlot.startsAt, endsAt: sdkSlot.endsAt };
+
 	it.each(["pending", "approved", "rejected", "cancelled"] as const)("projects a backend %s registration history row", async status => {
 		sdk.classes.listMyRegistrations.mockResolvedValueOnce({ data: { registrations: [{ id: "request-1", classId: sdkSlot.id, status, createdAt: "2026-11-01T00:00:00Z", approvedAt: null, rejectedAt: null, cancelledAt: null, canCancel: status === "pending", class: { id: sdkSlot.id, name: sdkSlot.name, startsAt: sdkSlot.startsAt, endsAt: sdkSlot.endsAt, lifecycleStatus: "created", templateId: null } }] }, error: null });
 		expect(await adapter.listRequests(range)).toEqual({ type: "loaded", requests: [{ ...projectedSlot, canRegister: false, name: sdkSlot.name, userRegistrationState: { id: "request-1", status }, canCancelRegistration: status === "pending" }] });

@@ -312,6 +312,7 @@ export const he = {
 		accBookToCreate: "אין לכם חשבון? קבעו פגישה ונפתח לכם חשבון.",
 		pending: "ממתין לאישור",
 		approved: "מאושר",
+		addToGoogleCalendar: "הוספה ליומן Google",
 		cancelled: "בוטל",
 		rejected: "נדחה",
 		bookAnother: "פגישה נוספת",

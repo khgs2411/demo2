@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
 import { requestsTransition, type RequestsState } from "./requests-machine";
 
-const request = { id: "slot", name: "Meeting", startsAt: "2026-11-10T09:00:00Z", canRegister: false, canCancelRegistration: true, userRegistrationState: { id: "registration", status: "pending" as const } };
+const request = { id: "slot", name: "Meeting", startsAt: "2026-11-10T09:00:00Z", endsAt: "2026-11-10T09:45:00Z", canRegister: false, canCancelRegistration: true, userRegistrationState: { id: "registration", status: "pending" as const } };
 const ready: RequestsState = { step: "ready", requests: [request], cancellingId: null, cancellationFailed: false };
 it("only starts an explicitly allowed cancellation and never replays on error", () => {
 	const cancelling = requestsTransition(ready, { type: "cancel_started", registrationId: "registration" });

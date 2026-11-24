@@ -235,7 +235,7 @@ export function createBookingAdapter(client: BookingSdk | null, refreshProductCo
 			if (response.error?.code === "forbidden") return { type: "no_access" };
 			if (response.error) return { type: isSignedOutError(response.error.code) ? "signed_out" : "failed" };
 			return { type: "loaded", requests: response.data.registrations.map(registration => ({
-				id: registration.classId, name: registration.class.name, startsAt: registration.class.startsAt,
+				id: registration.classId, name: registration.class.name, startsAt: registration.class.startsAt, endsAt: registration.class.endsAt,
 				canRegister: false, canCancelRegistration: registration.canCancel,
 				userRegistrationState: { id: registration.id, status: registration.status },
 			})) };
