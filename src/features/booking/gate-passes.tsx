@@ -9,3 +9,12 @@ export function AccountPass() {
 		{ label: t("account.terms"), value: t("account.termsValue") },
 	]} />;
 }
+
+export function StudioPass() {
+	const { t } = useTranslation("pass");
+	return <Pass kicker={t("studio.kicker")} code={t("studio.code")} status={t("studio.status")} num={t("studio.num")} rows={[
+		{ label: t("studio.pending"), value: t("studio.pendingValue") },
+		{ label: t("studio.upcoming"), value: t("studio.upcomingValue") },
+		{ label: t("studio.history"), value: t("studio.historyValue") },
+	]} />;
+}

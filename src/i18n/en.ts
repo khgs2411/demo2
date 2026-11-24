@@ -347,6 +347,8 @@ export const en = {
 	pass: {
 		account: { kicker: "Admission pass", code: "ADMIT ONE", status: "Opens your account", num: "№ 02",
 			requests: "Requests", requestsValue: "Every meeting you asked for, and where it stands", details: "Details", detailsValue: "Your name and phone for the meeting", terms: "Terms", termsValue: "What you accepted, by version" },
+		studio: { kicker: "Staff pass", code: "STAFF", status: "Opens the studio", num: "№ 00",
+			pending: "Pending", pendingValue: "Requests waiting on your decision", upcoming: "Upcoming", upcomingValue: "Meetings you approved", history: "History", historyValue: "What was rejected or cancelled" },
 	},
 	passwordReset: {
 		forgotLink: "Forgot password?",

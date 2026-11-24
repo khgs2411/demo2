@@ -347,6 +347,8 @@ export const he = {
 	pass: {
 		account: { kicker: "כרטיס כניסה", code: "ADMIT ONE", status: "פותח את החשבון שלך", num: "№ 02",
 			requests: "בקשות", requestsValue: "כל פגישה שביקשת, והסטטוס שלה", details: "פרטים", detailsValue: "השם והטלפון לפגישה", terms: "תנאים", termsValue: "מה שאישרת, לפי גרסה" },
+		studio: { kicker: "כרטיס צוות", code: "STAFF", status: "פותח את הסטודיו", num: "№ 00",
+			pending: "ממתינות", pendingValue: "בקשות שמחכות להחלטה שלך", upcoming: "קרובות", upcomingValue: "פגישות שאישרת", history: "היסטוריה", historyValue: "מה שנדחה או בוטל" },
 	},
 	passwordReset: {
 		forgotLink: "שכחת סיסמה?",

@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useProductContext } from "../../lib/product-provider";
 import { getStudioAccess, type StudioAccess } from "../../lib/studio-access";
-import { AccountDetails, AccountStep, createBookingAdapter, PasswordChange, usePasswordChange } from "../booking";
+import { AccountDetails, AccountStep, createBookingAdapter, PasswordChange, StudioPass, usePasswordChange } from "../booking";
 import { Ticket } from "../../ui/ticket";
 import { useStudio } from "./use-studio";
 import { MeetingList } from "./meeting-list";
@@ -30,9 +30,10 @@ function StudioSession({ context, access, accountAdapter, passwordChange }: {
 	const busy = Boolean(state.busy) || passwordChange.busy;
 	const showAccount = access === "manager" && (state.step === "ready" || state.step === "failed" || state.step === "not_manager");
 	const { session } = context;
-	return <main data-module="studio" className="booking-page studio-page"><section>
+	const gate = state.step === "signed_out";
+	return <main data-module="studio" className={`booking-page studio-page${gate ? " gate" : ""}`}><section>
 		{state.error && <p role="alert" className="notice error">{state.error.message ?? t(state.error.code === "redirect_storage" ? "storageError" : "networkError")}</p>}
-		{state.step === "signed_out" ? <>
+		{gate ? <>
 			{passwordChange.signedOut && <p role="status">{t("passwordChange.outcomes.signed_out", { ns: "booking" })}</p>}
 			<AccountStep product={context.product} loading={false} busy={busy} signInOnly title={t("title")} description={t("signInDescription")}
 				onPassword={(_method, email, password) => void passwordChange.runAuth(() => signIn(email, password))}
@@ -56,5 +57,5 @@ function StudioSession({ context, access, accountAdapter, passwordChange }: {
 			</>}
 			{session && <div className="actions"><Ticket stub="" className="booking-link" disabled={busy} onClick={() => void passwordChange.runAuth(signOut)}>{t("signOut")}</Ticket></div>}
 		</>}
-	</section></main>;
+	</section>{gate && <StudioPass />}</main>;
 }

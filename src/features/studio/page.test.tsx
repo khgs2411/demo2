@@ -77,6 +77,19 @@ it.each(["he","en"])("offers only sign-in while signed out, without registration
 	expect(listPending).not.toHaveBeenCalled(); expect(listRegistered).not.toHaveBeenCalled();
 });
 
+it("shows the staff pass only on the studio sign-in gate", () => {
+	const view = render(<StudioPage />);
+	const main = screen.getByRole("main");
+	const pass = within(main).getByRole("complementary");
+	expect(within(pass).getByText("STAFF")).toBeDefined();
+	expect(main.classList.contains("gate")).toBe(true);
+
+	signedIn("email");
+	view.rerender(<StudioPage />);
+	expect(screen.queryByRole("complementary")).toBeNull();
+	expect(screen.getByRole("main").classList.contains("gate")).toBe(false);
+});
+
 it("waits for context and denies non-managers without reading registrations", async () => {
 	context.loading = true;
 	const view = render(<StudioPage />);
