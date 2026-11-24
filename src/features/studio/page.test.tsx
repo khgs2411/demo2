@@ -16,6 +16,7 @@ const reject = vi.fn();
 const signIn = vi.fn();
 const signOut = vi.fn();
 const signInWithGoogle = vi.fn();
+const changePassword = vi.fn<ClassKitClient["auth"]["changePassword"]>();
 const getProfile = vi.fn();
 const updateProfile = vi.fn<ClassKitClient["profile"]["update"]>();
 const managerProfile = { data: { user: {
@@ -26,7 +27,7 @@ beforeEach(async () => {
 	context = {
 		client: {
 			management: { registrations: { listPending, listRegistered, listHistory, approve, reject } },
-			auth: { signIn, signOut, signInWithGoogle },
+			auth: { signIn, signOut, signInWithGoogle, changePassword },
 			profile: { get: getProfile, update: updateProfile },
 		} as unknown as NonNullable<ReturnType<typeof useProductContext>["client"]>,
 		productKey:"demo", product:{product_key:"demo",name:"Demo",auth_mode:"open",email_password_enabled:true,google_oauth_enabled:true,auth_redirects:[]},
@@ -42,6 +43,23 @@ beforeEach(async () => {
 afterEach(cleanup);
 function signedIn() {
 	context.session = {access_token:"test",refresh_token:"test",token_type:"bearer",expires_in:3600,user:{id:"manager",app_metadata:{},user_metadata:{},aud:"authenticated",created_at:"2026-11-15"}};
+}
+
+function managerWithIdentities(...providers: string[]) {
+	signedIn();
+	context.capabilities.permissions = ["registrations.manage"];
+	const { user } = context.session!;
+	user.identities = providers.map(provider => ({ id: provider, identity_id: provider, user_id: user.id, provider }));
+}
+
+async function submitPasswordChange() {
+	const section = await screen.findByRole("region", { name: "Password" });
+	const form = within(section);
+	fireEvent.change(form.getByLabelText("Current password"), { target: { value: "old-password" } });
+	fireEvent.change(form.getByLabelText("New password"), { target: { value: "new-password" } });
+	fireEvent.change(form.getByLabelText("New password, again"), { target: { value: "new-password" } });
+	fireEvent.click(form.getByRole("button", { name: "Change password" }));
+	return section;
 }
 
 it.each(["he","en"])("offers only sign-in while signed out, without registration reads (%s)", async language => {
@@ -135,6 +153,109 @@ it.each(["unauthorized", "session_revoked"] as const)("returns to studio sign-in
 	expect(screen.queryByRole("region", { name: "Your details" })).toBeNull();
 	expect(screen.queryByRole("region", { name: "History" })).toBeNull();
 	expect(signOut).not.toHaveBeenCalled();
+});
+
+it.each([
+	["a Google-only account", ["google"], true],
+	["email password disabled", ["email"], false],
+] as const)("hides the studio password section for %s", async (_reason, providers, enabled) => {
+	managerWithIdentities(...providers);
+	context.product = { ...context.product!, email_password_enabled: enabled };
+	render(<StudioPage />);
+
+	await screen.findByRole("region", { name: "Your details" });
+	expect(screen.queryByRole("region", { name: "Password" })).toBeNull();
+});
+
+it.each([
+	["password_changed", "status", "Your password was changed."],
+	["current_password_invalid", "alert", "The current password is incorrect."],
+	["bad_request", "alert", "Choose a different new password and try again."],
+] as const)("shows the %s outcome under studio details", async (status, role, message) => {
+	managerWithIdentities("google", "email");
+	changePassword.mockResolvedValue({ status });
+	render(<StudioPage />);
+
+	const section = await submitPasswordChange();
+	expect((await within(section).findByRole(role)).textContent).toBe(message);
+	expect(screen.getByRole("region", { name: "Your details" }).compareDocumentPosition(section) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+	expect(changePassword).toHaveBeenCalledExactlyOnceWith({ currentPassword: "old-password", newPassword: "new-password" });
+	expect(screen.getByRole("button", { name: "Sign out" })).toBeDefined();
+});
+
+it.each(["provider keeps the old session", "provider clears the session"])("shows the signed-out password message when the %s", async situation => {
+	managerWithIdentities("email");
+	let finish!: () => void;
+	changePassword.mockImplementation(() => new Promise(resolve => { finish = () => resolve({ status: "signed_out" }); }));
+	const view = render(<StudioPage />);
+	await submitPasswordChange();
+	if (situation === "provider clears the session") {
+		context = { ...context, session: null };
+		await act(async () => { view.rerender(<StudioPage />); });
+	}
+	await act(async () => { finish(); });
+
+	expect(screen.getByRole("button", { name: "Sign in" })).toBeDefined();
+	expect(screen.getByRole("status").textContent).toBe("Your password was changed. Sign in with your new password.");
+	expect(screen.queryByRole("region", { name: "Password" })).toBeNull();
+	expect(screen.queryByRole("region", { name: "Your details" })).toBeNull();
+	expect(screen.queryByRole("region", { name: "History" })).toBeNull();
+	expect(signOut).not.toHaveBeenCalled();
+});
+
+it("shows the successful change after the studio session is renewed", async () => {
+	managerWithIdentities("email");
+	let finish!: () => void;
+	changePassword.mockImplementation(() => new Promise(resolve => { finish = () => resolve({ status: "password_changed" }); }));
+	const view = render(<StudioPage />);
+	await submitPasswordChange();
+
+	const session = context.session!;
+	context = { ...context, session: null, loading: true };
+	await act(async () => { view.rerender(<StudioPage />); });
+	context = { ...context, session: { ...session, access_token: "renewed" }, loading: false };
+	await act(async () => { view.rerender(<StudioPage />); finish(); });
+
+	const section = await screen.findByRole("region", { name: "Password" });
+	expect(within(section).getByRole("status").textContent).toBe("Your password was changed.");
+});
+
+it.each(["during password change", "after session renewal"])("keeps the studio open when a details save loses the old session %s", async timing => {
+	managerWithIdentities("email");
+	let finishChange!: () => void;
+	let finishSave!: () => void;
+	changePassword.mockImplementation(() => new Promise(resolve => { finishChange = () => resolve({ status: "password_changed" }); }));
+	updateProfile.mockImplementation(() => new Promise(resolve => {
+		finishSave = () => resolve({ data: null, error: { code: "session_revoked", message: "Session ended" } });
+	}));
+	const view = render(<StudioPage />);
+	const details = within(await screen.findByRole("region", { name: "Your details" }));
+	fireEvent.change(await details.findByDisplayValue("Maya"), { target: { value: "Maya Levi" } });
+	fireEvent.click(details.getByRole("button", { name: "Save details" }));
+	await submitPasswordChange();
+
+	if (timing === "during password change") await act(async () => { finishSave(); });
+	context.session = { ...context.session!, access_token: "renewed" };
+	view.rerender(<StudioPage />);
+	await act(async () => { finishChange(); });
+	if (timing === "after session renewal") await act(async () => { finishSave(); });
+
+	expect(screen.getByText("Your password was changed.")).toBeDefined();
+	expect(screen.queryByRole("button", { name: "Sign in" })).toBeNull();
+});
+
+it("pauses studio decisions and sign-out while changing the password", async () => {
+	managerWithIdentities("email");
+	listPending.mockResolvedValue({ registrations: [registration("r", "2026-11-01", "2099-11-17")] });
+	let finish!: () => void;
+	changePassword.mockImplementation(() => new Promise(resolve => { finish = () => resolve({ status: "password_changed" }); }));
+	render(<StudioPage />);
+	await submitPasswordChange();
+
+	const controls = ["Approve", "Reject", "Sign out"].map(name => screen.getByRole("button", { name }));
+	for (const control of controls) expect(control.matches(":disabled")).toBe(true);
+	await act(async () => { finish(); });
+	for (const control of controls) expect(control.matches(":disabled")).toBe(false);
 });
 
 it.each(["he","en"])("shows customer contact, package and local start without an end time (%s)", async language => {

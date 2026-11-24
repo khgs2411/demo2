@@ -51,7 +51,7 @@ export function usePasswordChange(
 		return locked.current?.type === "password_change" && locked.current.ownerId === userId ? null : accessToken;
 	}, []);
 	const clearSignedOut = useCallback(() => dispatchSignedOut({ type: "auth_reset" }), []);
-	async function runAuth(operation: () => Promise<void>) {
+	async function runAuth(operation: () => Promise<void> | null) {
 		if (locked.current) return;
 		locked.current = { type: "auth" };
 		try {
@@ -87,6 +87,7 @@ export function usePasswordChange(
 
 	return {
 		state: state.ownerId === userId ? state : initialPasswordChange,
+		busy: state.step === "saving",
 		signedOut,
 		canChangePassword,
 		requestSessionToken,
