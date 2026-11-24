@@ -2,12 +2,12 @@ import { useEffect, useId, useReducer, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Ticket } from "../../ui/ticket";
 import { accountDetailsTransition, getDetailsToSave } from "./account-details-machine";
-import type { createBookingAdapter } from "./adapter";
+import type { createAccountDetailsAdapter } from "./adapter";
 import { ContactFields } from "./contact-fields";
 import { RetryTicket } from "./retry-ticket";
 
 export function AccountDetails({ adapter, userId, onSignedOut }: {
-	adapter: Pick<ReturnType<typeof createBookingAdapter>, "loadProfile" | "saveAccountDetails">;
+	adapter: ReturnType<typeof createAccountDetailsAdapter>;
 	userId: string;
 	onSignedOut: () => void;
 }) {
