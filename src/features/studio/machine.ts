@@ -17,9 +17,9 @@ export type StudioEvent =
 export function transition(state: StudioState, event: StudioEvent): StudioState {
 	switch (event.type) {
 		case "auth_started": return state.busy ? state : { ...state, busy:true, error:null };
-		case "manager_signed_in":
-		case "auth_finished": return event.type === "manager_signed_in" && state.step === "signed_out"
+		case "manager_signed_in": return state.step === "signed_out"
 			? { step: "loading" } : { ...state, busy:false };
+		case "auth_finished": return { ...state, busy:false };
 		case "auth_failed": return { ...state, busy:false, error:event.error };
 		case "access_resolved": return { step: event.access === "manager" ? "loading" : event.access, busy: false, error: null };
 		case "lists_loaded": return state.step === "loading" || state.step === "ready"
