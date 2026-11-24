@@ -7,7 +7,7 @@ import { LanguageSwitch } from "./language";
 
 export function Header() {
 	const { t } = useTranslation("shell");
-	const context = useProductContext();
+	const studioAccess = getStudioAccess(useProductContext());
 	return <header className="topline">
 		<a className="mark" href="#/"><b aria-hidden="true">{t("brandMark")}</b><span>{t("brand")}</span></a>
 		<nav className="links" aria-label={t("navigation")}>
@@ -15,9 +15,10 @@ export function Header() {
 			<TextLink href="#/demo">{t("liveDemo")}</TextLink>
 			<TextLink href="#/packages">{t("packages")}</TextLink>
 		</nav>
-		{!context.loading && <div className="account-links">
-			<TextLink href="#/account">{context.session ? t("myAccount") : t("signIn")}</TextLink>
-			{getStudioAccess(context) === "manager" && <TextLink href="#/studio">{t("studio")}</TextLink>}
+		{studioAccess !== "loading" && <div className="account-links">
+			<TextLink href={studioAccess === "manager" ? "#/studio" : "#/account"}>
+				{studioAccess === "signed_out" ? t("signIn") : t("myAccount")}
+			</TextLink>
 		</div>}
 		<LanguageSwitch />
 		<Ticket href="#/book" stub={t("ticketNumber")} small data-desk>{t("bookMeeting")}</Ticket>
