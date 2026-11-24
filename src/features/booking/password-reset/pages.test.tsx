@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { createClassKitClient, useProductContext } from "@class-kit/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { i18n } from "../../../i18n";
@@ -115,6 +115,15 @@ describe("sign-in step", () => {
 });
 
 describe("forgot password screen", () => {
+	it("shows the first reset step on the email gate", async () => {
+		await renderForgot();
+		const main = screen.getByRole("main");
+		expect(main.classList.contains("gate")).toBe(true);
+		const pass = within(main).getByRole("complementary");
+		expect(within(pass).getByText("RESET")).toBeDefined();
+		expect(within(pass).getByText("01/03")).toBeDefined();
+	});
+
 	it("sends the carried email with the locale and the Turnstile token, then answers neutrally", async () => {
 		rememberResetEmail("dana@example.com");
 		requestPasswordReset.mockResolvedValueOnce("sent");
@@ -178,6 +187,27 @@ describe("forgot password screen", () => {
 });
 
 describe("reset password screen", () => {
+	it("shows the first reset step when there is no link", () => {
+		render(<ResetPasswordPage />);
+		const main = screen.getByRole("main");
+		expect(main.classList.contains("gate")).toBe(true);
+		const pass = within(main).getByRole("complementary");
+		expect(within(pass).getByText("01/03")).toBeDefined();
+	});
+
+	it("advances the pass from choosing a password to saved", async () => {
+		holdToken();
+		completePasswordReset.mockResolvedValueOnce("password_reset");
+		render(<ResetPasswordPage />);
+		const pass = within(screen.getByRole("complementary"));
+		expect(pass.getByText("02/03")).toBeDefined();
+		expect(pass.queryByText("Saved")).toBeNull();
+
+		await act(async () => submitPasswords("new-password"));
+		expect(pass.getByText("03/03")).toBeDefined();
+		expect(pass.getByText("Saved")).toBeDefined();
+	});
+
 	it("explains a missing link and offers to request one", () => {
 		render(<ResetPasswordPage />);
 		expect(screen.getByRole("status").textContent).toBe(message("noLink"));

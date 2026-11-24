@@ -349,6 +349,8 @@ export const he = {
 			requests: "בקשות", requestsValue: "כל פגישה שביקשת, והסטטוס שלה", details: "פרטים", detailsValue: "השם והטלפון לפגישה", terms: "תנאים", termsValue: "מה שאישרת, לפי גרסה" },
 		studio: { kicker: "כרטיס צוות", code: "STAFF", status: "פותח את הסטודיו", num: "№ 00",
 			pending: "ממתינות", pendingValue: "בקשות שמחכות להחלטה שלך", upcoming: "קרובות", upcomingValue: "פגישות שאישרת", history: "היסטוריה", historyValue: "מה שנדחה או בוטל" },
+		reset: { kicker: "איפוס סיסמה", code: "RESET", status: "שלב", stamp: "נשמר",
+			email: "01 · מייל", emailValue: "שולחים קישור", choose: "02 · סיסמה חדשה", chooseValue: "בוחרים מהקישור", signIn: "03 · כניסה", signInValue: "עם הסיסמה החדשה" },
 	},
 	passwordReset: {
 		forgotLink: "שכחת סיסמה?",

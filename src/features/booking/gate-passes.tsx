@@ -18,3 +18,19 @@ export function StudioPass() {
 		{ label: t("studio.history"), value: t("studio.historyValue") },
 	]} />;
 }
+
+type ResetStep = 1 | 2 | 3;
+
+export function ResetPass({ step }: { step: ResetStep }) {
+	const { t } = useTranslation("pass");
+	function rowState(row: ResetStep): PassRow["state"] {
+		if (row < step) return "done";
+		return row === step ? "now" : "next";
+	}
+	return <Pass kicker={t("reset.kicker")} code={t("reset.code")} status={t("reset.status")} num={`0${step}/03`}
+		stamp={step === 3 ? t("reset.stamp") : undefined} rows={[
+			{ label: t("reset.email"), value: t("reset.emailValue"), state: rowState(1) },
+			{ label: t("reset.choose"), value: t("reset.chooseValue"), state: rowState(2) },
+			{ label: t("reset.signIn"), value: t("reset.signInValue"), state: rowState(3) },
+		]} />;
+}

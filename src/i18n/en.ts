@@ -349,6 +349,8 @@ export const en = {
 			requests: "Requests", requestsValue: "Every meeting you asked for, and where it stands", details: "Details", detailsValue: "Your name and phone for the meeting", terms: "Terms", termsValue: "What you accepted, by version" },
 		studio: { kicker: "Staff pass", code: "STAFF", status: "Opens the studio", num: "№ 00",
 			pending: "Pending", pendingValue: "Requests waiting on your decision", upcoming: "Upcoming", upcomingValue: "Meetings you approved", history: "History", historyValue: "What was rejected or cancelled" },
+		reset: { kicker: "Password reset", code: "RESET", status: "Step", stamp: "Saved",
+			email: "01 · Email", emailValue: "We send a link", choose: "02 · New password", chooseValue: "Chosen from the link", signIn: "03 · Sign in", signInValue: "With the new password" },
 	},
 	passwordReset: {
 		forgotLink: "Forgot password?",

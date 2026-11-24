@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Input } from "../../../ui/input";
 import { Ticket } from "../../../ui/ticket";
 import { createBookingAdapter, useBookingContext } from "../adapter";
+import { ResetPass } from "../gate-passes";
 import { passwordProblem } from "../password-validation";
 import { initialResetState, resetTransition } from "./machine";
 import { dropResetToken, readResetToken } from "./memory";
@@ -43,7 +44,7 @@ export function ResetPasswordPage() {
 		} finally { locked.current = false; }
 	}
 
-	return <main data-module="booking" className="booking-page account-page" ref={main}>
+	return <main data-module="booking" className="booking-page account-page gate" ref={main}>
 		<section aria-busy={state.step === "saving"}>
 			{state.step === "no_link" && <>
 				<h1 tabIndex={-1}>{t("resetTitle")}</h1>
@@ -75,5 +76,6 @@ export function ResetPasswordPage() {
 				</form>
 			</>}
 		</section>
+		<ResetPass step={state.step === "done" ? 3 : state.step === "no_link" ? 1 : 2} />
 	</main>;
 }
