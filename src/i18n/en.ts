@@ -179,7 +179,6 @@ export const en = {
 	},
 	studio: {
 		storageError: "Could not save the return page. Allow session storage before signing in with Google.",
-		retry: "Try again",
 		networkError: "Could not reach ClassKit. Please try again.",
 		customer: "Customer",
 		email: "Email",
@@ -196,6 +195,7 @@ export const en = {
 		noPending: "No requests waiting.",
 		noUpcoming: "No upcoming meetings.",
 		history: "History",
+		counts: "{{pending}} pending · {{upcoming}} upcoming",
 		noHistory: "No rejected or cancelled requests.",
 		status: "Status",
 		loading: "Loading…",
@@ -343,6 +343,14 @@ export const en = {
 			registration_failed: "We could not verify your meeting request. Refresh the times before trying again.",
 			redirect_storage: "Your booking choice could not be saved for Google sign-in. Please use email or allow session storage and try again.",
 		},
+	},
+	pass: {
+		account: { kicker: "Admission pass", code: "ADMIT ONE", status: "Opens your account", num: "№ 02",
+			requests: "Requests", requestsValue: "Every meeting you asked for, and where it stands", details: "Details", detailsValue: "Your name and phone for the meeting", terms: "Terms", termsValue: "What you accepted, by version" },
+		studio: { kicker: "Staff pass", code: "STAFF", status: "Opens the studio", num: "№ 00",
+			pending: "Pending", pendingValue: "Requests waiting on your decision", upcoming: "Upcoming", upcomingValue: "Meetings you approved", history: "History", historyValue: "What was rejected or cancelled" },
+		reset: { kicker: "Password reset", code: "RESET", status: "Step", stamp: "Saved",
+			email: "01 · Email", emailValue: "We send a link", choose: "02 · New password", chooseValue: "Chosen from the link", signIn: "03 · Sign in", signInValue: "With the new password" },
 	},
 	passwordReset: {
 		forgotLink: "Forgot password?",

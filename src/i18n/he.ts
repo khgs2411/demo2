@@ -179,7 +179,6 @@ export const he = {
 	},
 	studio: {
 		storageError: "לא ניתן לשמור את עמוד החזרה. יש לאפשר אחסון בדפדפן לפני התחברות עם Google.",
-		retry: "ניסיון נוסף",
 		networkError: "לא ניתן להתחבר ל־ClassKit. נסו שוב.",
 		customer: "לקוח",
 		email: "אימייל",
@@ -196,6 +195,7 @@ export const he = {
 		noPending: "אין בקשות ממתינות.",
 		noUpcoming: "אין פגישות קרובות.",
 		history: "היסטוריה",
+		counts: "{{pending}} ממתינות · {{upcoming}} קרובות",
 		noHistory: "אין בקשות שנדחו או בוטלו.",
 		status: "סטטוס",
 		loading: "טוען…",
@@ -343,6 +343,14 @@ export const he = {
 			registration_failed: "לא הצלחנו לוודא את מצב בקשת הפגישה. יש לרענן את המועדים לפני ניסיון נוסף.",
 			redirect_storage: "לא הצלחנו לשמור את בחירת הפגישה לקראת ההתחברות עם Google. אפשר להתחבר באימייל או לאפשר אחסון להפעלה ולנסות שוב.",
 		},
+	},
+	pass: {
+		account: { kicker: "כרטיס כניסה", code: "ADMIT ONE", status: "פותח את החשבון שלך", num: "№ 02",
+			requests: "בקשות", requestsValue: "כל פגישה שביקשת, והסטטוס שלה", details: "פרטים", detailsValue: "השם והטלפון לפגישה", terms: "תנאים", termsValue: "מה שאישרת, לפי גרסה" },
+		studio: { kicker: "כרטיס צוות", code: "STAFF", status: "פותח את הסטודיו", num: "№ 00",
+			pending: "ממתינות", pendingValue: "בקשות שמחכות להחלטה שלך", upcoming: "קרובות", upcomingValue: "פגישות שאישרת", history: "היסטוריה", historyValue: "מה שנדחה או בוטל" },
+		reset: { kicker: "איפוס סיסמה", code: "RESET", status: "שלב", stamp: "נשמר",
+			email: "01 · מייל", emailValue: "שולחים קישור", choose: "02 · סיסמה חדשה", chooseValue: "בוחרים מהקישור", signIn: "03 · כניסה", signInValue: "עם הסיסמה החדשה" },
 	},
 	passwordReset: {
 		forgotLink: "שכחת סיסמה?",

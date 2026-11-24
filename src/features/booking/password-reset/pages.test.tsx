@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { createClassKitClient, useProductContext } from "@class-kit/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { i18n } from "../../../i18n";
@@ -65,6 +65,11 @@ function submitPasswords(password: string, confirmation = password) {
 	fireEvent.submit(screen.getByRole("button", { name: message("save") }).closest("form")!);
 }
 
+function expectPassStep(pass: HTMLElement, serial: string, label: string) {
+	expect(within(pass).getByText(serial)).toBeDefined();
+	expect(pass.querySelector("dl > .now > dt")?.textContent).toBe(label);
+}
+
 describe("routing on reset_token", () => {
 	it("takes the token from the address bar once and routes to the reset screen", () => {
 		const client = createClassKitClient({ supabaseUrl: "http://localhost:54321", supabasePublishableKey: "test-key", authStorageKey: "reset-test", debug: false });
@@ -115,6 +120,15 @@ describe("sign-in step", () => {
 });
 
 describe("forgot password screen", () => {
+	it("shows the first reset step on the email gate", async () => {
+		await renderForgot();
+		const main = screen.getByRole("main");
+		expect(main.classList.contains("gate")).toBe(true);
+		const pass = within(main).getByRole("complementary");
+		expect(within(pass).getByText("RESET")).toBeDefined();
+		expectPassStep(pass, "01/03", "01 · Email");
+	});
+
 	it("sends the carried email with the locale and the Turnstile token, then answers neutrally", async () => {
 		rememberResetEmail("dana@example.com");
 		requestPasswordReset.mockResolvedValueOnce("sent");
@@ -178,6 +192,27 @@ describe("forgot password screen", () => {
 });
 
 describe("reset password screen", () => {
+	it("shows the first reset step when there is no link", () => {
+		render(<ResetPasswordPage />);
+		const main = screen.getByRole("main");
+		expect(main.classList.contains("gate")).toBe(true);
+		const pass = within(main).getByRole("complementary");
+		expectPassStep(pass, "01/03", "01 · Email");
+	});
+
+	it("advances the pass from choosing a password to saved", async () => {
+		holdToken();
+		completePasswordReset.mockResolvedValueOnce("password_reset");
+		render(<ResetPasswordPage />);
+		const pass = screen.getByRole("complementary");
+		expectPassStep(pass, "02/03", "02 · New password");
+		expect(within(pass).queryByText("Saved")).toBeNull();
+
+		await act(async () => submitPasswords("new-password"));
+		expectPassStep(pass, "03/03", "03 · Sign in");
+		expect(within(pass).getByText("Saved")).toBeDefined();
+	});
+
 	it("explains a missing link and offers to request one", () => {
 		render(<ResetPasswordPage />);
 		expect(screen.getByRole("status").textContent).toBe(message("noLink"));

@@ -1,8 +1,8 @@
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { useProductContext } from "../../lib/product-provider";
 import { getStudioAccess, type StudioAccess } from "../../lib/studio-access";
-import { AccountDetails, AccountStep, createBookingAdapter, PasswordChange, usePasswordChange } from "../booking";
+import { AccountDetails, AccountStep, createBookingAdapter, PasswordChange, RetryTicket, StudioPass, usePasswordChange } from "../booking";
 import { Ticket } from "../../ui/ticket";
 import { useStudio } from "./use-studio";
 import { MeetingList } from "./meeting-list";
@@ -30,31 +30,50 @@ function StudioSession({ context, access, accountAdapter, passwordChange }: {
 	const busy = Boolean(state.busy) || passwordChange.busy;
 	const showAccount = access === "manager" && (state.step === "ready" || state.step === "failed" || state.step === "not_manager");
 	const { session } = context;
-	return <main data-module="studio" className="booking-page studio-page"><section>
+	const gate = state.step === "signed_out";
+	return <main data-module="studio" className={`booking-page studio-page${gate ? " gate" : ""}`}><section>
 		{state.error && <p role="alert" className="notice error">{state.error.message ?? t(state.error.code === "redirect_storage" ? "storageError" : "networkError")}</p>}
-		{state.step === "signed_out" ? <>
+		{gate ? <>
 			{passwordChange.signedOut && <p role="status">{t("passwordChange.outcomes.signed_out", { ns: "booking" })}</p>}
 			<AccountStep product={context.product} loading={false} busy={busy} signInOnly title={t("title")} description={t("signInDescription")}
 				onPassword={(_method, email, password) => void passwordChange.runAuth(() => signIn(email, password))}
 				onGoogle={() => void passwordChange.runAuth(signInWithGoogle)} />
 		</> : <>
-			<h1>{t("title")}</h1>
+			<header className="page-head">
+				<div>
+					<h1>{t("title")}</h1>
+					{state.step === "ready" && <span className="head-mono">{t("counts", { pending: state.pending.length, upcoming: state.upcoming.length })}</span>}
+				</div>
+				{session && <Ticket small tone="ghost" stub="↩" disabled={busy} onClick={() => void passwordChange.runAuth(signOut)}>{t("signOut")}</Ticket>}
+			</header>
 			{state.step === "loading" && <p role="status">{t("loading")}</p>}
 			{state.step === "not_manager" && <p className="lede">{t("notManager")}</p>}
-			{state.step === "failed" && <Ticket stub="" onClick={retry}>{t("retry")}</Ticket>}
+			{state.step === "failed" && <RetryTicket tone="ink" onClick={retry} />}
 			{state.step === "ready" && <>
-				<section aria-labelledby="studio-pending"><h2 id="studio-pending">{t("pending")}</h2>{state.pending.length ? <MeetingList rows={state.pending} busy={busy} onDecide={(id, action, reason) => void decide(id, action, reason)} /> : <p>{t("noPending")}</p>}</section>
-				<section aria-labelledby="studio-upcoming"><h2 id="studio-upcoming">{t("upcoming")}</h2>{state.upcoming.length ? <MeetingList rows={state.upcoming} /> : <p>{t("noUpcoming")}</p>}</section>
-				<section aria-labelledby="studio-history"><h2 id="studio-history">{t("history")}</h2>{state.history.length ? <MeetingList rows={state.history} showStatus /> : <p>{t("noHistory")}</p>}</section>
+				<StudioPart id="studio-pending" title={t("pending")} count={state.pending.length}>
+					{state.pending.length ? <MeetingList rows={state.pending} busy={busy} onDecide={(id, action, reason) => void decide(id, action, reason)} /> : <p>{t("noPending")}</p>}
+				</StudioPart>
+				<StudioPart id="studio-upcoming" title={t("upcoming")} count={state.upcoming.length}>
+					{state.upcoming.length ? <MeetingList rows={state.upcoming} /> : <p>{t("noUpcoming")}</p>}
+				</StudioPart>
+				<StudioPart id="studio-history" title={t("history")} count={state.history.length}>
+					{state.history.length ? <MeetingList rows={state.history} showStatus /> : <p>{t("noHistory")}</p>}
+				</StudioPart>
 			</>}
-			{showAccount && <>
+			{showAccount && <div className="studio-account">
 				{session && <AccountDetails adapter={accountAdapter} userId={session.user.id} onSignedOut={() => {
 					if (session.access_token === passwordChange.requestSessionToken()) onSignedOut();
 				}} />}
 				{passwordChange.canChangePassword && <PasswordChange state={passwordChange.state} busy={busy}
 					onRejected={passwordChange.onRejected} onSubmit={(current, next) => void passwordChange.submit(current, next)} />}
-			</>}
-			{session && <div className="actions"><Ticket stub="" className="booking-link" disabled={busy} onClick={() => void passwordChange.runAuth(signOut)}>{t("signOut")}</Ticket></div>}
+			</div>}
 		</>}
-	</section></main>;
+	</section>{gate && <StudioPass />}</main>;
+}
+
+function StudioPart({ id, title, count, children }: { id: string; title: string; count: number; children: ReactNode }) {
+	return <section className="studio-part" aria-labelledby={id}>
+		<h2 id={id}>{title}<small aria-hidden="true">{count}</small></h2>
+		{children}
+	</section>;
 }

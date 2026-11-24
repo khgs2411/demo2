@@ -73,6 +73,32 @@ a { color: inherit; }
 :focus-visible { outline: 2px solid var(--fg); outline-offset: 4px; }
 .ticket:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--ink); }
 
+/* Ticket tones: coral is the one primary action, ink the other commits, ghost the small or undoing ones. */
+.ticket-ink { background: var(--ink); color: var(--paper); }
+.ticket-ink .stub { border-inline-start-color: color-mix(in srgb, var(--paper), transparent 60%); }
+.ticket-ink:focus-visible { box-shadow: inset 0 0 0 2px var(--coral); }
+.ticket-ghost { background: var(--paper-2); color: var(--ink); }
+
+/* The pass: the booking summary ticket's shape, standing beside a gate page. */
+.pass { --notch: 16px; --tear: 96px; position: relative; align-self: start; background: var(--coral); color: var(--ink); padding: 28px 28px 0;
+	-webkit-mask: radial-gradient(circle var(--notch) at 0 calc(100% - var(--tear)), transparent 97%, var(--ink)) 0 0 / 51% 100% no-repeat, radial-gradient(circle var(--notch) at 100% calc(100% - var(--tear)), transparent 97%, var(--ink)) 100% 0 / 51% 100% no-repeat;
+	mask: radial-gradient(circle var(--notch) at 0 calc(100% - var(--tear)), transparent 97%, var(--ink)) 0 0 / 51% 100% no-repeat, radial-gradient(circle var(--notch) at 100% calc(100% - var(--tear)), transparent 97%, var(--ink)) 100% 0 / 51% 100% no-repeat; }
+.pass-mono { font: 500 11px/1.3 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; }
+.pass header { display: flex; justify-content: space-between; gap: 16px; margin-block-end: 18px; }
+.pass dl > div { display: grid; gap: 6px; padding-block: 16px; border-block-end: 1.5px solid color-mix(in srgb, var(--ink), transparent 72%); transition: opacity var(--duration-ticket); }
+.pass dt { opacity: .7; display: flex; align-items: center; gap: 8px; }
+.pass dd { font: 700 1.4rem/1.15 var(--font-display); }
+.pass .next { opacity: .42; }
+.pass .now dt::before { content: ""; inline-size: 8px; block-size: 8px; background: var(--ink); }
+.pass .done dt::after { content: "✓"; font-size: 13px; }
+.pass-tear { margin-block-start: 28px; block-size: var(--tear); border-block-start: 2px dashed color-mix(in srgb, var(--ink), transparent 55%); display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.pass-tear b { font: 900 2.4rem/1 var(--font-display); white-space: nowrap; }
+.pass-stamp { position: absolute; inset-block-start: 40%; inset-inline-start: 50%; translate: 50% -50%; rotate: -9deg; border: 3px solid var(--ink); padding: 8px 14px; font: 700 15px/1.1 var(--font-mono); letter-spacing: .12em; background: color-mix(in srgb, var(--coral), var(--paper) 15%); animation: pass-stamp var(--duration-flip) var(--ease); }
+.pass-stamp:dir(ltr) { translate: -50% -50%; }
+@keyframes pass-stamp { from { opacity: 0; scale: 1.6; } }
+@media (width < 1000px) { .pass dl > div:not(.now) { display: none; } .pass { --notch: 12px; --tear: 60px; padding: 18px 20px 0; } .pass dl > div { padding-block: 10px; } .pass dd { font-size: 1.15rem; } .pass-tear { margin-block-start: 14px; } .pass-tear b { font-size: 1.6rem; } }
+@media (prefers-reduced-motion: reduce) { .pass-stamp { animation: none; } }
+
 .primitives-sample { padding: 32px var(--gutter); display: grid; gap: 26px; }
 .primitives-sample h1 { font: 900 var(--text-h2)/1 var(--font-display); letter-spacing: -.02em; }
 .primitives-sample .ledger { margin-block-start: 0; }

@@ -4,6 +4,7 @@ import { Input } from "../../../ui/input";
 import { TextLink } from "../../../ui/text-link";
 import { Ticket } from "../../../ui/ticket";
 import { createBookingAdapter, useBookingContext } from "../adapter";
+import { ResetPass } from "../gate-passes";
 import { useTurnstile } from "../use-turnstile";
 import { forgotTransition, initialForgotState } from "./machine";
 import { readResetEmail, rememberResetEmail } from "./memory";
@@ -38,7 +39,7 @@ export function ForgotPasswordPage() {
 
 	const busy = state.step === "sending";
 	const notice = state.step === "editing" ? state.notice ?? (turnstile.status === "unavailable" ? "turnstile_unavailable" : null) : null;
-	return <main data-module="booking" className="booking-page account-page" ref={main}>
+	return <main data-module="booking" className="booking-page account-page gate" ref={main}>
 		<section aria-busy={busy}>
 			{state.step === "sent" ? <>
 				<h1 tabIndex={-1}>{t("sentTitle")}</h1>
@@ -59,5 +60,6 @@ export function ForgotPasswordPage() {
 				</form>
 			</>}
 		</section>
+		<ResetPass step={1} />
 	</main>;
 }

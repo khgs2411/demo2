@@ -24,6 +24,26 @@ beforeEach(async () => {
 	await i18n.changeLanguage("en");
 });
 afterEach(cleanup);
+it("puts Another meeting in the account header and Sign out after the account forms", async () => {
+	context.session!.user.identities = [{ id: "email", identity_id: "email", user_id: "visitor", provider: "email" }];
+	render(<AccountPage />);
+
+	const heading = await screen.findByRole("heading", { name: "My account", level: 1 });
+	const header = heading.closest("header")!;
+	expect(within(header).getByRole("link", { name: "Another meeting" }).getAttribute("href")).toBe("#/book");
+
+	const details = await screen.findByRole("region", { name: "Your details" });
+	const side = details.parentElement!;
+	const password = within(side).getByRole("region", { name: "Password" });
+	const signOut = within(side).getByRole("button", { name: "Sign out" });
+	expect(password.compareDocumentPosition(signOut) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+	const requests = screen.getByRole("region", { name: "My requests" });
+	const terms = screen.getByRole("region", { name: "Terms you accepted" });
+	expect(requests.parentElement).toBe(terms.parentElement);
+	expect(requests.parentElement).not.toBe(side);
+});
+
 it.each(["he","en"])("renders all backend statuses and only allowed cancellation controls in %s", async language => {
 	await i18n.changeLanguage(language);
 	listRequests.mockResolvedValueOnce({type:"loaded",requests:["pending","approved","rejected","cancelled"].map(status => ({...request,canCancelRegistration:status==="pending",userRegistrationState:{id:status,status}}))});
@@ -103,6 +123,17 @@ it("offers authentication to signed-out visitors without reading private request
 	expect(screen.getByRole("link", { name: "No account? Book a meeting and we'll create one." }).getAttribute("href")).toBe("#/book");
 	expect(listRequests).not.toHaveBeenCalled();
 	expect(loadAcceptedTerms).not.toHaveBeenCalled();
+});
+it("shows the admission pass and Google ticket on the signed-out account gate", () => {
+	context.session = null;
+	render(<AccountPage />);
+	const main = screen.getByRole("main");
+	const pass = within(main).getByRole("complementary");
+	expect(main.classList.contains("gate")).toBe(true);
+	expect(within(pass).getByText("ADMIT ONE")).toBeDefined();
+	const google = within(main).getByRole("button", { name: "Continue with Google" });
+	expect(google.classList.contains("ticket-ghost")).toBe(true);
+	expect(google.querySelector('[aria-hidden="true"].stub')?.textContent).toBe("↗");
 });
 it("ignores a stale read after the provider switches visitors", async () => {
 	let resolveOld!: (value: unknown) => void;

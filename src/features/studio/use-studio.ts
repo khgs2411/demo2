@@ -20,9 +20,11 @@ export function useStudio(context: ReturnType<typeof useProductContext>, access:
 	}, [access, adapter, send]);
 	useEffect(() => {
 		active.current = true;
-		void load();
 		return () => { active.current = false; generation.current++; };
 	}, [load]);
+	useEffect(() => {
+		if (state.step === "loading") void load();
+	}, [state.step, load]);
 	async function decide(id: string, action: "approve" | "reject", reason?: string) {
 		if (access !== "manager" || !adapter || transition(current.current,{type:"decision_started",id}) === current.current) return;
 		send({type:"decision_started",id});
@@ -35,13 +37,13 @@ export function useStudio(context: ReturnType<typeof useProductContext>, access:
 	function retry() {
 		if (current.current.step !== "failed") return;
 		send({type:"retry_requested"});
-		void load();
 	}
 	async function authenticate(operation: () => Promise<StudioEvent>) {
 		if (current.current.busy) return;
 		send({type:"auth_started"});
 		const result = await operation();
-		if (active.current) send(result);
+		if (!active.current) return;
+		send(result.type === "auth_finished" && access === "manager" ? { type: "manager_signed_in" } : result);
 	}
 	return { state, decide, retry,
 		onSignedOut: () => send({ type: "access_resolved", access: "signed_out" }),

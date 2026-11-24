@@ -42,7 +42,7 @@ export function RequestLedger({ state, refresh, cancel, timeZone }: { state: Req
 	const now = useRequestClock(state.step === "ready" ? state.requests : undefined);
 	if (state.step === "loading") return <p role="status">{t("loading")}</p>;
 	if (state.step === "no_access") return <p role="alert" className="notice error">{t("accNoAccess")}</p>;
-	if (state.step === "failed") return <>{state.lastCancellation && <p role="status">{t(state.lastCancellation.status)}</p>}<p role="alert" className="notice error">{t("messages.slots_failed")}</p><RetryTicket onClick={refresh} /></>;
+	if (state.step === "failed") return <>{state.lastCancellation && <p role="status">{t(state.lastCancellation.status)}</p>}<p role="alert" className="notice error">{t("messages.slots_failed")}</p><RetryTicket tone="ink" onClick={refresh} /></>;
 	if (state.step !== "ready") return null;
 	return <>
 		{state.cancellationFailed && <p role="alert" className="notice error">{t("cancelFailed")}</p>}
@@ -53,7 +53,7 @@ export function RequestLedger({ state, refresh, cancel, timeZone }: { state: Req
 				<span className="side"><span className={`state ${request.userRegistrationState!.status}`}>{t(request.userRegistrationState!.status)}</span>
 					{upcomingConfirmedStart(request, now) !== null &&
 						<TextLink href={googleCalendarLink(request)} target="_blank" rel="noopener noreferrer">{t("addToGoogleCalendar")}</TextLink>}
-					{request.canCancelRegistration && <Ticket stub="" className="booking-link" disabled={state.cancellingId !== null} onClick={() => cancel(request.userRegistrationState!.id)}>{t(state.cancellingId === request.userRegistrationState!.id ? "loading" : "cancel")}</Ticket>}</span>
+					{request.canCancelRegistration && <Ticket stub="✕" small tone="ghost" disabled={state.cancellingId !== null} onClick={() => cancel(request.userRegistrationState!.id)}>{t(state.cancellingId === request.userRegistrationState!.id ? "loading" : "cancel")}</Ticket>}</span>
 			</article>)}
 		</div>}
 	</>;

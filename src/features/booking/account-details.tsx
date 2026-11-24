@@ -60,13 +60,13 @@ export function AccountDetails({ adapter, userId, onSignedOut }: {
 		{state.step === "failed" && <p role="alert" className="notice error">
 			{t(loadFailed ? "accDetailsLoadFailed" : "accDetailsSaveFailed")}
 		</p>}
-		{loadFailed && <RetryTicket onClick={() => dispatch({ type: "load_retry_requested" })} />}
+		{loadFailed && <RetryTicket tone="ink" onClick={() => dispatch({ type: "load_retry_requested" })} />}
 		{"details" in state && <form onSubmit={event => { event.preventDefault(); void save(); }}>
 			<fieldset className="fields" disabled={saving}>
 				<ContactFields contact={state.details} onChange={(field, value) => dispatch({ type: "field_changed", field, value })} />
 			</fieldset>
 			<div className="actions">
-				<Ticket stub="" className="booking-link" type="submit" disabled={saving || !getDetailsToSave(state.details)}>
+				<Ticket stub="✓" small tone="ink" type="submit" disabled={saving || !getDetailsToSave(state.details)}>
 					{t(saving ? "accDetailsSaving" : "accDetailsSave")}
 				</Ticket>
 				{state.step === "saved" && <p role="status">{t("accDetailsSaved")}</p>}

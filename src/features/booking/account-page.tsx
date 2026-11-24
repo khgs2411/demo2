@@ -7,6 +7,7 @@ import type { BookingEvent } from "./machine";
 import { AccountDetails } from "./account-details";
 import { AcceptedTerms } from "./accepted-terms";
 import { AccountStep } from "./account-step";
+import { AccountPass } from "./gate-passes";
 import { PasswordChange } from "./password-change";
 import { RequestLedger } from "./request-ledger";
 import { usePasswordChange } from "./use-password-change";
@@ -97,7 +98,10 @@ export function AccountPage() {
 	const signedOut = !session || !userId || requests.state.step === "signed_out";
 	const noAccess = requests.state.step === "no_access";
 	const showAccountSections = !noAccess && requests.state.step !== "loading";
-	return <main data-module="booking" className="booking-page account-page">
+	const gate = !context.loading && signedOut;
+	const ledger = <RequestLedger {...requests} timeZone={Intl.DateTimeFormat().resolvedOptions().timeZone} />;
+	const signOutTicket = <Ticket small tone="ghost" stub="↩" disabled={auth.busy} onClick={() => void signOut()}>{t("signOut")}</Ticket>;
+	return <main data-module="booking" className={`booking-page account-page${gate ? " gate" : ""}`}>
 		<section>
 			{!revoked && auth.error && <p role="alert" className="notice error">{t(auth.error)}</p>}
 			{context.loading ? <><h1>{t("accTitle")}</h1><p role="status">{t("loading")}</p></> : signedOut ? <>
@@ -105,21 +109,32 @@ export function AccountPage() {
 				<AccountStep product={context.product} loading={false} busy={auth.busy} signInOnly title={t("signIn")} description={t("accSignInLede")}
 					onPassword={(_method,email,password) => void authenticate(() => adapter.signIn(email,password))} onGoogle={() => void authenticate(() => adapter.signInWithGoogle())} />
 				<p className="switch"><TextLink href="#/book">{t("accBookToCreate")}</TextLink></p>
+			</> : noAccess ? <>
+				{ledger}
+				<div className="actions">{signOutTicket}</div>
 			</> : <>
-				{!noAccess && <><h1>{t("accTitle")}</h1><p className="lede">{t("accLede")}</p></>}
-				<div className={noAccess ? undefined : "account-columns"}>
-					<div><RequestLedger {...requests} timeZone={Intl.DateTimeFormat().resolvedOptions().timeZone} /></div>
-					{showAccountSections && <AccountDetails key={userId}
-						adapter={adapter} userId={userId} onSignedOut={() => dispatch({ type: "profile_signed_out", accessToken: session.access_token })} />}
-				</div>
-				{showAccountSections && passwordChange.canChangePassword && <PasswordChange key={`password:${userId}`}
-					state={passwordChange.state} busy={auth.busy} onRejected={passwordChange.onRejected} onSubmit={changePassword} />}
-				{showAccountSections && <AcceptedTerms key={userId} adapter={adapter} />}
-				<div className="actions">
-					{!noAccess && <Ticket href="#/book" stub="+">{t("bookAnother")}</Ticket>}
-					<Ticket className="booking-link" stub="" disabled={auth.busy} onClick={() => void signOut()}>{t("signOut")}</Ticket>
+				<header className="page-head">
+					<div><h1>{t("myAccount", { ns: "shell" })}</h1><p className="lede">{t("accLede")}</p></div>
+					<Ticket href="#/book" stub="+">{t("bookAnother")}</Ticket>
+				</header>
+				<div className="account-columns">
+					<div>
+						<section className="requests-part" aria-labelledby="account-requests">
+							<h2 id="account-requests">{t("accTitle")}</h2>
+							{ledger}
+						</section>
+						{showAccountSections && <AcceptedTerms key={userId} adapter={adapter} />}
+					</div>
+					<div>
+						{showAccountSections && <AccountDetails key={userId}
+							adapter={adapter} userId={userId} onSignedOut={() => dispatch({ type: "profile_signed_out", accessToken: session.access_token })} />}
+						{showAccountSections && passwordChange.canChangePassword && <PasswordChange key={`password:${userId}`}
+							state={passwordChange.state} busy={auth.busy} onRejected={passwordChange.onRejected} onSubmit={changePassword} />}
+						<div className="actions side-actions">{signOutTicket}</div>
+					</div>
 				</div>
 			</>}
 		</section>
+		{gate && <AccountPass />}
 	</main>;
 }

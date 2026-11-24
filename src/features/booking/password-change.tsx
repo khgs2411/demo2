@@ -44,7 +44,7 @@ export function PasswordChange({ state, busy, onRejected, onSubmit }: {
 				<Input label={resetText("confirmPassword")} name="confirmation" type="password" autoComplete="new-password" required />
 			</fieldset>
 			<div className="actions">
-				<Ticket type="submit" stub="" className="booking-link" disabled={busy || saving}>{t(saving ? "passwordChange.saving" : "passwordChange.save")}</Ticket>
+				<Ticket type="submit" stub="✓" small tone="ink" disabled={busy || saving}>{t(saving ? "passwordChange.saving" : "passwordChange.save")}</Ticket>
 				<TextLink href="#/forgot-password">{resetText("forgotTitle")}</TextLink>
 			</div>
 		</form>

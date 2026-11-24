@@ -1,5 +1,6 @@
 import { cleanup, render, screen, fireEvent, waitFor, act, within } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { useState } from "react";
 import { useProductContext, type ClassKitClient } from "@class-kit/react";
 import { i18n } from "../../i18n";
 import { StudioPage } from "./page";
@@ -76,6 +77,19 @@ it.each(["he","en"])("offers only sign-in while signed out, without registration
 	expect(listPending).not.toHaveBeenCalled(); expect(listRegistered).not.toHaveBeenCalled();
 });
 
+it("shows the staff pass only on the studio sign-in gate", () => {
+	const view = render(<StudioPage />);
+	const main = screen.getByRole("main");
+	const pass = within(main).getByRole("complementary");
+	expect(within(pass).getByText("STAFF")).toBeDefined();
+	expect(main.classList.contains("gate")).toBe(true);
+
+	signedIn("email");
+	view.rerender(<StudioPage />);
+	expect(screen.queryByRole("complementary")).toBeNull();
+	expect(screen.getByRole("main").classList.contains("gate")).toBe(false);
+});
+
 it("waits for context and denies non-managers without reading registrations", async () => {
 	context.loading = true;
 	const view = render(<StudioPage />);
@@ -101,6 +115,28 @@ it.each(["role", "permission"])("loads empty sections for manager access granted
 	expect(listPending).toHaveBeenCalledWith(); expect(listRegistered).toHaveBeenCalledWith();
 });
 
+it.each([
+	["en", "2 pending · 1 upcoming", "Pending requests", "Upcoming meetings", "History"],
+	["he", "2 ממתינות · 1 קרובות", "בקשות ממתינות", "פגישות קרובות", "היסטוריה"],
+])("shows studio totals and keeps the section names accessible in %s", async (language, total, pending, upcoming, history) => {
+	await i18n.changeLanguage(language);
+	managerWithIdentities("email");
+	const rows = ["a", "b", "c"].map(id => registration(id, "2026-11-01", "2099-11-17"));
+	listPending.mockResolvedValue({ registrations: rows.slice(0, 2) });
+	listRegistered.mockResolvedValue({ registrations: [{ ...rows[2], status: "approved", registrationStatus: "approved" }] });
+	listHistory.mockResolvedValue({ registrations: rows.map(row => ({ ...row, status: "rejected", registrationStatus: "rejected" })) });
+	render(<StudioPage />);
+
+	const summary = await screen.findByText(total);
+	const header = summary.closest("header")!;
+	expect(within(header).getByRole("button", { name: i18n.t("signOut", { ns: "studio" }) })).toBeDefined();
+	for (const [name, count] of [[pending, "2"], [upcoming, "1"], [history, "3"]]) {
+		const region = screen.getByRole("region", { name });
+		const heading = within(region).getByRole("heading", { name, level: 2 });
+		expect(within(heading).getByText(count).getAttribute("aria-hidden")).toBe("true");
+	}
+});
+
 it.each(["role", "permission"])("loads and saves studio account details with manager access granted by %s", async grant => {
 	signedIn();
 	if (grant === "role") context.productUser = { role: "manager" } as NonNullable<typeof context.productUser>;
@@ -115,7 +151,7 @@ it.each(["role", "permission"])("loads and saves studio account details with man
 	const name = await within(details).findByDisplayValue("Maya");
 	const phone = within(details).getByDisplayValue("0501234567");
 	expect(screen.getByRole("region", { name: "History" }).compareDocumentPosition(details) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-	expect(details.compareDocumentPosition(screen.getByRole("button", { name: "Sign out" })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+	expect(screen.getByRole("button", { name: "Sign out" }).compareDocumentPosition(details) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 	expect(screen.queryByText("No meeting requests yet.")).toBeNull();
 	expect(screen.queryByRole("heading", { name: "Terms you accepted" })).toBeNull();
 	expect(screen.queryByRole("link", { name: "Another meeting" })).toBeNull();
@@ -418,4 +454,61 @@ it.each(["he", "en"])("renders stored rejected and cancelled decisions in a read
  expect(section.querySelectorAll("li")).toHaveLength(2);
  expect(section.querySelector("button")).toBeNull();
  expect(listHistory).toHaveBeenCalledWith();
+});
+
+function submitManagerSignIn() {
+	fireEvent.change(screen.getByLabelText("Email"), { target: { value: "maya@example.com" } });
+	fireEvent.change(screen.getByLabelText("Password"), { target: { value: "password1" } });
+	fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
+}
+
+it("reaches the studio when the same manager signs back in after an unauthorized load (#59)", async () => {
+	managerWithIdentities("email");
+	listPending.mockRejectedValueOnce({ code: "unauthorized", message: "Session expired" });
+	signIn.mockResolvedValue({ data: {}, error: null });
+	const view = render(<StudioPage />);
+	await screen.findByText("Session expired");
+	submitManagerSignIn();
+	await waitFor(() => expect(signIn).toHaveBeenCalled());
+	context = { ...context, session: { ...context.session!, access_token: "renewed" } };
+	view.rerender(<StudioPage />);
+	expect(await screen.findByRole("heading", { name: "Pending requests" }, { timeout: 2000 })).toBeDefined();
+});
+
+it("lets the manager sign out while the lists reload after signing back in", async () => {
+	managerWithIdentities("email");
+	let finishReload!: () => void;
+	listPending.mockRejectedValueOnce({ code: "unauthorized", message: "Session expired" })
+		.mockImplementationOnce(() => new Promise(resolve => {
+			finishReload = () => resolve({ registrations: [] });
+		}));
+	signIn.mockResolvedValue({ data: {}, error: null });
+	signOut.mockResolvedValue({ error: null });
+	render(<StudioPage />);
+	await screen.findByText("Session expired");
+	submitManagerSignIn();
+	fireEvent.click(await screen.findByRole("button", { name: "Sign out" }));
+	await screen.findByRole("button", { name: "Sign in" });
+	await act(async () => finishReload());
+	expect(screen.getByRole("button", { name: "Sign in" })).toBeDefined();
+});
+
+it("does not reload the lists when signing back in refreshes access to non-manager", async () => {
+	managerWithIdentities("email");
+	listPending.mockRejectedValueOnce({ code: "unauthorized", message: "Session expired" });
+	signIn.mockResolvedValue({ data: {}, error: null });
+	function PageWithPermissionRefresh() {
+		const [isManager, setIsManager] = useState(true);
+		context = {
+			...context,
+			capabilities: { ...context.capabilities, permissions: isManager ? ["registrations.manage"] : [] },
+			refreshProductContext: async () => setIsManager(false),
+		};
+		return <StudioPage />;
+	}
+	render(<PageWithPermissionRefresh />);
+	await screen.findByText("Session expired");
+	submitManagerSignIn();
+	await screen.findByText("This page is for the studio manager.");
+	expect(listPending).toHaveBeenCalledOnce();
 });

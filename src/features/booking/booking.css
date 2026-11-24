@@ -122,16 +122,17 @@ h1 { font: 900 clamp(2.4rem, 1.2rem + 3.6vw, 4.4rem)/.95 var(--font-display); le
 .next-list li span { font: 500 12px/1.6 var(--font-mono); opacity: .55; }
 
 /* #/account: my requests, a ledger with status in the machine voice */
-.account-columns { display: grid; align-items: start; gap: 40px; }
-.account-details h2, .accepted-terms h2, .password-change h2 { font: 700 1.5rem/1.1 var(--font-display); margin-block-end: 22px; }
-.accepted-terms, .password-change { margin-block-start: 40px; max-inline-size: 760px; }
-.accepted-terms ul { padding: 0; margin: 0; list-style: none; border-block-start: 2px solid var(--ink); }
+.account-columns { display: grid; align-items: start; gap: 56px; }
+.account-columns > div { display: grid; gap: 56px; align-content: start; min-inline-size: 0; }
+.account-columns :is(.fields, .password-change) { max-inline-size: none; }
+.account-columns .side-actions { margin-block-start: 0; }
+.password-change { max-inline-size: 760px; }
+.accepted-terms ul { padding: 0; margin: 0; list-style: none; }
 .accepted-terms li { border-block-end: 1px solid var(--rule); }
 .accepted-terms .booking-terms { margin-block-end: 16px; }
 @media (min-width: 1000px) {
-	.account-columns { grid-template-columns: minmax(0, 1fr) 380px; column-gap: clamp(40px, 6vw, 110px); }
+	.account-columns { grid-template-columns: minmax(0, 1fr) 380px; }
 }
-.reqs { border-block-start: 2px solid var(--ink); max-inline-size: 760px; }
 .req { display: grid; grid-template-columns: 1fr auto; gap: 6px 20px; padding-block: 20px; border-block-end: 1px solid var(--rule); align-items: baseline; }
 .req b { font: 700 1.35rem/1.15 var(--font-display); }
 .req .when, .accepted-terms .when { font: 500 14px/1.4 var(--font-mono); }
@@ -150,7 +151,7 @@ h1 { font: 900 clamp(2.4rem, 1.2rem + 3.6vw, 4.4rem)/.95 var(--font-display); le
  fieldset { border: 0; padding: 0; min-inline-size: 0; }
  .ledger { margin-block-start: 0; }
  .ticket:disabled { opacity: .35; transform: none; }
- .ticket .main { padding: 16px 22px; }
+ .ticket:where(:not(.ticket-small)) .main { padding: 16px 22px; }
  .booking-link, .time, .day-tab { background: transparent; mask: none; -webkit-mask: none; }
  .booking-link { font-size: inherit; font-weight: 500; text-decoration: underline; text-underline-offset: 4px; }
  .booking-link .main { padding: 0; }
@@ -164,11 +165,10 @@ h1 { font: 900 clamp(2.4rem, 1.2rem + 3.6vw, 4.4rem)/.95 var(--font-display); le
  .time:disabled { text-decoration: line-through; }
  .day-tab { justify-content: center; }
  .day-tab .main { padding: 0; display: grid; gap: 2px; }
- .booking-google { inline-size: 100%; max-inline-size: 460px; background: transparent; border: 2px solid var(--ink); mask: none; -webkit-mask: none; }
- .booking-google .main { display: flex; gap: 14px; }
+ .booking-google { inline-size: 100%; max-inline-size: 520px; }
+ .booking-google .main { display: flex; gap: 14px; flex: 1; }
  .booking-google svg { flex: none; }
  .field > span { font: 500 11px/1.4 var(--font-mono); letter-spacing: .1em; text-transform: uppercase; }
- .booking-google .stub { display: none; }
  .actions, .done-actions { row-gap: 18px; }
  .status, .when { overflow-wrap: anywhere; }
  @media (min-width: 1000px) { .summary { inset-block-start: 96px; } }
@@ -183,3 +183,22 @@ h1 { font: 900 clamp(2.4rem, 1.2rem + 3.6vw, 4.4rem)/.95 var(--font-display); le
 .booking-page .acceptance-row bdi { font-weight: 600; text-decoration: underline; text-underline-offset: 4px; }
 .shell-content > main.account-page { grid-template-columns: minmax(0, 1fr); }
 .booking-page .issued-password { font-family: var(--font-mono); }
+
+/* The section headings share a counter from the top of each ledger. */
+.booking-page:is(.account-page, .studio-page) { counter-reset: part; }
+.booking-page :is(.requests-part, .account-details, .password-change, .accepted-terms, .studio-part) > h2 {
+	counter-increment: part; display: flex; align-items: baseline; gap: 14px; padding-block-start: 14px; border-block-start: 2px solid var(--ink);
+	font: 700 clamp(1.5rem, 1.2rem + .9vw, 2rem)/1.1 var(--font-display); margin-block-end: 22px; }
+.booking-page :is(.requests-part, .account-details, .password-change, .accepted-terms, .studio-part) > h2::before {
+	content: counter(part, decimal-leading-zero) / ""; font: 500 12px/1 var(--font-mono); letter-spacing: .12em; opacity: .6; }
+.booking-page .page-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 24px 48px; margin-block-end: 56px; }
+.booking-page .page-head .lede { margin-block-end: 0; }
+
+/* Gate pages put the form beside the pass on desktop. */
+.shell-content > main.booking-page.gate { align-content: center; row-gap: 48px; }
+.booking-page.gate h1 { font-size: clamp(2.8rem, 1.2rem + 4.4vw, 5.4rem); max-inline-size: 11ch; }
+.booking-page.gate :is(.fields, .or) { max-inline-size: 520px; }
+@media (min-width: 1000px) {
+	.shell-content > main.booking-page.gate { grid-template-columns: minmax(0, 580px) 400px; justify-content: center; column-gap: clamp(56px, 7vw, 140px); }
+	.booking-page.gate .pass { position: sticky; inset-block-start: 112px; }
+}
