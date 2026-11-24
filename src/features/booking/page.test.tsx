@@ -3,6 +3,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testi
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { i18n } from "../../i18n";
 import { BookingPage } from "./page";
+import { AccountPage } from "./account-page";
 import type { BookingEvent } from "./machine";
 import * as adapterModule from "./adapter";
 import { makeBookingContext } from "./context-fixture";
@@ -11,10 +12,16 @@ import { formatWhen, weekRange } from "./calendar";
 
 vi.mock("@class-kit/react", () => ({ useProductContext: vi.fn() }));
 let context: ReturnType<typeof adapterModule.useBookingContext>;
+const signedInTerms = { title: "Booking terms", text: "Published booking terms", version: 3, locale: "en" };
+const bookingSession = {
+	access_token: "test", refresh_token: "test", token_type: "bearer", expires_in: 3600,
+	user: { id: "visitor", app_metadata: {}, user_metadata: {}, aud: "authenticated", created_at: "2026-11-07" },
+} satisfies NonNullable<typeof context.session>;
 const fakeAdapter = {
 	signIn: vi.fn().mockResolvedValue({ type: "signed_in", userId: "visitor" }),
 	signUp: vi.fn().mockResolvedValue({ type: "signed_in", userId: "visitor" }),
 	loadTerms: vi.fn(), loadAcceptedTerms: vi.fn(), requestWithSignup: vi.fn(), loadProfile: vi.fn().mockResolvedValue({ type: "profile_loaded", profile: null }),
+	checkTerms: vi.fn(), acceptTerms: vi.fn(),
 	saveAccountDetails: vi.fn(),
 	signInWithGoogle: vi.fn().mockResolvedValue({ type: "auth_redirect_started" }),
 	saveProfile: vi.fn().mockResolvedValue({ type: "profile_saved" }),
@@ -31,6 +38,8 @@ beforeEach(async () => {
 	vi.stubGlobal("crypto", webcrypto);
 	fakeAdapter.loadSlots.mockReset().mockResolvedValue({ type: "booking_not_open" });
 	fakeAdapter.loadTerms.mockReset().mockResolvedValue({ type: "terms_load_failed" });
+	fakeAdapter.checkTerms.mockReset().mockResolvedValue({ type: "terms_checked", terms: signedInTerms, alreadyAccepted: true });
+	fakeAdapter.acceptTerms.mockReset();
 	fakeAdapter.requestWithSignup.mockReset();
 	vi.spyOn(adapterModule, "useBookingContext").mockImplementation(() => context);
 	vi.spyOn(adapterModule, "createBookingAdapter").mockReturnValue(fakeAdapter);
@@ -40,6 +49,16 @@ afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.unstubAllEnvs(); });
 
 const turnstileToken = "verified-token";
 const turnstileScript = () => document.querySelector<HTMLScriptElement>('script[src^="https://challenges.cloudflare.com/turnstile/"]');
+
+function prepareSignedInSlot() {
+	const date = new Date(weekRange(new Date()).start);
+	date.setDate(date.getDate() + 1);
+	date.setHours(9);
+	const slot = { id: "s", startsAt: date.toISOString(), canRegister: true, canCancelRegistration: false, userRegistrationState: null };
+	context = { ...context, session: bookingSession };
+	saveBookingRedirect({ step: "choosing_slot", selection: { packageId: "system", addonInterests: [], slotId: slot.id }, userId: "visitor", slots: [], availability: "loading", notice: null });
+	fakeAdapter.loadSlots.mockResolvedValueOnce({ type: "slots_loaded", slots: [slot] });
+}
 
 async function enterSignup(pendingScript: HTMLScriptElement | null = null) {
 	const date = new Date(); date.setDate(date.getDate() - (date.getDay()+6)%7 + 1); date.setHours(9,0,0,0);
@@ -245,6 +264,10 @@ it("prefills an existing account’s email and sends the selected request after 
 	expect((screen.getByLabelText("Email") as HTMLInputElement).value).toBe("test@example.com");
 	expect(within(screen.getByRole("complementary")).getByText(time)).toBeDefined();
 	fireEvent.change(screen.getByLabelText("Password"), { target: { value: "test-password" } });
+	fakeAdapter.signIn.mockImplementationOnce(async () => {
+		context = { ...context, session: bookingSession };
+		return { type: "signed_in", userId: "visitor" };
+	});
 	fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
 	await screen.findByDisplayValue("Dana");
 	expect(within(screen.getByRole("complementary")).getByText(time)).toBeDefined();
@@ -365,6 +388,9 @@ it("prefills name and phone from the signed-in profile and sends the request thr
 	expect(fakeAdapter.saveProfile).toHaveBeenCalledWith(expect.objectContaining({ displayName: "Dana", businessName: "Dana Studio" }), expect.objectContaining({ packageId: "system" }));
 	expect(fakeAdapter.requestRegistration).toHaveBeenCalledOnce();
 	expect(fakeAdapter.requestWithSignup).not.toHaveBeenCalled();
+	expect(fakeAdapter.checkTerms).toHaveBeenCalledExactlyOnceWith("en");
+	expect(fakeAdapter.acceptTerms).not.toHaveBeenCalled();
+	expect(screen.queryByRole("checkbox")).toBeNull();
 	expect(screen.queryByText("Copy password")).toBeNull();
 	expect(turnstileScript()).toBeNull();
 });
@@ -385,16 +411,123 @@ it("finishes an existing account request after the same email returns from Googl
 		step: "signing_in_for_signup", selection: { packageId: "system", addonInterests: [], slotId: "s" },
 		email: "test@example.com", continuation: { kind: "book", slot, contact: { displayName: "Dana", phoneNumber: "0501234567" } },
 	});
-	context = { ...context, session: { access_token: "test", refresh_token: "test", token_type: "bearer", expires_in: 3600, user: { id: "visitor", email: "test@example.com", app_metadata: {}, user_metadata: {}, aud: "authenticated", created_at: "2026-11-07" } } };
+	context = { ...context, session: { ...bookingSession, user: { ...bookingSession.user, email: "test@example.com" } } };
 	fakeAdapter.requestRegistration.mockResolvedValueOnce([{ type: "registration_requested", registration: { id: "google-request", classId: "s", status: "pending" } }]);
 	fakeAdapter.loadProfile.mockResolvedValueOnce({ type: "profile_loaded", profile: { displayName: "Saved name", phoneNumber: "0507654321", businessName: "Studio" } });
-	render(<BookingPage />);
+	fakeAdapter.checkTerms.mockResolvedValueOnce({ type: "terms_checked", terms: signedInTerms, alreadyAccepted: false });
+	fakeAdapter.acceptTerms.mockImplementationOnce(async () => {
+		fakeAdapter.loadAcceptedTerms.mockResolvedValueOnce({
+			type: "loaded", acceptances: [{ ...signedInTerms, id: "accepted", acceptedAt: "2026-11-24T08:00:00Z" }],
+		});
+		return { type: "acceptance_recorded" };
+	});
+	const booking = render(<BookingPage />);
 	await screen.findByDisplayValue("Saved name");
 	expect(screen.getByDisplayValue("0507654321")).toBeDefined();
 	expect(screen.queryByDisplayValue("0501234567")).toBeNull();
 	fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+	await screen.findByText("Published booking terms");
+	const send = screen.getByRole<HTMLButtonElement>("button", { name: "Send request" });
+	expect(send.disabled).toBe(true);
+	expect(fakeAdapter.requestRegistration).not.toHaveBeenCalled();
+	fireEvent.click(screen.getByRole("checkbox", { name: "I accept the terms of service" }));
+	fireEvent.click(send);
 	await screen.findByText("Request sent.");
+	expect(fakeAdapter.acceptTerms).toHaveBeenCalledExactlyOnceWith(signedInTerms);
+	expect(fakeAdapter.acceptTerms).toHaveBeenCalledBefore(fakeAdapter.requestRegistration);
 	expect(fakeAdapter.requestRegistration).toHaveBeenCalledExactlyOnceWith("s", "system", weekRange(new Date(slot.startsAt)));
+	booking.unmount();
+	render(<AccountPage />);
+	const history = within(await screen.findByRole("region", { name: "Terms you accepted" }));
+	fireEvent.click(await history.findByRole("button", { name: /Booking terms.*Version 3/ }));
+	expect(history.getByText("Published booking terms")).toBeDefined();
+});
+
+it.each([
+	["en", "Send request", "Try again", "The terms of service are unavailable. Please try again later.", "We couldn't record your acceptance. Please try again.", "The terms of service have changed. Please read and accept them again."],
+	["he", "לשלוח בקשה", "ניסיון נוסף", "תנאי השירות אינם זמינים כרגע. כדאי לנסות שוב מאוחר יותר.", "לא הצלחנו לשמור את האישור. כדאי לנסות שוב.", "תנאי השירות השתנו. יש לקרוא ולאשר אותם שוב."],
+])("retries terms load and acceptance and requires fresh consent after a publication change in %s", async (locale, sendLabel, retryLabel, loadError, acceptError, changedMessage) => {
+	await i18n.changeLanguage(locale);
+	const terms = { ...signedInTerms, locale };
+	const updated = { ...terms, version: 4, text: "Updated booking terms" };
+	prepareSignedInSlot();
+	fakeAdapter.checkTerms.mockResolvedValueOnce({ type: "terms_load_failed" })
+		.mockResolvedValueOnce({ type: "terms_checked", terms, alreadyAccepted: false });
+	fakeAdapter.loadTerms.mockResolvedValueOnce({ type: "terms_loaded", terms: updated });
+	fakeAdapter.acceptTerms.mockResolvedValueOnce({ type: "acceptance_failed" })
+		.mockResolvedValueOnce({ type: "document_changed" }).mockResolvedValueOnce({ type: "acceptance_recorded" });
+	fakeAdapter.requestRegistration.mockResolvedValueOnce([{ type: "registration_requested", registration: { id: "request-4", classId: "s", status: "pending" } }]);
+	render(<BookingPage />);
+	const send = await screen.findByRole<HTMLButtonElement>("button", { name: sendLabel });
+	await waitFor(() => expect(send.disabled).toBe(false));
+	fireEvent.click(send);
+	await screen.findByText(loadError);
+	expect(fakeAdapter.requestRegistration).not.toHaveBeenCalled();
+	fireEvent.click(screen.getByRole("button", { name: retryLabel }));
+	await screen.findByText("Published booking terms");
+	fireEvent.click(screen.getByRole("checkbox"));
+	fireEvent.click(screen.getByRole("button", { name: sendLabel }));
+	await screen.findByText(acceptError);
+	expect(fakeAdapter.requestRegistration).not.toHaveBeenCalled();
+	fireEvent.click(screen.getByRole("button", { name: retryLabel }));
+	await screen.findByText("Updated booking terms");
+	expect(screen.getByText(changedMessage)).toBeDefined();
+	expect(screen.getByRole<HTMLInputElement>("checkbox").checked).toBe(false);
+	expect(screen.getByRole<HTMLButtonElement>("button", { name: sendLabel }).disabled).toBe(true);
+	expect(fakeAdapter.requestRegistration).not.toHaveBeenCalled();
+	fireEvent.click(screen.getByRole("checkbox"));
+	fireEvent.click(screen.getByRole("button", { name: sendLabel }));
+	await waitFor(() => expect(fakeAdapter.requestRegistration).toHaveBeenCalledOnce());
+	expect(fakeAdapter.checkTerms.mock.calls).toEqual([[locale], [locale]]);
+	expect(fakeAdapter.loadTerms).toHaveBeenCalledExactlyOnceWith(locale, true);
+	expect(fakeAdapter.acceptTerms.mock.calls).toEqual([[terms], [terms], [updated]]);
+});
+
+it.each(["check", "acceptance"])("ignores a pending terms %s when the signed-in client changes", async pending => {
+	prepareSignedInSlot();
+	let settle!: (event: BookingEvent) => void;
+	const response = new Promise<BookingEvent>(resolve => { settle = resolve; });
+	if (pending === "check") fakeAdapter.checkTerms.mockReturnValueOnce(response);
+	else {
+		fakeAdapter.checkTerms.mockResolvedValueOnce({ type: "terms_checked", terms: signedInTerms, alreadyAccepted: false });
+		fakeAdapter.acceptTerms.mockReturnValueOnce(response);
+	}
+	const page = render(<BookingPage />);
+	const send = await screen.findByRole<HTMLButtonElement>("button", { name: "Send request" });
+	await waitFor(() => expect(send.disabled).toBe(false));
+	fireEvent.click(send);
+	if (pending === "acceptance") {
+		await screen.findByText("Published booking terms");
+		fireEvent.click(screen.getByRole("checkbox"));
+		fireEvent.click(screen.getByRole("button", { name: "Send request" }));
+		expect(fakeAdapter.acceptTerms).toHaveBeenCalledOnce();
+	} else expect(fakeAdapter.checkTerms).toHaveBeenCalledOnce();
+	context = { ...context, session: { ...bookingSession, user: { ...bookingSession.user, id: "other" } } };
+	page.rerender(<BookingPage />);
+	await act(async () => {
+		settle(pending === "check" ? { type: "terms_checked", terms: signedInTerms, alreadyAccepted: true } : { type: "acceptance_recorded" });
+	});
+	expect(screen.getByRole("button", { name: "Sign in" })).toBeDefined();
+	expect(fakeAdapter.requestRegistration).not.toHaveBeenCalled();
+});
+
+it("checks the new language and clears consent when the client switches languages during review", async () => {
+	prepareSignedInSlot();
+	fakeAdapter.checkTerms.mockResolvedValueOnce({ type: "terms_checked", terms: signedInTerms, alreadyAccepted: false })
+		.mockResolvedValueOnce({ type: "terms_checked", terms: { ...signedInTerms, locale: "he", text: "תנאי השירות של הסטודיו" }, alreadyAccepted: false });
+	render(<BookingPage />);
+	const send = await screen.findByRole<HTMLButtonElement>("button", { name: "Send request" });
+	await waitFor(() => expect(send.disabled).toBe(false));
+	fireEvent.click(send);
+	await screen.findByText("Published booking terms");
+	fireEvent.click(screen.getByRole("checkbox"));
+	await act(async () => { await i18n.changeLanguage("he"); });
+	await screen.findByText("תנאי השירות של הסטודיו");
+	expect(screen.getByRole<HTMLInputElement>("checkbox").checked).toBe(false);
+	expect(screen.getByRole<HTMLButtonElement>("button", { name: "לשלוח בקשה" }).disabled).toBe(true);
+	expect(fakeAdapter.checkTerms.mock.calls).toEqual([["en"], ["he"]]);
+	expect(fakeAdapter.acceptTerms).not.toHaveBeenCalled();
+	expect(fakeAdapter.requestRegistration).not.toHaveBeenCalled();
 });
 
 it("retains the route package when a signed-in client visits a closed calendar", async () => {

@@ -38,7 +38,7 @@ export function AcceptedTerms({ adapter }: { adapter: Pick<ReturnType<typeof cre
 						onClick={() => dispatch({ type: "acceptance_toggled", id: acceptance.id })}>
 						<bdi lang={acceptance.locale}>{acceptance.title}</bdi>
 						<span className="when">
-							{t("accTermsVersion", { version: acceptance.version })} ·{" "}
+							{t("termsVersion", { version: acceptance.version })} ·{" "}
 							<time dateTime={acceptance.acceptedAt}>{dates.format(new Date(acceptance.acceptedAt))}</time>
 						</span>
 					</Ticket>

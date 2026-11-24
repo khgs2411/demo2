@@ -121,7 +121,8 @@ export function buildWorld(scene: THREE.Scene, labels: SceneLabels, direction: "
 		pivot.rotation.x = pointerY * .12;
 		signPivot.rotation.z += (frame.signAngle - signPivot.rotation.z) * .08;
 		for (let i = 0; i < packetCount; i++) {
-			const curve = curves[i % 3], u = (t * (.22 + (i % 5) * .03) + i / packetCount) % 1;
+			const curve = curves[i % 3];
+			const u = THREE.MathUtils.euclideanModulo(t * (.22 + (i % 5) * .03) + i / packetCount, 1);
 			dummy.position.copy(curve.getPointAt(u)); dummy.updateMatrix(); packets.setMatrixAt(i, dummy.matrix);
 		}
 		packets.instanceMatrix.needsUpdate = true;

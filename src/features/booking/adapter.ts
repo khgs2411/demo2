@@ -10,11 +10,14 @@ import type { CompleteOutcome, RequestOutcome } from "./password-reset/machine";
 export type BookingSdk = Pick<ClassKitClient, "supabase" | "authStorageKey" | "productKey"> & {
 	auth: Pick<ClassKitClient["auth"], "signIn" | "signUp" | "getSession" | "signInWithGoogle" | "signOut" | "requestPasswordReset" | "completePasswordReset" | "changePassword">;
 	profile: Pick<ClassKitClient["profile"], "get" | "update">;
-	productDocuments: Pick<ClassKitClient["productDocuments"], "listMyAcceptances">;
+	productDocuments: Pick<ClassKitClient["productDocuments"], "get" | "accept" | "listMyAcceptances">;
 	classes: Pick<ClassKitClient["classes"], "list" | "listMyRegistrations" | "register" | "registerWithSignup" | "cancelRegistration">;
 };
 export type PasswordChangeOutcome = Awaited<ReturnType<BookingSdk["auth"]["changePassword"]>>["status"] | "failed";
 export type BookingRange = { start: string; end: string };
+const termsDocumentType = "terms_of_service";
+const fallbackTermsLocale = "en";
+
 export function useBookingContext() {
 	return useProductContext();
 }
@@ -140,12 +143,16 @@ export function createBookingAdapter(client: BookingSdk | null, refreshProductCo
 		}
 	}
 
-	async function loadTerms(locale: string): Promise<BookingEvent> {
+	async function loadTerms(locale: string, afterDocumentChanged = false): Promise<
+		Extract<BookingEvent, { type: "terms_loaded" | "terms_load_failed" }>
+	> {
 		try {
-			// The document facade caches successful reads. Consent needs a fresh publication.
-			const response = await invokeProductFunction<{ document: ProductDocument }>(client, "product-documents", {
-				action: "get", document_type: "terms_of_service", locale, fallback_locale: "en",
-			});
+			// Initial checks need a fresh publication. A conflict has already cleared the SDK cache.
+			const response = afterDocumentChanged && client
+				? await client.productDocuments.get(termsDocumentType, { locale, fallbackLocale: fallbackTermsLocale })
+				: await invokeProductFunction<{ document: ProductDocument }>(client, "product-documents", {
+					action: "get", document_type: termsDocumentType, locale, fallback_locale: fallbackTermsLocale,
+				});
 			if (response.error) return { type: "terms_load_failed" };
 			const { title, content_markdown: text, version, locale: publishedLocale } = response.data.document;
 			return { type: "terms_loaded", terms: { title, text, version, locale: publishedLocale } };
@@ -154,13 +161,49 @@ export function createBookingAdapter(client: BookingSdk | null, refreshProductCo
 		}
 	}
 
+	async function listAcceptanceSnapshots() {
+		const response = await client?.productDocuments.listMyAcceptances();
+		return response?.data?.acceptances ?? null;
+	}
+
+	async function checkTerms(locale: string): Promise<BookingEvent> {
+		try {
+			if (!client) return { type: "terms_load_failed" };
+			const [publication, snapshots] = await Promise.all([
+				loadTerms(locale),
+				listAcceptanceSnapshots(),
+			]);
+			if (publication.type === "terms_load_failed" || !snapshots) return { type: "terms_load_failed" };
+			const { terms } = publication;
+			const alreadyAccepted = snapshots.some(snapshot => snapshot.documentType === termsDocumentType
+				&& snapshot.documentLocale === terms.locale && snapshot.documentVersion === terms.version);
+			return { type: "terms_checked", terms, alreadyAccepted };
+		} catch {
+			return { type: "terms_load_failed" };
+		}
+	}
+
+	async function acceptTerms(terms: BookingTerms): Promise<BookingEvent> {
+		try {
+			const response = await client?.productDocuments.accept(termsDocumentType, {
+				// Locale streams can share a version number. Save only the locale that was shown.
+				locale: terms.locale, fallbackLocale: terms.locale, context: "booking", version: terms.version,
+			});
+			if (response?.error?.code === "document_changed") return { type: "document_changed" };
+			if (response?.error?.code === "not_found") return { type: "terms_unavailable" };
+			return { type: response && !response.error ? "acceptance_recorded" : "acceptance_failed" };
+		} catch {
+			return { type: "acceptance_failed" };
+		}
+	}
+
 	async function loadAcceptedTerms(): Promise<AcceptedTermsLoadEvent> {
 		try {
-			const response = await client?.productDocuments.listMyAcceptances();
-			if (!response || response.error) return { type: "load_failed" };
+			const snapshots = await listAcceptanceSnapshots();
+			if (!snapshots) return { type: "load_failed" };
 			return {
 				type: "loaded",
-				acceptances: response.data.acceptances.map(snapshot => ({
+				acceptances: snapshots.map(snapshot => ({
 					id: snapshot.id,
 					title: snapshot.documentTitle,
 					text: snapshot.documentContentMarkdown,
@@ -235,7 +278,7 @@ export function createBookingAdapter(client: BookingSdk | null, refreshProductCo
 			if (response.error?.code === "forbidden") return { type: "no_access" };
 			if (response.error) return { type: isSignedOutError(response.error.code) ? "signed_out" : "failed" };
 			return { type: "loaded", requests: response.data.registrations.map(registration => ({
-				id: registration.classId, name: registration.class.name, startsAt: registration.class.startsAt,
+				id: registration.classId, name: registration.class.name, startsAt: registration.class.startsAt, endsAt: registration.class.endsAt,
 				canRegister: false, canCancelRegistration: registration.canCancel,
 				userRegistrationState: { id: registration.id, status: registration.status },
 			})) };
@@ -298,6 +341,8 @@ export function createBookingAdapter(client: BookingSdk | null, refreshProductCo
 		loadSlots,
 		requestRegistration,
 		loadTerms,
+		checkTerms,
+		acceptTerms,
 		loadAcceptedTerms,
 		requestWithSignup,
 		listRequests,

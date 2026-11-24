@@ -7,12 +7,12 @@ import { makeBookingContext } from "./context-fixture";
 
 vi.mock("@class-kit/react", () => ({ useProductContext: vi.fn() }));
 let context: ReturnType<typeof adapterModule.useBookingContext>;
-const request = { id:"s", name:"Business meeting", startsAt:"2026-11-10T09:00:00Z", canRegister:false, canCancelRegistration:true, userRegistrationState:{id:"r",status:"pending" as const} };
+const request = { id:"s", name:"Business meeting", startsAt:"2026-11-10T09:00:00Z", endsAt:"2026-11-10T09:45:00Z", canRegister:false, canCancelRegistration:true, userRegistrationState:{id:"r",status:"pending" as const} };
 const profile = { displayName: "Maya Cohen", phoneNumber: "0501234567", businessName: "Studio" };
 const listRequests = vi.fn();
 const cancelRequest = vi.fn();
 const loadAcceptedTerms = vi.fn();
-const adapter = { loadProfile:vi.fn(), saveAccountDetails:vi.fn(), loadTerms:vi.fn(), loadAcceptedTerms, requestWithSignup:vi.fn(), signIn:vi.fn(), signUp:vi.fn(), signInWithGoogle:vi.fn(), saveProfile:vi.fn(),loadSlots:vi.fn(),requestRegistration:vi.fn(),listRequests,cancelRequest,signOut:vi.fn(),requestPasswordReset:vi.fn(),completePasswordReset:vi.fn(), changePassword:vi.fn() };
+const adapter = { loadProfile:vi.fn(), saveAccountDetails:vi.fn(), loadTerms:vi.fn(), loadAcceptedTerms, checkTerms:vi.fn(), acceptTerms:vi.fn(), requestWithSignup:vi.fn(), signIn:vi.fn(), signUp:vi.fn(), signInWithGoogle:vi.fn(), saveProfile:vi.fn(),loadSlots:vi.fn(),requestRegistration:vi.fn(),listRequests,cancelRequest,signOut:vi.fn(),requestPasswordReset:vi.fn(),completePasswordReset:vi.fn(), changePassword:vi.fn() };
 beforeEach(async () => {
 	vi.restoreAllMocks(); vi.resetAllMocks();
 	context = { ...makeBookingContext(), session:{access_token:"test",refresh_token:"test",token_type:"bearer",expires_in:3600,user:{id:"visitor",app_metadata:{},user_metadata:{},aud:"authenticated",created_at:"2026-11-07"}} };
@@ -31,6 +31,51 @@ it.each(["he","en"])("renders all backend statuses and only allowed cancellation
 	for (const status of ["pending","approved","rejected","cancelled"]) expect(await screen.findByText(i18n.t(status,{ns:"booking"}))).toBeDefined();
 	expect(screen.getAllByRole("button",{name:i18n.t("cancel",{ns:"booking"})})).toHaveLength(1);
 	expect(screen.getByRole("link",{name:i18n.t("bookAnother",{ns:"booking"})}).getAttribute("href")).toBe("#/book");
+});
+it.each([
+	["en", "Add to Google Calendar"],
+	["he", "הוספה ליומן Google"],
+])("links only the upcoming confirmed request to Google Calendar in %s", async (language, label) => {
+	vi.spyOn(Date, "now").mockReturnValue(Date.parse("2026-11-10T08:50:00Z"));
+	await i18n.changeLanguage(language);
+	const requests = ["pending", "approved", "rejected", "cancelled"].map(status => ({
+		...request, name: `${status} meeting`, userRegistrationState: { id: status, status },
+	}));
+	requests.push({
+		...request, name: "Earlier meeting", startsAt: "2026-11-10T08:45:00Z",
+		endsAt: "2026-11-10T09:30:00Z", userRegistrationState: { id: "earlier", status: "approved" },
+	});
+	listRequests.mockResolvedValueOnce({ type: "loaded", requests });
+	render(<AccountPage />);
+	const approvedRow = (await screen.findByText("approved meeting")).closest("article")!;
+	const link = within(approvedRow).getByRole("link", { name: label });
+	const url = new URL(link.getAttribute("href")!);
+	expect(screen.getAllByRole("link", { name: label })).toEqual([link]);
+	expect(link.getAttribute("target")).toBe("_blank");
+	expect(link.getAttribute("rel")).toBe("noopener noreferrer");
+	expect(url.searchParams.get("text")).toBe("approved meeting");
+	expect(url.searchParams.get("dates")).toBe("20261110T090000Z/20261110T094500Z");
+});
+it("removes calendar links as confirmed meetings start on the open account page", async () => {
+	vi.useFakeTimers({ toFake: ["Date", "setTimeout", "clearTimeout"] });
+	try {
+		vi.setSystemTime(new Date("2026-11-10T08:59:59Z"));
+		const first = { ...request, userRegistrationState: { id: "first", status: "approved" } };
+		const second = { ...first, name: "Next meeting", startsAt: "2026-11-10T09:00:01Z", userRegistrationState: { id: "second", status: "approved" } };
+		listRequests.mockResolvedValueOnce({ type: "loaded", requests: [first, second] });
+		await act(async () => { render(<AccountPage />); });
+		const calendarLink = { name: "Add to Google Calendar" };
+		expect(screen.getAllByRole("link", calendarLink)).toHaveLength(2);
+
+		act(() => { vi.advanceTimersByTime(1000); });
+		const secondRow = screen.getByText("Next meeting").closest("article")!;
+		expect(screen.getAllByRole("link", calendarLink)).toEqual([within(secondRow).getByRole("link", calendarLink)]);
+		act(() => { vi.advanceTimersByTime(1000); });
+		expect(screen.queryByRole("link", calendarLink)).toBeNull();
+		expect(listRequests).toHaveBeenCalledOnce();
+	} finally {
+		vi.useRealTimers();
+	}
 });
 it("does not replay cancellation after a failure and renders refreshed flags", async () => {
 	cancelRequest.mockResolvedValueOnce([{type:"cancel_failed"},{type:"loaded",requests:[{...request,canCancelRegistration:false}]}]);

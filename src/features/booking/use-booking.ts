@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from "react";
 import { createBookingAdapter, useBookingContext } from "./adapter";
-import { initialState, transition, type BookingEvent, type BookingState, type BookingProfile, type BookingSelection, type SignupDraft } from "./machine";
+import { initialState, isSignedInTermsState, transition, type BookingEvent, type BookingState, type BookingProfile, type BookingSelection, type SignupDraft } from "./machine";
 import { restoreBookingRedirect } from "./redirect";
 import { moveWeek, weekRange } from "./calendar";
 
@@ -17,7 +17,8 @@ export function useBooking(locale: string, draft: BookingSelection) {
 	const latestDraft = useRef(draft);
 	const wasRevoked = useRef(false);
 	const latestSession = useRef(context.session);
-	const requestStarted = useRef<BookingState | null>(null);
+	const latestLocale = useRef(locale);
+	const writeStarted = useRef<BookingState | null>(null);
 	// The registration sign-up API requires Google to be enabled.
 	const guestAvailable = context.product?.auth_mode === "open"
 		&& context.product.email_password_enabled && context.product.google_oauth_enabled;
@@ -27,7 +28,6 @@ export function useBooking(locale: string, draft: BookingSelection) {
 	}, []);
 	useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
 	useEffect(() => {
-		latestSession.current = context.session;
 		if (context.loading) return;
 		if (state.step === "choosing_package" && context.session) {
 			const { id, email } = context.session.user;
@@ -53,6 +53,18 @@ export function useBooking(locale: string, draft: BookingSelection) {
 		wasRevoked.current = revoked;
 		send(revoked ? { type: "session_revoked", selection: latestDraft.current } : { type: "session_revocation_cleared" });
 	}, [revoked, send]);
+	useLayoutEffect(() => {
+		latestSession.current = context.session;
+		const flow = current.current;
+		if ((isSignedInTermsState(flow) || flow.step === "submitting") && context.session?.user.id !== flow.userId) {
+			send({ type: "unauthenticated" });
+		}
+	}, [context.session, state, send]);
+	useLayoutEffect(() => {
+		if (latestLocale.current === locale) return;
+		latestLocale.current = locale;
+		send({ type: "terms_locale_changed" });
+	}, [locale, send]);
 	useEffect(() => {
 		if (!recovering) {
 			recoveryStarted.current = false;
@@ -94,16 +106,32 @@ export function useBooking(locale: string, draft: BookingSelection) {
 		return () => { active = false; };
 	}, [adapter, locale, needsTerms, send]);
 
-	const submission = state.step === "submitting" ? state : null;
+	const checkingTerms = state.step === "checking_terms" ? state : null;
 	useEffect(() => {
-		const slotId = submission?.selection.slotId;
-		if (!submission || !slotId || requestStarted.current === submission) return;
-		requestStarted.current = submission;
-		const requestState = current.current;
-		void adapter.requestRegistration(slotId, submission.selection.packageId, range).then(events => {
-			if (mounted.current && current.current === requestState) for (const event of events) send(event);
+		const flow = current.current;
+		if (!checkingTerms || flow.step !== "checking_terms") return;
+		let active = true;
+		const result = flow.termsChanged ? adapter.loadTerms(locale, true) : adapter.checkTerms(locale);
+		void result.then(event => {
+			if (active && current.current === flow) send(event);
 		});
-	}, [adapter, range, submission, send]);
+		return () => { active = false; };
+	}, [adapter, locale, checkingTerms, send]);
+
+	const writing = state.step === "accepting_terms" || state.step === "submitting" ? state : null;
+	useEffect(() => {
+		const flow = current.current;
+		if (!writing || writing.step !== flow.step || writeStarted.current === writing) return;
+		const slotId = writing.selection.slotId;
+		if (!slotId) return;
+		writeStarted.current = writing;
+		const result = writing.step === "accepting_terms"
+			? adapter.acceptTerms(writing.terms).then(event => [event])
+			: adapter.requestRegistration(slotId, writing.selection.packageId, range);
+		void result.then(events => {
+			if (mounted.current && current.current === flow) for (const event of events) send(event);
+		});
+	}, [adapter, range, writing, send]);
 
 	function run(started: BookingEvent, operation: () => Promise<BookingEvent | readonly BookingEvent[]>) {
 		if (inFlight.current) return;
@@ -142,10 +170,5 @@ export function useBooking(locale: string, draft: BookingSelection) {
 			return run({ type: "profile_save_started" }, () => adapter.saveProfile(profile, flow.selection));
 		},
 		moveWeek(direction: -1 | 1) { send({ type: "slots_refresh_requested" }); setRange(previous => moveWeek(previous, direction)); },
-		submit() {
-			const flow = current.current;
-			if (flow.step !== "choosing_slot" || !flow.userId || !flow.selection.slotId || flow.availability !== "ready") return;
-			send({ type: "submit_requested" });
-		},
 	};
 }

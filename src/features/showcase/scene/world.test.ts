@@ -1,6 +1,21 @@
 import * as THREE from "three";
-import { expect, it } from "vitest";
-import { disposeWorld } from "./world";
+import { expect, it, vi } from "vitest";
+import { timeline } from "./timeline";
+import { buildWorld, disposeWorld } from "./world";
+
+vi.mock("./labels", () => ({ makeLabel: () => new THREE.Object3D() }));
+
+it("applies a frame with negative time without throwing", () => {
+	const scene = new THREE.Scene();
+	const world = buildWorld(scene, {
+		studio: "Studio", open: "Open", customers: "Customers", bookings: "Bookings", requests: "Requests",
+	}, "ltr");
+	try {
+		expect(() => world.apply(timeline(0, 0), -.001, 0, 0)).not.toThrow();
+	} finally {
+		disposeWorld(scene);
+	}
+});
 
 it("releases shared geometry, material and texture exactly once, plus instance buffers", () => {
 	const scene = new THREE.Scene(), geometry = new THREE.BoxGeometry();

@@ -34,8 +34,10 @@ export default function Scene(props: SceneProps) {
 		};
 		function frame(now: number) {
 			if (cancelled || !view || !intersects || document.hidden) return;
-			const dt = Math.min((now - previous) / 1000, .05), time = (now - started) / 1000;
-			previous = now;
+			// The first rAF timestamp can precede the immediate paint's performance.now().
+			const current = Math.max(now, previous);
+			const dt = Math.min((current - previous) / 1000, .05), time = (current - started) / 1000;
+			previous = current;
 			progress = dampProgress(progress, target, dt);
 			pmx += (mx - pmx) * .05; pmy += (my - pmy) * .05;
 			const parameters = timeline(progress, time);

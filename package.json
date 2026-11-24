@@ -12,7 +12,7 @@
 		"check": "npx vitest run && npm run build && npm run check:floor && gitleaks git . --redact --no-banner"
 	},
 	"dependencies": {
-		"@class-kit/react": "git+ssh://git@github.com/khgs2411/class-kit-sdk.git#v0.1.32",
+		"@class-kit/react": "git+ssh://git@github.com/khgs2411/class-kit-sdk.git#v0.1.33",
 		"@fontsource/frank-ruhl-libre": "^5.3.0",
 		"@fontsource/ibm-plex-mono": "^5.3.0",
 		"@fontsource/ibm-plex-sans": "^5.3.0",
