@@ -344,6 +344,10 @@ export const en = {
 			redirect_storage: "Your booking choice could not be saved for Google sign-in. Please use email or allow session storage and try again.",
 		},
 	},
+	pass: {
+		account: { kicker: "Admission pass", code: "ADMIT ONE", status: "Opens your account", num: "№ 02",
+			requests: "Requests", requestsValue: "Every meeting you asked for, and where it stands", details: "Details", detailsValue: "Your name and phone for the meeting", terms: "Terms", termsValue: "What you accepted, by version" },
+	},
 	passwordReset: {
 		forgotLink: "Forgot password?",
 		forgotTitle: "Forgot your password?",

@@ -164,11 +164,10 @@ h1 { font: 900 clamp(2.4rem, 1.2rem + 3.6vw, 4.4rem)/.95 var(--font-display); le
  .time:disabled { text-decoration: line-through; }
  .day-tab { justify-content: center; }
  .day-tab .main { padding: 0; display: grid; gap: 2px; }
- .booking-google { inline-size: 100%; max-inline-size: 460px; background: transparent; border: 2px solid var(--ink); mask: none; -webkit-mask: none; }
- .booking-google .main { display: flex; gap: 14px; }
+ .booking-google { inline-size: 100%; max-inline-size: 520px; }
+ .booking-google .main { display: flex; gap: 14px; flex: 1; }
  .booking-google svg { flex: none; }
  .field > span { font: 500 11px/1.4 var(--font-mono); letter-spacing: .1em; text-transform: uppercase; }
- .booking-google .stub { display: none; }
  .actions, .done-actions { row-gap: 18px; }
  .status, .when { overflow-wrap: anywhere; }
  @media (min-width: 1000px) { .summary { inset-block-start: 96px; } }
@@ -183,3 +182,12 @@ h1 { font: 900 clamp(2.4rem, 1.2rem + 3.6vw, 4.4rem)/.95 var(--font-display); le
 .booking-page .acceptance-row bdi { font-weight: 600; text-decoration: underline; text-underline-offset: 4px; }
 .shell-content > main.account-page { grid-template-columns: minmax(0, 1fr); }
 .booking-page .issued-password { font-family: var(--font-mono); }
+
+/* Gate pages put the form beside the pass on desktop. */
+.shell-content > main.booking-page.gate { align-content: center; row-gap: 48px; }
+.booking-page.gate h1 { font-size: clamp(2.8rem, 1.2rem + 4.4vw, 5.4rem); max-inline-size: 11ch; }
+.booking-page.gate :is(.fields, .or) { max-inline-size: 520px; }
+@media (min-width: 1000px) {
+	.shell-content > main.booking-page.gate { grid-template-columns: minmax(0, 580px) 400px; justify-content: center; column-gap: clamp(56px, 7vw, 140px); }
+	.booking-page.gate .pass { position: sticky; inset-block-start: 112px; }
+}

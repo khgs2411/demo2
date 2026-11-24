@@ -344,6 +344,10 @@ export const he = {
 			redirect_storage: "לא הצלחנו לשמור את בחירת הפגישה לקראת ההתחברות עם Google. אפשר להתחבר באימייל או לאפשר אחסון להפעלה ולנסות שוב.",
 		},
 	},
+	pass: {
+		account: { kicker: "כרטיס כניסה", code: "ADMIT ONE", status: "פותח את החשבון שלך", num: "№ 02",
+			requests: "בקשות", requestsValue: "כל פגישה שביקשת, והסטטוס שלה", details: "פרטים", detailsValue: "השם והטלפון לפגישה", terms: "תנאים", termsValue: "מה שאישרת, לפי גרסה" },
+	},
 	passwordReset: {
 		forgotLink: "שכחת סיסמה?",
 		forgotTitle: "שכחת את הסיסמה?",

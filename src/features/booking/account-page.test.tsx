@@ -104,6 +104,17 @@ it("offers authentication to signed-out visitors without reading private request
 	expect(listRequests).not.toHaveBeenCalled();
 	expect(loadAcceptedTerms).not.toHaveBeenCalled();
 });
+it("shows the admission pass and Google ticket on the signed-out account gate", () => {
+	context.session = null;
+	render(<AccountPage />);
+	const main = screen.getByRole("main");
+	const pass = within(main).getByRole("complementary");
+	expect(main.classList.contains("gate")).toBe(true);
+	expect(within(pass).getByText("ADMIT ONE")).toBeDefined();
+	const google = within(main).getByRole("button", { name: "Continue with Google" });
+	expect(google.classList.contains("ticket-ghost")).toBe(true);
+	expect(google.querySelector('[aria-hidden="true"].stub')?.textContent).toBe("↗");
+});
 it("ignores a stale read after the provider switches visitors", async () => {
 	let resolveOld!: (value: unknown) => void;
 	listRequests.mockImplementationOnce(() => new Promise(resolve => { resolveOld = resolve; })).mockResolvedValueOnce({type:"loaded",requests:[]});

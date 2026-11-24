@@ -7,6 +7,7 @@ import type { BookingEvent } from "./machine";
 import { AccountDetails } from "./account-details";
 import { AcceptedTerms } from "./accepted-terms";
 import { AccountStep } from "./account-step";
+import { AccountPass } from "./gate-passes";
 import { PasswordChange } from "./password-change";
 import { RequestLedger } from "./request-ledger";
 import { usePasswordChange } from "./use-password-change";
@@ -97,7 +98,8 @@ export function AccountPage() {
 	const signedOut = !session || !userId || requests.state.step === "signed_out";
 	const noAccess = requests.state.step === "no_access";
 	const showAccountSections = !noAccess && requests.state.step !== "loading";
-	return <main data-module="booking" className="booking-page account-page">
+	const gate = !context.loading && signedOut;
+	return <main data-module="booking" className={`booking-page account-page${gate ? " gate" : ""}`}>
 		<section>
 			{!revoked && auth.error && <p role="alert" className="notice error">{t(auth.error)}</p>}
 			{context.loading ? <><h1>{t("accTitle")}</h1><p role="status">{t("loading")}</p></> : signedOut ? <>
@@ -121,5 +123,6 @@ export function AccountPage() {
 				</div>
 			</>}
 		</section>
+		{gate && <AccountPass />}
 	</main>;
 }
