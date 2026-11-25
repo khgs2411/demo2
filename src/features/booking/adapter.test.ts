@@ -43,7 +43,7 @@ function mockSdk() {
 const sdk = mockSdk();
 const refresh = vi.fn<() => Promise<void>>().mockResolvedValue();
 const adapter = createBookingAdapter(sdk, refresh);
-const selection = { packageId: "system", addonInterests: ["agent-voice"], slotId: null } as const;
+const selection = { packageId: "system-studio", addonInterests: ["agent-voice"], slotId: null } as const;
 const profile = { displayName: "Test Visitor", phoneNumber: "+972500000000", businessName: "Test Business", websiteUrl: "https://example.com" };
 const publishedTerms: ProductDocument = {
 	id: "terms-8", product_id: "demo", document_type: "terms_of_service", locale: "en", version: 8,
@@ -97,15 +97,15 @@ describe("booking password authentication", () => {
 });
 
 describe("booking profile", () => {
-	it("saves the contact fields and package/add-on metadata through the customer API", async () => {
+	it.each(["system-basic", "system-studio", "system-partner", "site-quick", "site-landing", "site-business"] as const)("saves the contact fields and %s package metadata through the customer API", async packageId => {
 		sdk.profile.update.mockResolvedValueOnce({ data: {
 			profile: { customer_id: "customer-1", user_id: "visitor", display_name: profile.displayName, contact_email: null, phone_number: profile.phoneNumber },
 			product_user: { customer_id: "customer-1", user_id: "visitor", metadata: {} },
 		}, error: null });
-		expect(await adapter.saveProfile(profile, selection)).toEqual({ type: "profile_saved" });
+		expect(await adapter.saveProfile(profile, { ...selection, packageId })).toEqual({ type: "profile_saved" });
 		expect(sdk.profile.update).toHaveBeenCalledWith({
 			displayName: profile.displayName, phoneNumber: profile.phoneNumber,
-			metadata: { business_name: profile.businessName, website_url: profile.websiteUrl, package_interest: "system", addon_interests: ["agent-voice"] },
+			metadata: { business_name: profile.businessName, website_url: profile.websiteUrl, package_interest: packageId, addon_interests: ["agent-voice"] },
 		});
 	});
 
@@ -157,7 +157,7 @@ describe("booking slot SDK adapter", () => {
 		id: sdkSlot.id, startsAt: sdkSlot.startsAt, canRegister: true, canCancelRegistration: false, userRegistrationState: null,
 	};
 
-	it.each(["site", "system"] as const)("treats a null %s template as booking not open without an SDK call", async (packageId) => {
+	it.each(["site-landing", "system-studio"] as const)("treats a null %s template as booking not open without an SDK call", async (packageId) => {
 		withoutTemplates();
 		expect(await adapter.loadSlots(packageId, range)).toEqual({ type: "booking_not_open" });
 		expect(sdk.classes.list).not.toHaveBeenCalled();
@@ -166,26 +166,26 @@ describe("booking slot SDK adapter", () => {
 	it("filters by the package template and preserves backend flags without exposing end times", async () => {
 		provideTemplate();
 		sdk.classes.list.mockResolvedValueOnce({ data: { classes: [sdkSlot] }, error: null });
-		expect(await adapter.loadSlots("system", range)).toEqual({ type: "slots_loaded", slots: [projectedSlot] });
-		expect(sdk.classes.list).toHaveBeenCalledWith({ range, filters: { templateId: "template-system" } });
+		expect(await adapter.loadSlots("system-studio", range)).toEqual({ type: "slots_loaded", slots: [projectedSlot] });
+		expect(sdk.classes.list).toHaveBeenCalledWith({ range, filters: { templateId: "template-system-studio" } });
 	});
 
 	it.each(["unauthorized", "forbidden", "internal_error"] as const)("maps a %s list response", async (code) => {
 		provideTemplate();
 		sdk.classes.list.mockResolvedValueOnce({ data: null, error: { code, message: "Backend message" } });
-		expect(await adapter.loadSlots("site", range)).toEqual(code === "unauthorized" ? { type: "unauthenticated" }
+		expect(await adapter.loadSlots("site-landing", range)).toEqual(code === "unauthorized" ? { type: "unauthenticated" }
 			: { type: "operation_failed", operation: "slots", reason: "generic" });
 	});
 
 	it("maps a rejected list promise", async () => {
 		provideTemplate();
 		sdk.classes.list.mockRejectedValueOnce(new Error("offline"));
-		expect(await adapter.loadSlots("site", range)).toEqual({ type: "operation_failed", operation: "slots", reason: "generic" });
+		expect(await adapter.loadSlots("site-landing", range)).toEqual({ type: "operation_failed", operation: "slots", reason: "generic" });
 	});
 
 	it("maps successful registration using the backend id and status", async () => {
 		sdk.classes.register.mockResolvedValueOnce({ data: registered, error: null });
-		expect(await adapter.requestRegistration("slot-1", "system", range)).toEqual([
+		expect(await adapter.requestRegistration("slot-1", "system-studio", range)).toEqual([
 			{ type: "registration_requested", registration: { id: "request-1", classId: "slot-1", status: "pending" } },
 		]);
 		expect(sdk.classes.register).toHaveBeenCalledExactlyOnceWith("slot-1");
@@ -194,14 +194,14 @@ describe("booking slot SDK adapter", () => {
 
 	it("preserves an approved backend result instead of assuming a pending status", async () => {
 		sdk.classes.register.mockResolvedValueOnce({ data: { ...registered, status: "approved", registration: { ...registered.registration, status: "approved" } }, error: null });
-		expect(await adapter.requestRegistration("slot-1", "system", range)).toEqual([
+		expect(await adapter.requestRegistration("slot-1", "system-studio", range)).toEqual([
 			{ type: "registration_requested", registration: { id: "request-1", classId: "slot-1", status: "approved" } },
 		]);
 	});
 
 	it("maps rejected registration promises without replay", async () => {
 		sdk.classes.register.mockRejectedValueOnce(new Error("offline"));
-		expect(await adapter.requestRegistration("slot-1", "system", range)).toEqual([{ type: "operation_failed", operation: "registration", reason: "generic" }]);
+		expect(await adapter.requestRegistration("slot-1", "system-studio", range)).toEqual([{ type: "operation_failed", operation: "registration", reason: "generic" }]);
 		expect(sdk.classes.register).toHaveBeenCalledOnce();
 	});
 
@@ -209,16 +209,16 @@ describe("booking slot SDK adapter", () => {
 		provideTemplate();
 		sdk.classes.register.mockResolvedValueOnce({ data: null, error: { code: "bad_request", message: "class_capacity_full" } });
 		sdk.classes.list.mockResolvedValueOnce({ data: { classes: [{ ...sdkSlot, canRegister: false }] }, error: null });
-		expect(await adapter.requestRegistration("slot-1", "system", range)).toEqual([
+		expect(await adapter.requestRegistration("slot-1", "system-studio", range)).toEqual([
 			{ type: "slot_full" }, { type: "slots_loaded", slots: [{ ...projectedSlot, canRegister: false }] },
 		]);
 		expect(sdk.classes.register).toHaveBeenCalledOnce();
-		expect(sdk.classes.list).toHaveBeenCalledExactlyOnceWith({ range, filters: { templateId: "template-system" } });
+		expect(sdk.classes.list).toHaveBeenCalledExactlyOnceWith({ range, filters: { templateId: "template-system-studio" } });
 	});
 
 	it.each(["unauthorized", "conflict", "internal_error"] as const)("maps %s registration errors without replaying", async (code) => {
 		sdk.classes.register.mockResolvedValueOnce({ data: null, error: { code, message: "Backend message" } });
-		expect(await adapter.requestRegistration("slot-1", "system", range)).toEqual([code === "unauthorized" ? { type: "unauthenticated" }
+		expect(await adapter.requestRegistration("slot-1", "system-studio", range)).toEqual([code === "unauthorized" ? { type: "unauthenticated" }
 			: { type: "operation_failed", operation: "registration", reason: "generic" }]);
 		expect(sdk.classes.register).toHaveBeenCalledOnce();
 		expect(sdk.classes.list).not.toHaveBeenCalled();
@@ -228,7 +228,7 @@ describe("booking slot SDK adapter", () => {
 		provideTemplate();
 		sdk.classes.register.mockResolvedValueOnce({ data: null, error: { code: "bad_request", message: "class_capacity_full" } });
 		sdk.classes.list.mockRejectedValueOnce(new Error("offline"));
-		expect(await adapter.requestRegistration("slot-1", "system", range)).toEqual([
+		expect(await adapter.requestRegistration("slot-1", "system-studio", range)).toEqual([
 			{ type: "slot_full" }, { type: "operation_failed", operation: "slots", reason: "generic" },
 		]);
 	});
@@ -243,14 +243,14 @@ describe("booking slot SDK adapter", () => {
 		mockPublishedTerms().mockResolvedValueOnce(publicationResponse(publishedTerms));
 		sdk.productDocuments.listMyAcceptances.mockResolvedValueOnce({ data: { acceptances: [acceptedSnapshot] }, error: null });
 		sdk.classes.register.mockResolvedValueOnce({ data: registered, error: null });
-		let state = transition(initialState, { type: "package_chosen", packageId: "system", addonInterests: [] });
+		let state = transition(initialState, { type: "package_chosen", packageId: "system-studio", addonInterests: [] });
 		state = transition(state, await adapter.signIn("visitor@example.com", "test-password"));
 		state = transition(state, await adapter.saveProfile(profile, selection));
-		state = transition(state, await adapter.loadSlots("system", range));
+		state = transition(state, await adapter.loadSlots("system-studio", range));
 		state = transition(state, { type: "slot_chosen", slotId: "slot-1" });
 		state = transition(state, { type: "submit_requested" });
 		state = transition(state, await adapter.checkTerms("en"));
-		for (const event of await adapter.requestRegistration("slot-1", "system", range)) state = transition(state, event);
+		for (const event of await adapter.requestRegistration("slot-1", "system-studio", range)) state = transition(state, event);
 		expect(state).toMatchObject({ step: "requested", registration: { id: "request-1", status: "pending" } });
 	});
 });
@@ -259,34 +259,34 @@ describe("booking Google redirect", () => {
 	beforeEach(() => { sessionStorage.clear(); });
 
 	it("persists the choice before the SDK can redirect and leaves session/context loading to ProductProvider", async () => {
-		const state = transition(initialState, { type: "package_chosen", packageId: "system", addonInterests: ["agent-voice"] });
+		const state = transition(initialState, { type: "package_chosen", packageId: "system-studio", addonInterests: ["agent-voice"] });
 		sdk.auth.signInWithGoogle.mockImplementationOnce(async () => {
-			expect(JSON.parse(sessionStorage.getItem(bookingRedirectKey)!)).toMatchObject({ selection: { packageId: "system", addonInterests: ["agent-voice"] } });
+			expect(JSON.parse(sessionStorage.getItem(bookingRedirectKey)!)).toMatchObject({ selection: { packageId: "system-studio", addonInterests: ["agent-voice"] } });
 			return { error: null };
 		});
 		expect(await adapter.signInWithGoogle(state)).toEqual({ type: "auth_redirect_started" });
 		expect(sdk.auth.signInWithGoogle).toHaveBeenCalledOnce();
 		expect(refresh).not.toHaveBeenCalled();
 		expect(sdk.auth.getSession).not.toHaveBeenCalled();
-		expect(await restoreBookingRedirect("visitor")).toMatchObject({ type: "redirect_restored", selection: { packageId: "system" } });
+		expect(await restoreBookingRedirect("visitor")).toMatchObject({ type: "redirect_restored", selection: { packageId: "system-studio" } });
 	});
 
 	it("clears saved intent when Google fails before redirecting", async () => {
-		const state = transition(initialState, { type: "package_chosen", packageId: "site", addonInterests: [] });
+		const state = transition(initialState, { type: "package_chosen", packageId: "site-landing", addonInterests: [] });
 		sdk.auth.signInWithGoogle.mockResolvedValueOnce({ error: "Google redirect is not configured" });
 		expect(await adapter.signInWithGoogle(state)).toEqual({ type: "operation_failed", operation: "auth", reason: "generic" });
 		expect(await restoreBookingRedirect("visitor")).toBeNull();
 	});
 
 	it("blocks OAuth if session storage cannot preserve the choice", async () => {
-		const state = transition(initialState, { type: "package_chosen", packageId: "system", addonInterests: [] });
+		const state = transition(initialState, { type: "package_chosen", packageId: "system-studio", addonInterests: [] });
 		vi.spyOn(Storage.prototype, "setItem").mockImplementationOnce(() => { throw new Error("storage denied"); });
 		expect(await adapter.signInWithGoogle(state)).toEqual({ type: "operation_failed", operation: "auth", reason: "redirect_storage" });
 		expect(sdk.auth.signInWithGoogle).not.toHaveBeenCalled();
 	});
 
 	it("clears saved intent on a thrown OAuth error", async () => {
-		const state = transition(initialState, { type: "package_chosen", packageId: "site", addonInterests: [] });
+		const state = transition(initialState, { type: "package_chosen", packageId: "site-landing", addonInterests: [] });
 		sdk.auth.signInWithGoogle.mockRejectedValueOnce(new Error("offline"));
 		expect(await adapter.signInWithGoogle(state)).toEqual({ type: "operation_failed", operation: "auth", reason: "generic" });
 		expect(await restoreBookingRedirect("visitor")).toBeNull();

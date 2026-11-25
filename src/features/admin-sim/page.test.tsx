@@ -32,9 +32,9 @@ it.each(["he", "en"])("plays all six visitor-paced beats and books system in %s 
 	click(t(scenario.beats.deploying.nextKey));
 	expect(screen.getByRole("slider", { name: t("comparisonLabel") })).toBeDefined();
 	const booking = screen.getByRole("link", { name: t(scenario.beats.live.nextKey) });
-	expect(booking.getAttribute("href")).toBe("#/book/system");
+	expect(booking.getAttribute("href")).toBe("#/book/system-studio");
 	fireEvent.click(booking);
-	expect(window.location.hash).toBe("#/book/system");
+	expect(window.location.hash).toBe("#/book/system-studio");
 	act(() => { vi.runAllTimers(); });
 	expect(fetch).not.toHaveBeenCalled();
 });

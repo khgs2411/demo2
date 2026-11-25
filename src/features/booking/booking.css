@@ -27,6 +27,11 @@ h1 { font: 900 clamp(2.4rem, 1.2rem + 3.6vw, 4.4rem)/.95 var(--font-display); le
 .actions { display: flex; align-items: center; gap: 22px; margin-block-start: 34px; flex-wrap: wrap; }
 
 /* package step: ledger rows with a radio, same rules as #/packages */
+.booking-package-line + .booking-package-line { margin-block-start: 32px; }
+.booking-package-line h2 {
+	margin-block-end: 10px;
+	font: 700 1.5rem/1.1 var(--font-display);
+}
 .ledger { border-block-start: 1px solid var(--rule); }
 .row { display: grid; grid-template-columns: 26px 1fr auto; gap: 16px; align-items: baseline; padding-block: 20px; border-block-end: 1px solid var(--rule); cursor: pointer; }
 .row input { appearance: none; inline-size: 18px; block-size: 18px; border: 2px solid var(--ink); border-radius: 50%; translate: 0 3px; }

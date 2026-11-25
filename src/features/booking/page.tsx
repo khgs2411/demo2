@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Ticket } from "../../ui/ticket";
 import { isSignedInTermsState, type BookingProfile, type BookingSelection, type SignupDraft } from "./machine";
 import { useBooking } from "./use-booking";
-import { readBookingChoice, saveBookingChoice } from "./redirect";
+import { readBookingChoice, resolveBookingPackage, saveBookingChoice } from "./redirect";
 import { PackageStep } from "./package-step";
 import { AccountStep } from "./account-step";
 import { IssuedPassword } from "./issued-password";
@@ -20,7 +20,7 @@ export function BookingPage({ packageId }: { packageId?: string }) {
 	const { t, i18n } = useTranslation("booking");
 	const [draft, setDraft] = useState<BookingSelection>(() => {
 		const saved = readBookingChoice();
-		return { packageId: packageId === "site" || packageId === "system" ? packageId : saved?.packageId ?? "system", addonInterests: saved?.addonInterests ?? [], slotId: null };
+		return { packageId: resolveBookingPackage(packageId) ?? saved?.packageId ?? "system-studio", addonInterests: saved?.addonInterests ?? [], slotId: null };
 	});
 	const flow = useBooking(i18n.language, draft);
 	const { state, context } = flow;

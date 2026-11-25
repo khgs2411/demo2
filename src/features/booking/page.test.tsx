@@ -56,7 +56,7 @@ function prepareSignedInSlot() {
 	date.setHours(9);
 	const slot = { id: "s", startsAt: date.toISOString(), canRegister: true, canCancelRegistration: false, userRegistrationState: null };
 	context = { ...context, session: bookingSession };
-	saveBookingRedirect({ step: "choosing_slot", selection: { packageId: "system", addonInterests: [], slotId: slot.id }, userId: "visitor", slots: [], availability: "loading", notice: null });
+	saveBookingRedirect({ step: "choosing_slot", selection: { packageId: "system-studio", addonInterests: [], slotId: slot.id }, userId: "visitor", slots: [], availability: "loading", notice: null });
 	fakeAdapter.loadSlots.mockResolvedValueOnce({ type: "slots_loaded", slots: [slot] });
 }
 
@@ -66,7 +66,7 @@ async function enterSignup(pendingScript: HTMLScriptElement | null = null) {
 	const terms = { title: "Studio terms", text: "Published studio terms", version: 3, locale: "en" };
 	fakeAdapter.loadSlots.mockResolvedValueOnce({ type: "slots_loaded", slots: [slot] });
 	fakeAdapter.loadTerms.mockResolvedValueOnce({ type: "terms_loaded", terms });
-	const page = render(<BookingPage packageId="system" />);
+	const page = render(<BookingPage packageId="system-studio" />);
 	expect(turnstileScript()).toBe(pendingScript);
 	fireEvent.click(screen.getByRole("button", { name: "Continue" }));
 	fireEvent.click(await screen.findByRole("button", { name: /\d{2}:\d{2}/ }));
@@ -276,7 +276,7 @@ it("prefills an existing account’s email and sends the selected request after 
 	fireEvent.change(screen.getByLabelText("Business name"), { target: { value: "Dana Studio" } });
 	fireEvent.click(screen.getByRole("button", { name: "Continue" }));
 	await screen.findByText("Request sent.");
-	expect(fakeAdapter.requestRegistration).toHaveBeenCalledExactlyOnceWith("s", "system", expect.anything());
+	expect(fakeAdapter.requestRegistration).toHaveBeenCalledExactlyOnceWith("s", "system-studio", expect.anything());
 });
 
 it("shows the unavailable time before allowing an anonymous client to choose another", async () => {
@@ -323,7 +323,7 @@ it("hides disallowed auth methods and signup for invite-only products", () => {
 	expect(screen.getByRole("button", { name:"Sign in" })).toBeDefined();
 });
 it("restores OAuth only after the provider session is loaded and revalidates the saved slot", async () => {
-	saveBookingRedirect({ step:"choosing_slot", selection:{ packageId:"system", addonInterests:[], slotId:"s" }, userId:"visitor", availability:"loading", slots:[], notice:null });
+	saveBookingRedirect({ step:"choosing_slot", selection:{ packageId:"system-studio", addonInterests:[], slotId:"s" }, userId:"visitor", availability:"loading", slots:[], notice:null });
 	context.loading = true;
 	const view = render(<BookingPage />);
 	expect(fakeAdapter.loadSlots).not.toHaveBeenCalled();
@@ -337,7 +337,7 @@ it("submits once, stamps the real request, then cancels using backend permission
 	const date = new Date(); date.setDate(date.getDate() - (date.getDay()+6)%7 + 1); date.setHours(9,0,0,0);
 	const slot = { id:"s", startsAt:date.toISOString(), canRegister:true, canCancelRegistration:false, userRegistrationState:null };
 	context = { ...context, session:{access_token:"test",refresh_token:"test",token_type:"bearer",expires_in:3600,user:{id:"visitor",app_metadata:{},user_metadata:{},aud:"authenticated",created_at:"2026-11-07"}} };
-	saveBookingRedirect({step:"choosing_slot",selection:{packageId:"system",addonInterests:[],slotId:"s"},userId:"visitor",slots:[],availability:"loading",notice:null});
+	saveBookingRedirect({step:"choosing_slot",selection:{packageId:"system-studio",addonInterests:[],slotId:"s"},userId:"visitor",slots:[],availability:"loading",notice:null});
 	fakeAdapter.loadSlots.mockResolvedValueOnce({type:"slots_loaded",slots:[slot]});
 	fakeAdapter.requestRegistration.mockResolvedValueOnce([{type:"registration_requested",registration:{id:"real-request",classId:"s",status:"pending"}}]);
 	fakeAdapter.listRequests.mockResolvedValueOnce({type:"loaded",requests:[{...slot,name:"Business meeting",canCancelRegistration:true,userRegistrationState:{id:"real-request",status:"pending"}}]});
@@ -358,7 +358,7 @@ it("renders a refreshed capacity-race notice and requires another explicit selec
 	const date = new Date(); date.setDate(date.getDate() - (date.getDay()+6)%7 + 1); date.setHours(9,0,0,0);
 	const slot = {id:"s",startsAt:date.toISOString(),canRegister:true,canCancelRegistration:false,userRegistrationState:null};
 	context = { ...context, session:{access_token:"test",refresh_token:"test",token_type:"bearer",expires_in:3600,user:{id:"visitor",app_metadata:{},user_metadata:{},aud:"authenticated",created_at:"2026-11-07"}} };
-	saveBookingRedirect({step:"choosing_slot",selection:{packageId:"system",addonInterests:[],slotId:"s"},userId:"visitor",slots:[],availability:"loading",notice:null});
+	saveBookingRedirect({step:"choosing_slot",selection:{packageId:"system-studio",addonInterests:[],slotId:"s"},userId:"visitor",slots:[],availability:"loading",notice:null});
 	fakeAdapter.loadSlots.mockResolvedValueOnce({type:"slots_loaded",slots:[slot]});
 	fakeAdapter.requestRegistration.mockResolvedValueOnce([{type:"slot_full"},{type:"slots_loaded",slots:[{...slot,canRegister:false}]}]);
 	render(<BookingPage />);
@@ -377,7 +377,7 @@ it("prefills name and phone from the signed-in profile and sends the request thr
 	fakeAdapter.loadProfile.mockResolvedValueOnce({ type: "profile_loaded", profile: { displayName: "Dana", phoneNumber: "0501234567", businessName: "Dana Studio" } });
 	fakeAdapter.loadSlots.mockResolvedValueOnce({ type: "slots_loaded", slots: [slot] });
 	fakeAdapter.requestRegistration.mockResolvedValueOnce([{ type: "registration_requested", registration: { id: "real-request", classId: "s", status: "pending" } }]);
-	render(<BookingPage packageId="system" />);
+	render(<BookingPage packageId="system-studio" />);
 	fireEvent.click(screen.getByRole("button", { name: "Continue" }));
 	await screen.findByDisplayValue("Dana");
 	expect(screen.getByDisplayValue("0501234567")).toBeDefined();
@@ -385,7 +385,7 @@ it("prefills name and phone from the signed-in profile and sends the request thr
 	fireEvent.click(await screen.findByRole("button", { name: /\d{2}:\d{2}/ }));
 	fireEvent.click(screen.getByRole("button", { name: "Send request" }));
 	await screen.findByText("Request sent.");
-	expect(fakeAdapter.saveProfile).toHaveBeenCalledWith(expect.objectContaining({ displayName: "Dana", businessName: "Dana Studio" }), expect.objectContaining({ packageId: "system" }));
+	expect(fakeAdapter.saveProfile).toHaveBeenCalledWith(expect.objectContaining({ displayName: "Dana", businessName: "Dana Studio" }), expect.objectContaining({ packageId: "system-studio" }));
 	expect(fakeAdapter.requestRegistration).toHaveBeenCalledOnce();
 	expect(fakeAdapter.requestWithSignup).not.toHaveBeenCalled();
 	expect(fakeAdapter.checkTerms).toHaveBeenCalledExactlyOnceWith("en");
@@ -408,7 +408,7 @@ it("starts Google once when the provider reports a revoked booking session and d
 it("finishes an existing account request after the same email returns from Google", async () => {
 	const slot = { id: "s", startsAt: "2026-12-08T09:00:00Z", canRegister: true, canCancelRegistration: false, userRegistrationState: null };
 	await saveBookingAuthRedirect({
-		step: "signing_in_for_signup", selection: { packageId: "system", addonInterests: [], slotId: "s" },
+		step: "signing_in_for_signup", selection: { packageId: "system-studio", addonInterests: [], slotId: "s" },
 		email: "test@example.com", continuation: { kind: "book", slot, contact: { displayName: "Dana", phoneNumber: "0501234567" } },
 	});
 	context = { ...context, session: { ...bookingSession, user: { ...bookingSession.user, email: "test@example.com" } } };
@@ -435,7 +435,7 @@ it("finishes an existing account request after the same email returns from Googl
 	await screen.findByText("Request sent.");
 	expect(fakeAdapter.acceptTerms).toHaveBeenCalledExactlyOnceWith(signedInTerms);
 	expect(fakeAdapter.acceptTerms).toHaveBeenCalledBefore(fakeAdapter.requestRegistration);
-	expect(fakeAdapter.requestRegistration).toHaveBeenCalledExactlyOnceWith("s", "system", weekRange(new Date(slot.startsAt)));
+	expect(fakeAdapter.requestRegistration).toHaveBeenCalledExactlyOnceWith("s", "system-studio", weekRange(new Date(slot.startsAt)));
 	booking.unmount();
 	render(<AccountPage />);
 	const history = within(await screen.findByRole("region", { name: "Terms you accepted" }));
@@ -533,12 +533,12 @@ it("checks the new language and clears consent when the client switches language
 it("retains the route package when a signed-in client visits a closed calendar", async () => {
 	context = { ...context, session: { access_token: "test", refresh_token: "test", token_type: "bearer", expires_in: 3600, user: { id: "visitor", app_metadata: {}, user_metadata: {}, aud: "authenticated", created_at: "2026-11-07" } } };
 	fakeAdapter.loadProfile.mockResolvedValueOnce({ type: "profile_loaded", profile: { displayName: "Dana", phoneNumber: "0501234567", businessName: "Dana Studio" } });
-	render(<BookingPage packageId="site" />);
+	render(<BookingPage packageId="site-landing" />);
 	fireEvent.click(screen.getByRole("button", { name: "Continue" }));
 	await screen.findByDisplayValue("Dana");
 	fireEvent.click(screen.getByRole("button", { name: "Continue" }));
 	await screen.findByText("The calendar isn't open yet.");
-	expect(fakeAdapter.saveProfile).toHaveBeenCalledWith(expect.objectContaining({ displayName: "Dana", businessName: "Dana Studio" }), expect.objectContaining({ packageId: "site" }));
+	expect(fakeAdapter.saveProfile).toHaveBeenCalledWith(expect.objectContaining({ displayName: "Dana", businessName: "Dana Studio" }), expect.objectContaining({ packageId: "site-landing" }));
 	expect(screen.queryByRole("button", { name: "Send request" })).toBeNull();
 });
 
@@ -556,7 +556,7 @@ it("keeps a visible notice and asks for consent when previously unavailable term
 it("does not submit a saved request when Google returns a different email", async () => {
 	const slot = { id: "s", startsAt: "2026-12-08T09:00:00Z", canRegister: true, canCancelRegistration: false, userRegistrationState: null };
 	await saveBookingAuthRedirect({
-		step: "signing_in_for_signup", selection: { packageId: "system", addonInterests: [], slotId: "s" },
+		step: "signing_in_for_signup", selection: { packageId: "system-studio", addonInterests: [], slotId: "s" },
 		email: "test@example.com", continuation: { kind: "book", slot, contact: { displayName: "Dana", phoneNumber: "0501234567" } },
 	});
 	context = { ...context, session: { access_token: "test", refresh_token: "test", token_type: "bearer", expires_in: 3600, user: { id: "visitor", email: "different@example.com", app_metadata: {}, user_metadata: {}, aud: "authenticated", created_at: "2026-11-07" } } };
@@ -575,10 +575,10 @@ it("does not retry failed Google recovery when the package draft changes", async
 	await waitFor(() => expect(back().disabled).toBe(false));
 	fireEvent.click(back());
 	await act(async () => {
-		fireEvent.click(screen.getByRole("radio", { name: /Landing or product page/ }));
+		fireEvent.click(screen.getByRole("radio", { name: /^Landing page/ }));
 	});
 	expect(fakeAdapter.signInWithGoogle).toHaveBeenCalledOnce();
-	expect(screen.getByRole("radio", { name: /Landing or product page/, checked: true })).toBeDefined();
+	expect(screen.getByRole("radio", { name: /^Landing page/, checked: true })).toBeDefined();
 });
 
 it("shows a generic notice and the password if the signup receipt names the wrong time", async () => {
@@ -641,4 +641,15 @@ it("starts recovery only after an existing Google attempt settles", async () => 
 	finishManual({ type: "operation_failed", operation: "auth", reason: "generic" });
 	await waitFor(() => expect(fakeAdapter.signInWithGoogle).toHaveBeenCalledTimes(2));
 	expect(screen.queryByRole("alert")).toBeNull();
+});
+
+it.each([
+	["site", "site-landing", "Landing page"],
+	["system", "system-studio", "Studio"],
+	["system-partner", "system-partner", "Partner"],
+])("selects %s at the booking boundary and shows its name on the summary", (link, id, name) => {
+	render(<BookingPage packageId={link} />);
+	const selected = screen.getByRole<HTMLInputElement>("radio", { checked: true });
+	expect(selected.value).toBe(id);
+	expect(screen.getByRole("complementary").textContent).toContain(name);
 });

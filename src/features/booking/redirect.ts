@@ -1,4 +1,4 @@
-import { getBookingOptions } from "../packages";
+import { getBookingOptions, isPackageId, type PackageId } from "../packages";
 import type { BookingSelection, BookingState, BookingRedirectRestored, SignupContinuation } from "./machine";
 
 export const bookingRedirectKey = "demo2-booking-redirect";
@@ -66,18 +66,26 @@ function isContinuation(value: unknown, slotId: string | null): value is Redirec
 		&& ["pending", "approved", "rejected", "cancelled"].includes(registration.status);
 }
 
-function isIntent(value: unknown): value is RedirectIntent {
-	if (!value || typeof value !== "object") return false;
+export function resolveBookingPackage(id: unknown): PackageId | undefined {
+	if (id === "site") return "site-landing";
+	if (id === "system") return "system-studio";
+	if (isPackageId(id)) return id;
+}
+
+function readIntent(value: unknown): RedirectIntent | null {
+	if (!value || typeof value !== "object") return null;
 	const { selection, profileUserId, slotStartsAt, continuation } = value as Partial<RedirectIntent>;
-	if (!selection || typeof selection !== "object") return false;
-	const options = getBookingOptions();
-	return options.packages.some((entry) => entry.id === selection.packageId)
-		&& Array.isArray(selection.addonInterests)
-		&& selection.addonInterests.every((id) => options.addons.some((entry) => entry.id === id))
-		&& (selection.slotId === null || (typeof selection.slotId === "string" && selection.slotId.length > 0))
-		&& (continuation === undefined || isContinuation(continuation, selection.slotId))
-		&& (slotStartsAt === undefined || (typeof slotStartsAt === "string" && Number.isFinite(Date.parse(slotStartsAt))))
-		&& (profileUserId === null || (typeof profileUserId === "string" && profileUserId.length > 0));
+	if (!selection || typeof selection !== "object") return null;
+	const packageId = resolveBookingPackage(selection.packageId);
+	const { addons } = getBookingOptions();
+	if (!packageId
+		|| !Array.isArray(selection.addonInterests)
+		|| !selection.addonInterests.every((id) => addons.some((entry) => entry.id === id))
+		|| !(selection.slotId === null || (typeof selection.slotId === "string" && selection.slotId.length > 0))
+		|| (continuation !== undefined && !isContinuation(continuation, selection.slotId))
+		|| (slotStartsAt !== undefined && !(typeof slotStartsAt === "string" && Number.isFinite(Date.parse(slotStartsAt))))
+		|| !(profileUserId === null || (typeof profileUserId === "string" && profileUserId.length > 0))) return null;
+	return { selection: { ...selection, packageId }, profileUserId, slotStartsAt, continuation };
 }
 
 export async function restoreBookingRedirect(
@@ -89,8 +97,8 @@ export async function restoreBookingRedirect(
 		if (saved === null) return null;
 		// Consume once. The only automatic continuation is bound to the matching sign-in email.
 		target.removeItem(bookingRedirectKey);
-		const intent: unknown = JSON.parse(saved);
-		if (!isIntent(intent)) return null;
+		const intent = readIntent(JSON.parse(saved));
+		if (!intent) return null;
 		const restored: BookingRedirectRestored = {
 			type: "redirect_restored", userId, profileUserId: intent.profileUserId,
 			...(intent.slotStartsAt && { slotStartsAt: intent.slotStartsAt }),
@@ -125,7 +133,7 @@ export function saveBookingChoice(selection: BookingSelection): void {
 export function readBookingChoice(): BookingSelection | null {
 	try {
 		const value: unknown = JSON.parse(window.sessionStorage.getItem(choiceKey) ?? "null");
-		return isIntent(value) ? value.selection : null;
+		return readIntent(value)?.selection ?? null;
 	} catch { return null; }
 }
 

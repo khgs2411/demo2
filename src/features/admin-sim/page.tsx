@@ -27,7 +27,7 @@ export function AdminSimPage() {
 			<div className="sim-controls">
 				<button type="button" className="sim-link" disabled={state.step === "bug"} onClick={() => dispatch({ type: "back_requested" })}>{t("back")}</button>
 				{state.step === "ticket_drafting" ? <Ticket stub={`№ ${scenario.ticket.number}`} type="submit" form={requestFormId}>{next}</Ticket>
-					: state.step === "live" ? <Ticket stub={`№ ${scenario.ticket.number}`} href="#/book/system" onClick={(event) => { event.preventDefault(); openBooking({ packageId: "system" }); }}>{next}</Ticket>
+					: state.step === "live" ? <Ticket stub={`№ ${scenario.ticket.number}`} href="#/book/system-studio" onClick={(event) => { event.preventDefault(); openBooking({ packageId: "system-studio" }); }}>{next}</Ticket>
 						: <Ticket stub={`№ ${scenario.ticket.number}`} onClick={() => dispatch({ type: "next_requested" })}>{next}</Ticket>}
 				{state.step !== "bug" && <button type="button" className="sim-link sim-restart" onClick={() => { setDraft(undefined); dispatch({ type: "restarted" }); }}>{t("restart")}</button>}
 			</div>
