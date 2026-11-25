@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { i18n } from "../../i18n";
 import { PackageStep } from "./package-step";
@@ -10,10 +10,10 @@ afterEach(cleanup);
 beforeEach(async () => { await i18n.changeLanguage("en"); });
 it("confirms package and add-on choices using ticket actions", () => {
 	const change = vi.fn(), next = vi.fn();
-	render(<PackageStep selection={{ packageId: "system", addonInterests: [], slotId: null }} onChange={change} onContinue={next} />);
-	expect((screen.getByRole("radio", { name: /Website/ }) as HTMLInputElement).checked).toBe(true);
+	render(<PackageStep selection={{ packageId: "system-studio", addonInterests: [], slotId: null }} onChange={change} onContinue={next} />);
+	expect((screen.getByRole("radio", { name: /^Studio/ }) as HTMLInputElement).checked).toBe(true);
 	fireEvent.click(screen.getByRole("checkbox", { name: "Voice AI agent" }));
-	expect(change).toHaveBeenCalledWith({ packageId: "system", addonInterests: ["agent-voice"], slotId: null });
+	expect(change).toHaveBeenCalledWith({ packageId: "system-studio", addonInterests: ["agent-voice"], slotId: null });
 	const button = screen.getByRole("button", { name: "Continue" });
 	expect(button.classList.contains("ticket")).toBe(true);
 	fireEvent.click(button);
@@ -29,7 +29,30 @@ it("shows only start times, backend eligibility and a visitor timezone", () => {
 	expect(screen.getByText("Times are in Israel time.")).toBeDefined();
 });
 it("stamps the real request id and backend status", () => {
-	render(<SummaryTicket selection={{ packageId:"system", addonInterests:[], slotId:null }} registration={{ id:"real-request", classId:"s", status:"approved" }} timeZone="UTC" />);
+	render(<SummaryTicket selection={{ packageId:"system-studio", addonInterests:[], slotId:null }} registration={{ id:"real-request", classId:"s", status:"approved" }} timeZone="UTC" />);
 	expect(screen.getByText("№ real-request")).toBeDefined();
 	expect(screen.getByText("Confirmed")).toBeDefined();
+});
+
+it.each(["he", "en"])("lists the six packages under their service lines in %s", async language => {
+	await i18n.changeLanguage(language);
+	const change = vi.fn();
+	render(<PackageStep selection={{ packageId: "system-studio", addonInterests: ["agent-voice"], slotId: "old-slot" }} onChange={change} onContinue={vi.fn()} />);
+	const t = (key: string) => i18n.t(key, { ns: "packages" });
+	const lines = [
+		{ line: "system", ids: ["system-basic", "system-studio", "system-partner"] },
+		{ line: "site", ids: ["site-quick", "site-landing", "site-business"] },
+	];
+	const groups = within(screen.getByRole("radiogroup")).getAllByRole("region");
+	expect(groups.map(group => group.querySelector("h2")?.textContent)).toEqual(lines.map(({ line }) => t(`lines.${line}.name`)));
+	for (const [index, { ids }] of lines.entries()) {
+		const radios = within(groups[index]).getAllByRole<HTMLInputElement>("radio");
+		expect(radios.map(radio => radio.value)).toEqual(ids);
+		for (const radio of radios) {
+			expect(radio.labels?.[0].textContent).toContain(t(`offers.${radio.value}.name`));
+			expect(radio.labels?.[0].textContent).toContain(t(`offers.${radio.value}.price`));
+		}
+	}
+	fireEvent.click(within(groups[1]).getAllByRole("radio")[0]);
+	expect(change).toHaveBeenCalledWith({ packageId: "site-quick", addonInterests: ["agent-voice"], slotId: null });
 });

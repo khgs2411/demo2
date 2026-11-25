@@ -5,7 +5,7 @@ const rows = ["website", "hosting", "support", "classkit", "changes"] as const;
 
 export function PackageComparison() {
 	const { t } = useTranslation("packages");
-	const offers = getHeadlineOffers();
+	const offers = getHeadlineOffers().filter(({ id }) => id === "site-landing" || id === "system-studio").reverse();
 	return <section className="package-section" aria-labelledby="package-comparison-title">
 		<h2 id="package-comparison-title">{t("comparison.title")}</h2>
 		<table className="package-comparison" role="table" aria-labelledby="package-comparison-title">
@@ -16,7 +16,7 @@ export function PackageComparison() {
 				<th scope="row">{t(`comparison.${row}`)}<small>{t(`comparison.${row}Detail`)}</small></th>
 				{offers.map(({ id }) => <td key={id}>
 					<span className="comparison-package" aria-hidden="true">{t(`offers.${id}.name`)}</span>
-					{t(`comparison.${id === "system" || row === "website" || row === "hosting" ? "included" : "notIncluded"}`)}
+					{t(`comparison.${id === "system-studio" || row === "website" || row === "hosting" ? "included" : "notIncluded"}`)}
 				</td>)}
 			</tr>)}</tbody>
 		</table>

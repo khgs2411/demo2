@@ -34,16 +34,39 @@ export const en = {
 		book: "Let’s meet",
 		bookPackage: "Book a meeting about {{name}}",
 		recommended: "Recommended",
+		liveInSevenDays: "Live in 7 days",
+		lines: {
+			system: { name: "Website + ClassKit", period: "Per month", terms: "3-month minimum. First month paid in advance." },
+			site: { name: "Website", period: "One-time", terms: "Domain and hosting billed monthly, depending on the domain." },
+		},
 		offers: {
-			site: {
-				name: "Landing or product page", price: "₪1,000",
-				terms: "One-time, including the site and setup meeting. Domain and hosting billed monthly, depending on the domain.",
-				summary: "Custom design, build, and hosting on my infrastructure. You get a site; I take care of the rest.",
+			"system-basic": {
+				name: "Basic", price: "₪150",
+				summary: "Your site, customers and leads, appointments, a 1-hour monthly support bank, and replies to change requests within 5 business days.",
+				difference: "Studio adds AI-handled change requests and two more support hours.",
 			},
-			system: {
-				name: "Website + ClassKit", price: "₪150",
-				terms: "From, per month. 3-month minimum. First month paid in advance.",
-				summary: "Your site, a monthly support hour bank, ClassKit, and AI-handled change requests. With ongoing updates and new features.",
+			"system-studio": {
+				name: "Studio", price: "₪250",
+				summary: "Everything in Basic, plus a 3-hour monthly support bank, AI-handled change requests, users and roles, documents, ongoing updates and new features. Replies within 2 business days.",
+			},
+			"system-partner": {
+				name: "Partner", price: "₪550",
+				summary: "Everything in Studio, plus an 8-hour monthly support bank, one AI agent included, same-day replies, and a quarterly review meeting.",
+				difference: "Partner adds five support hours to Studio’s bank, an AI agent, same-day replies, and a quarterly review meeting.",
+			},
+			"site-quick": {
+				name: "Quick start", price: "₪490",
+				summary: "One page on a studio layout with your content, 1 revision round, live within 7 days.",
+				difference: "Landing page adds a setup meeting, a custom design, an extra revision round, and help with the copy.",
+			},
+			"site-landing": {
+				name: "Landing page", price: "₪1,000",
+				summary: "Setup meeting, custom one-page design, 2 revision rounds, and help with the copy.",
+			},
+			"site-business": {
+				name: "Business site", price: "₪1,900",
+				summary: "Everything in Landing page, plus up to 5 pages, Hebrew and English, 3 revision rounds, and 30 days of fixes after launch.",
+				difference: "Business site adds more pages, a second language, an extra revision round, and 30 days of fixes after launch to Landing page.",
 			},
 			"agent-whatsapp": { name: "WhatsApp AI agent" },
 			"agent-social": { name: "Facebook & Instagram AI agent" },
@@ -233,14 +256,7 @@ export const en = {
 		sProfile: "Details",
 		sSlot: "Time",
 		pTitle: "What shall we talk about?",
-		pLede: "Pick a package for the meeting. The final price, the hour bank and add-ons are set in the meeting itself.",
-		siteName: "Landing or product page",
-		siteSmall: "Design, build and hosting",
-		sitePrice: "₪1,000 one-time",
-		sysName: "Website + ClassKit",
-		sysSmall: "Site, hour bank, customers and bookings, an AI agent for requests",
-		sysPrice: "From ₪150 / month",
-		rec: "Recommended",
+		pLede: "Pick a package for the meeting. AI agent add-ons are priced in the meeting.",
 		addonsLabel: "Also interested in · priced in the meeting",
 		aWa: "WhatsApp AI agent",
 		aSocial: "Facebook and Instagram AI agent",

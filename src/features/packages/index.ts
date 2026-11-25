@@ -1,14 +1,16 @@
-import { catalog, type PackageEntry } from "./catalog";
+import { catalog, getHeadlineOffers, type PackageEntry, type PackageId } from "./catalog";
 
-export type { PackageEntry } from "./catalog";
+export { getHeadlineOffers, serviceLines } from "./catalog";
+export { PackageOfferLedger } from "./ledger";
+export type { AddonId, PackageId, ServiceLine, StudioPackage } from "./catalog";
 
-export function getHeadlineOffers(): readonly PackageEntry[] {
-	return catalog.filter(({ kind }) => kind === "base");
-}
-
-export function getBookingOptions(): { readonly packages: readonly PackageEntry[]; readonly addons: readonly PackageEntry[] } {
+export function getBookingOptions() {
 	return {
 		packages: getHeadlineOffers(),
-		addons: catalog.filter(({ kind }) => kind === "addon"),
+		addons: catalog.filter((entry): entry is Extract<PackageEntry, { kind: "addon" }> => entry.kind === "addon"),
 	};
+}
+
+export function isPackageId(id: unknown): id is PackageId {
+	return getHeadlineOffers().some(entry => entry.id === id);
 }

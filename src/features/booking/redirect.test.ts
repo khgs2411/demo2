@@ -1,9 +1,9 @@
 import { webcrypto } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { clearBookingRedirect, restoreBookingRedirect, saveBookingRedirect, saveBookingAuthRedirect, bookingRedirectKey } from "./redirect";
+import { readBookingChoice, clearBookingRedirect, restoreBookingRedirect, saveBookingRedirect, saveBookingAuthRedirect, bookingRedirectKey } from "./redirect";
 import { initialState, transition, type BookingState } from "./machine";
 
-const selection = { packageId: "system", addonInterests: ["agent-voice"], slotId: "slot-1" } as const;
+const selection = { packageId: "system-studio", addonInterests: ["agent-voice"], slotId: "slot-1" } as const;
 const slotState: BookingState = {
 	step: "choosing_slot", selection, userId: "visitor", slots: [], availability: "loading", notice: null,
 };
@@ -52,7 +52,7 @@ describe("booking OAuth redirect persistence", () => {
 	it.each([
 		"not-json", "null", "[]", "{}",
 		JSON.stringify({ selection: { ...selection, packageId: "agent-voice" }, profileUserId: null }),
-		JSON.stringify({ selection: { ...selection, addonInterests: ["system"] }, profileUserId: null }),
+		JSON.stringify({ selection: { ...selection, addonInterests: ["system-studio"] }, profileUserId: null }),
 		JSON.stringify({ selection: { ...selection, slotId: 42 }, profileUserId: null }),
 		JSON.stringify({ selection, profileUserId: 42 }),
 	])("rejects malformed persisted intent: %s", async (saved) => {
@@ -118,4 +118,12 @@ it("returns a Promise even when there is no stored redirect", async () => {
 	const result = restoreBookingRedirect("visitor");
 	expect(result).toBeInstanceOf(Promise);
 	expect(await result).toBeNull();
+});
+
+it.each([["site", "site-landing"], ["system", "system-studio"]])("restores legacy %s from OAuth and saved choices", async (legacy, packageId) => {
+	const saved = JSON.stringify({ selection: { ...selection, packageId: legacy }, profileUserId: "visitor" });
+	sessionStorage.setItem(bookingRedirectKey, saved);
+	sessionStorage.setItem("demo2-booking-choice", saved);
+	expect(await restoreBookingRedirect("visitor")).toMatchObject({ selection: { ...selection, packageId } });
+	expect(readBookingChoice()).toEqual({ ...selection, packageId });
 });
