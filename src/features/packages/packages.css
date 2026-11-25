@@ -40,15 +40,16 @@
 .package-addons ul { display: contents; list-style: none; padding: 0; }
 .package-section { margin-block-start: 80px; }
 .package-section > h2 { font: 900 var(--text-h2)/1 var(--font-display); letter-spacing: -.02em; }
+.package-comparison-line { margin-block-start: 32px; }
+.package-comparison-line > h3 { font: 700 1.5rem/1.1 var(--font-display); }
 .package-comparison, .package-disclosures {
 	margin-block-start: 32px;
 	border-block-start: 2px solid var(--fg);
 }
-.package-comparison { inline-size: 100%; border-collapse: collapse; text-align: start; table-layout: fixed; }
+.package-comparison { margin-block-start: 12px; inline-size: 100%; border-collapse: collapse; text-align: start; table-layout: fixed; }
 .package-comparison th, .package-comparison td { text-align: start; padding: 24px 0; vertical-align: baseline; }
 .package-comparison th { font-weight: 600; }
 .package-comparison tr, .package-disclosures details { border-block-end: 1px solid color-mix(in oklab, var(--fg), transparent 75%); }
-.package-comparison th small { display: block; margin-block-start: 6px; font-size: .875rem; font-weight: 500; }
 .comparison-package { display: none; }
 .package-disclosures summary {
 	display: flex;
@@ -80,5 +81,6 @@
 	.package-comparison tr { display: grid; gap: 10px; padding-block: 24px; }
 	.package-comparison th, .package-comparison td { display: block; padding: 0; }
 	.package-comparison td { display: flex; justify-content: space-between; gap: 28px; }
-	.comparison-package { display: inline; }
+	.comparison-package { display: inline; font-weight: 600; }
+	.package-comparison td > :last-child { text-align: end; }
 }

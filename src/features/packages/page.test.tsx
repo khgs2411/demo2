@@ -32,17 +32,23 @@ it.each(["he", "en"])("compares the offers and provides named add-ons and FAQ di
 	await i18n.changeLanguage(language);
 	render(<PackagesPage />);
 	const t = (key: string) => i18n.t(key, { ns: "packages" });
-	expect(screen.getByRole("table", { name: t("comparison.title") })).toBeTruthy();
-	for (const key of ["website", "hosting", "support", "classkit", "changes"]) {
-		const row = screen.getByText(t(`comparison.${key}`)).closest("tr")!;
-		const cells = within(row).getAllByRole("cell");
-		expect(cells[0].textContent).toBe(t("offers.site-landing.name") + t(`comparison.${key === "website" || key === "hosting" ? "included" : "notIncluded"}`));
-		expect(cells[1].textContent).toBe(t("offers.system-studio.name") + t("comparison.included"));
+	const lines = [
+		{ line: "system", ids: ["system-basic", "system-studio", "system-partner"], row: "support", cells: ["1", "3", "8"] },
+		{ line: "site", ids: ["site-quick", "site-landing", "site-business"], row: "revisions", cells: ["1", "2", "3"] },
+	];
+	expect(screen.getAllByRole("table")).toHaveLength(2);
+	for (const { line, ids, row, cells } of lines) {
+		const table = screen.getByRole("table", { name: t(`lines.${line}.name`) });
+		expect(within(table).getAllByRole("columnheader").slice(1).map(heading => heading.textContent))
+			.toEqual(ids.map(id => t(`offers.${id}.name`)));
+		const rowHeader = within(table).getByRole("rowheader", { name: t(`comparison.${row}`) });
+		const values = within(rowHeader.closest("tr")!).getAllByRole("cell");
+		expect(values.map(cell => cell.textContent)).toEqual(ids.map((id, index) => t(`offers.${id}.name`) + cells[index]));
 	}
 	for (const id of ["agent-whatsapp", "agent-social", "agent-voice"]) {
 		expect(screen.getByText(t(`offers.${id}.name`))).toBeTruthy();
 	}
-	for (const key of ["minimum", "advance", "support", "hosting"]) {
+	for (const key of ["minimum", "advance", "support", "hosting", "partnerAgent"]) {
 		const question = screen.getByText(t(`faq.${key}.question`));
 		expect(question.tagName).toBe("SUMMARY");
 		expect(question.closest("details")?.querySelector("p")?.textContent).toBe(t(`faq.${key}.answer`));
