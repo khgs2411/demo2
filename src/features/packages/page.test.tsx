@@ -22,7 +22,8 @@ it.each(["he", "en"])("renders the ledger and passes the selected base package t
 	expect(screen.getAllByRole("region").slice(0, 2).map(region => region.querySelector("h2")?.textContent))
 		.toEqual([t("lines.system.name"), t("lines.site.name")]);
 	expect(screen.getByText(t("liveInSevenDays")).closest("h3")?.textContent).toContain(t("offers.site-quick.name"));
-	for (const id of ["system-basic", "system-partner", "site-quick", "site-business"]) {
+	expect(screen.getAllByText(/./, { selector: ".package-difference" })).toHaveLength(2);
+	for (const id of ["system-basic", "site-quick"]) {
 		expect(screen.getByText(t(`offers.${id}.difference`))).toBeTruthy();
 	}
 	expect(screen.getByText(i18n.t("recommended", { ns: "packages" }))).toBeTruthy();

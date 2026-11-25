@@ -18,7 +18,7 @@ export function PackageOfferLedger({ offers, emphasizeRecommended = false }: {
 				price={<><bdi>{t(entry.priceKey)}</bdi><small>{t(`lines.${entry.line}.period`)}</small></>}
 				details={<>
 					<p>{t(`offers.${entry.id}.summary`)}</p>
-					{entry.id !== "system-studio" && entry.id !== "site-landing" && <p className="package-difference">{t(`offers.${entry.id}.difference`)}</p>}
+					{entry.hasAnchorNote && <p className="package-difference">{t(`offers.${entry.id}.difference`)}</p>}
 				</>}>
 				<Ticket stub={`№ 0${index + 1}`} tone={emphasizeRecommended && !entry.recommended ? "ghost" : "coral"}
 					aria-label={t("bookPackage", { name })}

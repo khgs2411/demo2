@@ -54,7 +54,6 @@ export const en = {
 			"system-partner": {
 				name: "Partner", price: "₪550",
 				summary: "Everything in Studio, plus an 8-hour monthly support bank, one AI agent included, same-day replies, and a quarterly review meeting.",
-				difference: "Partner adds five support hours to Studio’s bank, an AI agent, same-day replies, and a quarterly review meeting.",
 				comparison: { support: "8", replies: "Same day", changes: "Included", agent: "1 included", review: "Quarterly" },
 			},
 			"site-quick": {
@@ -71,7 +70,6 @@ export const en = {
 			"site-business": {
 				name: "Business site", price: "₪1,900",
 				summary: "Everything in Landing page, plus up to 5 pages, Hebrew and English, 3 revision rounds, and 30 days of fixes after launch.",
-				difference: "Business site adds more pages, a second language, an extra revision round, and 30 days of fixes after launch to Landing page.",
 				comparison: { pages: "Up to 5", design: "Custom", revisions: "3", languages: "Hebrew and English", fixes: "30 days" },
 			},
 			"agent-whatsapp": { name: "WhatsApp AI agent" },
