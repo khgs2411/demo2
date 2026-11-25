@@ -28,6 +28,17 @@ it.each(["he", "en"])("renders the ledger and passes the selected base package t
 	expect(screen.getByText(i18n.t("recommended", { ns: "packages" }))).toBeTruthy();
 });
 
+it.each(["he", "en"])("gives Studio the only primary package ticket in %s", async language => {
+	await i18n.changeLanguage(language);
+	render(<PackagesPage />);
+	const t = (key: string) => i18n.t(key, { ns: "packages" });
+	const tickets = within(screen.getByRole("main")).getAllByRole("button");
+	const studio = screen.getByRole("button", { name: i18n.t("bookPackage", { ns: "packages", name: t("offers.system-studio.name") }) });
+	expect(tickets.filter(ticket => !ticket.classList.contains("ticket-ghost"))).toEqual([studio]);
+	expect(screen.getByText(t("recommended")).classList.contains("package-mark-recommended")).toBe(true);
+	expect(screen.getByText(t("liveInSevenDays")).classList.contains("package-mark-recommended")).toBe(false);
+});
+
 it.each(["he", "en"])("compares the offers and provides named add-ons and FAQ disclosures in %s", async (language) => {
 	await i18n.changeLanguage(language);
 	render(<PackagesPage />);
