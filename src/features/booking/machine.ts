@@ -1,7 +1,6 @@
-import type { PackageEntry } from "../packages";
+import type { AddonId, PackageId } from "../packages";
 
-export type PackageId = Extract<PackageEntry["id"], "site" | "system">;
-export type AddonId = Exclude<PackageEntry["id"], PackageId>;
+export type { AddonId, PackageId } from "../packages";
 export type BookingSelection = {
 	readonly packageId: PackageId;
 	readonly addonInterests: readonly AddonId[];

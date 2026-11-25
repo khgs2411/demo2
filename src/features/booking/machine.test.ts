@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { initialState, transition, type BookingEvent, type BookingState } from "./machine";
 
-const selection = { packageId: "system", addonInterests: ["agent-voice"], slotId: null } as const;
-const chosen = { type: "package_chosen", packageId: "system", addonInterests: ["agent-voice"] } as const;
+const selection = { packageId: "system-studio", addonInterests: ["agent-voice"], slotId: null } as const;
+const chosen = { type: "package_chosen", packageId: "system-studio", addonInterests: ["agent-voice"] } as const;
 const account: BookingState = { step: "needs_account", selection };
 const profile: BookingState = { step: "completing_profile", selection, userId: "visitor" };
 
