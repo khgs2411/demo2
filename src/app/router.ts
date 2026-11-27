@@ -1,10 +1,12 @@
 import { useEffect, useSyncExternalStore } from "react";
 
 export type Route =
-	| { page: "showcase" | "packages" | "admin-sim" | "account" | "studio" | "forgot-password" | "reset-password" }
+	| { page: "showcase"; section?: "get" }
+	| { page: "packages" | "admin-sim" | "account" | "studio" | "forgot-password" | "reset-password" }
 	| { page: "booking"; packageId?: string };
 
 export function parseHash(hash: string): Route | null {
+	if (hash === "#get") return { page: "showcase", section: "get" };
 	if (hash && !hash.startsWith("#/")) return null;
 	switch (hash) {
 		case "#/packages": return { page: "packages" };
@@ -35,7 +37,7 @@ export function useRoute(): Route | null {
 	const hash = useSyncExternalStore(subscribe, () => window.location.hash);
 	const route = parseHash(hash);
 	useEffect(() => {
-		if (route?.page === "showcase" && hash !== "#/" && window.location.hash === hash) {
+		if (route?.page === "showcase" && !route.section && hash !== "#/" && window.location.hash === hash) {
 			window.history.replaceState(window.history.state, "", "#/");
 		}
 	}, [hash, route?.page]);

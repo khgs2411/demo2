@@ -19,17 +19,138 @@ export const en = {
 		languageSwitch: "עב",
 		languageSwitchLabel: "Switch to Hebrew",
 	},
-	showcase: {
-		scene: { studio: "Shaked Studio", open: "Open", customers: "Customers", bookings: "Bookings", requests: "Requests" },
-		storyLabel: "The story", bookMeeting: "Book a meeting", chooseTime: "Choose a time", seeItWork: "See it work",
-		posterTopside: "The studio storefront on its slab of ground", posterUnderside: "ClassKit, data pipes and the AI agent beneath the studio",
-		chapters: {
-			front: { kicker: "01 · The site", lead: "Your site", bridge: "is ", end: "the front.", body: "What your customers see. Your design, fast and precise." },
-			flip: { kicker: "↻", lead: "But a business", bridge: "", end: "doesn’t run on a front.", body: "Customers, appointments, site fixes. It all happens beneath the surface." },
-			system: { kicker: "02 · The system", lead: "Under the site:", bridge: "", end: "a system.", body: "ClassKit manages customers, leads, appointments and permissions. From the same site, without another app." },
-			agent: { kicker: "03 · The agent", lead: "And an agent to fix it", bridge: "", end: "for you.", body: "The sign fell? Open a request. An AI agent takes it, fixes it, and ships it live." },
-			book: { kicker: "04 · The meeting", lead: "Your meeting with me", bridge: "starts ", end: "here.", body: "Through this very same system." },
+	home: {
+		h1: ["ClassKit", "A system that works for you."],
+		sub: "A website for your business, with a system that runs your classes, bookings and class cards. Customers book on their own, and you see it all on your site’s manage page.",
+		site: {
+			name: "Shaked Studio",
+			sample: "Sample site",
+			week: "This week at the studio",
+			rows: [
+				[
+					"Mon 07:30",
+					"Mat Pilates",
+					4
+				],
+				[
+					"Tue 18:00",
+					"Reformer Pilates",
+					1
+				],
+				[
+					"Wed 19:00",
+					"Yoga",
+					6
+				]
+			],
+			book: "Book",
+			booked: "Booked ✓",
+			full: "Full",
+			spots: "{{count}} spots",
+			lastSpot: "1 spot left",
+			noSpots: "Class full"
 		},
+		fly: ["Maya A.", "18:00"],
+		manage: {
+			title: "Manage",
+			tabs: ["Classes", "Waiting", "Customers"],
+			coming: "Booked for this class",
+			full: "8/8 full",
+			maya: "Class card, 3 left",
+			people: [
+				["Dana Cohen", "Monthly"],
+				["Noa Levi", "Class card, 6 left"]
+			]
+		},
+		card: {
+			title: "10-class card",
+			who: "Maya Abraham",
+			left: "{{count}} left",
+			used: "{{count}} of 10"
+		},
+		getSub: "With ClassKit you get a website with its own management system, built around what your business needs: your classes, bookings and class cards, the way you work.",
+		tiles: {
+			site: [
+				"Your website",
+				"Built for your business and the way you work, in Hebrew and English. The weekly timetable on it updates itself from your real classes."
+			],
+			book: [
+				"Customers book on their own",
+				"They see how many spots are left, book and get an account on the spot. They cancel themselves, up to the time you set."
+			],
+			cards: [
+				"Class cards and memberships",
+				"You define them. Every booking takes one class, and a cancellation in time gives it back."
+			],
+			rules: [
+				"Your rules",
+				"For each class: who gets in right away, members only, or with your OK. And how late people can cancel."
+			],
+			sched: [
+				"Weekly schedule",
+				"Set it once, and the classes open by themselves. Skip a date when you need to."
+			],
+			app: [
+				"Your manage page",
+				"On every site. Who’s coming, who’s waiting for your OK, and your customers. Only you can open it."
+			],
+			change: [
+				"Changes to your site, in one request",
+				"Write what to change on your manage page. An AI assistant makes the change, it’s checked, and it goes on your site.",
+				"Included in Studio and Partner"
+			]
+		},
+		cancelNote: "Dana cancelled in time, and the class went back on her card.",
+		mini: {
+			nav: ["Classes", "Memberships", "Contact"],
+			logo: "Shaked",
+			h: "Strength you feel beyond the studio.",
+			p: "Pilates and yoga in small groups.",
+			cta: "Book a class"
+		},
+		langs: ["עברית", "English"],
+		who: ["Right away", "Members", "Your OK"],
+		cutoff: ["Cancel up to", "12 hours before"],
+		sched: "Every Tuesday 18:00",
+		dates: ["Dec 1", "Dec 8", "Dec 15", "Dec 22", "Dec 29"],
+		people: [
+			["Dana Cohen", "Mon 07:30", "Monthly", ""],
+			["Yossi Bar", "Wed 19:00", "Waiting for OK", "wait"],
+			["Maya Abraham", "Tue 18:00", "Card, 3 left", ""]
+		],
+		req: "Add to the home page that there’s a beginners’ intro class.",
+		steps: ["Received", "In progress", "Checked", "On your site ✓"],
+		packsTitle: ["Three packages.", "A fixed price every month."],
+		packsSub: "Each one has your website and ClassKit. What changes is how much help you get, and how fast.",
+		min: "3-month minimum",
+		month: "a month",
+		rec: "Recom­mended",
+		admit: "Website + ClassKit",
+		plans: {
+			"system-basic": ["1 hour of help a month", "Change requests answered within 5 business days"],
+			"system-studio": [
+				"Everything in Basic",
+				"An AI assistant handles your change requests",
+				"3 hours of help a month",
+				"Answers within 2 business days"
+			],
+			"system-partner": [
+				"Everything in Studio",
+				"One AI assistant for your customers included",
+				"8 hours of help a month, same-day answers",
+				"A meeting every 3 months to see what to improve"
+			]
+		},
+		terms: "A 3-month minimum, with the first month paid in advance.",
+		siteOnly: ["Just a website, without ClassKit?", "From ₪490, paid once."],
+		siteOnlyLink: "All packages",
+		agents: [
+			"AI assistants that answer your customers",
+			"Add one to any package. The price is set in the meeting."
+		],
+		agentPills: ["WhatsApp", "Facebook and Instagram", "Phone calls"],
+		closeTitle: ["Let’s build your", "business’s website."],
+		closeSub: "One meeting, and you know exactly what you’ll get and what it costs."
 	},
 	packages: {
 		title: "Two ways to begin. One keeps working for you.",

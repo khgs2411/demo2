@@ -14,7 +14,8 @@ export function Header() {
 	return <header className="topline"><div className="chrome-wrap">
 		<a className="mark" href="#/">{t("brand")}</a>
 		<nav className="links" aria-label={t("navigation")}>
-			{home ? <SectionLink targetId="get">{t("whatYouGet")}</SectionLink> : <TextLink href="#/">{t("howItWorks")}</TextLink>}
+			{home && <SectionLink targetId="get">{t("whatYouGet")}</SectionLink>}
+			<TextLink href="#/">{t("howItWorks")}</TextLink>
 			<TextLink href="#/demo">{t("liveDemo")}</TextLink>
 			<TextLink href="#/packages">{t("packages")}</TextLink>
 		</nav>

@@ -2,12 +2,22 @@ import type { ReactNode } from "react";
 
 export type PassRow = { label: ReactNode; value: ReactNode; state?: "done" | "now" | "next" };
 
-// The admission pass beside a gate page: the booking summary ticket's shape, holding what the page opens.
-export function Pass({ kicker, code, rows, status, num, stamp }: {
-	kicker: ReactNode; code: ReactNode; rows: readonly PassRow[]; status: ReactNode; num: ReactNode; stamp?: ReactNode;
-}) {
+type PassProps = { stamp?: ReactNode } & (
+	| { variant?: "gate"; kicker: ReactNode; code: ReactNode; rows: readonly PassRow[]; status: ReactNode; num: ReactNode }
+	| { variant: "package"; tone: "sand" | "coral" | "ink"; children: ReactNode; stub: ReactNode }
+);
+
+export function Pass(props: PassProps) {
+	if (props.variant === "package") {
+		return <article className={`pass package-pass package-pass-${props.tone}`}>
+			{props.stamp && <div className="stamp">{props.stamp}</div>}
+			<div className="body">{props.children}</div>
+			<div className="stub">{props.stub}</div>
+		</article>;
+	}
+	const { kicker, code, rows, status, num, stamp } = props;
 	const hasStamp = stamp != null && typeof stamp !== "boolean" && stamp !== "";
-	return <aside className={`pass ${hasStamp ? "stamped" : ""}`}>
+	return <aside className={`pass gate-pass ${hasStamp ? "stamped" : ""}`}>
 		<header><span className="pass-label">{kicker}</span><span className="pass-label">{code}</span></header>
 		<dl>{rows.map((row, index) => <div key={index} className={row.state ?? ""}>
 			<dt className="pass-label">{row.label}</dt><dd>{row.value}</dd>

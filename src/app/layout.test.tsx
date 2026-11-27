@@ -21,7 +21,7 @@ it.each(["he", "en"])("connects the home header and footer in %s", async (langua
 	const header = within(screen.getByRole("banner"));
 	expect(header.getByRole("link", { name: i18n.t("brand") }).getAttribute("href")).toBe("#/");
 	const navigation = within(header.getByRole("navigation"));
-	expect(navigation.getAllByRole("link").map((link) => link.getAttribute("href"))).toEqual(["#get", "#/demo", "#/packages"]);
+	expect(navigation.getAllByRole("link").map((link) => link.getAttribute("href"))).toEqual(["#get", "#/", "#/demo", "#/packages"]);
 	const ticket = header.getByRole("link", { name: i18n.t("homeBookMeeting") });
 	expect(ticket.getAttribute("href")).toBe("#/book");
 	expect(document.querySelector(".ticket-dock")).toBeNull();
@@ -30,6 +30,19 @@ it.each(["he", "en"])("connects the home header and footer in %s", async (langua
 	expect(footer.getByText("Made by Topsyde Studios")).toBeDefined();
 	await act(async () => fireEvent.click(ticket));
 	expect(window.location.hash).toBe("#/book");
+});
+
+it("opens the feature sheet from a directly loaded link", () => {
+	const scrollIntoView = vi.fn();
+	Object.defineProperty(Element.prototype, "scrollIntoView", { configurable: true, value: scrollIntoView });
+	try {
+		window.history.replaceState(null, "", "#get");
+		render(<App />);
+		expect(screen.getByRole("main")).toBeDefined();
+		expect(scrollIntoView.mock.instances).toContain(document.getElementById("get"));
+	} finally {
+		Reflect.deleteProperty(Element.prototype, "scrollIntoView");
+	}
 });
 
 it("keeps the mobile ticket on inner pages", () => {
