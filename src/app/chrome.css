@@ -3,8 +3,9 @@
 .topline .chrome-wrap { display: flex; align-items: center; gap: 24px; min-block-size: 68px; }
 .mark { flex: none; margin-inline-end: auto; font: 900 1.15rem/1 var(--font-display); text-decoration: none; }
 .links { display: flex; align-items: center; gap: 24px; font-size: .9rem; }
-.links a, .account-links a { text-decoration: none; font-weight: 500; }
-.account-links { font-size: .9rem; white-space: nowrap; }
+.links a, .account-link { text-decoration: none; font-weight: 500; }
+.account-tools { display: flex; align-items: center; gap: 24px; }
+.account-link { font-size: .9rem; white-space: nowrap; }
 .lang { font: 500 .85rem/1.3 var(--font-sans); background: none; border: 0; color: inherit; cursor: pointer; text-decoration: underline; text-underline-offset: 4px; }
 .topline .ticket-small { --notch: 6px; --ticket-size: .85rem; --ticket-leading: var(--leading-body); --ticket-main-padding: 9px 15px; --ticket-stub-padding: 10px; --ticket-stub-size: .72rem; --ticket-stub-leading: 1; }
 .inner-ticket { display: none; }
@@ -12,10 +13,17 @@
 .footer .chrome-wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px; padding-block: 20px; }
 .footer p { max-inline-size: 44ch; }
 .footer a { color: var(--paper); }
+.footer a:focus-visible { outline-color: var(--coral); }
 
 @media (max-width: 899px) {
  .links { display: none; }
  .topline .chrome-wrap { flex-wrap: wrap; gap: 8px 12px; padding-block: 10px; }
+ .account-tools { gap: 12px; }
+ .home-topline .chrome-wrap { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-content: center; gap: 0 12px; padding-block: 4px; }
+ .home-topline .mark { grid-area: 1 / 1; }
+ .home-topline .account-tools { grid-area: 2 / 1; flex-wrap: wrap; gap: 0 12px; }
+ .home-topline .account-tools > * { display: inline-flex; align-items: center; min-block-size: 24px; }
+ .home-ticket { grid-area: 1 / 2 / 3; justify-self: end; }
  .footer-with-dock .chrome-wrap { padding-block-end: 100px; }
 }
 @media (min-width: 900px) { .inner-ticket { display: inline-flex; } }

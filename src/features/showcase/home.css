@@ -7,6 +7,7 @@
 .showcase-page h2 { font-size: clamp(2rem, 1.2rem + 2.8vw, 3.3rem); line-height: 1.06; }
 .showcase-page h3 { font-size: 1.4rem; line-height: 1.15; font-weight: 700; letter-spacing: -.01em; }
 .showcase-page .muted { color: var(--muted); }
+.showcase-page :focus-visible { outline-color: var(--coral); }
 .showcase-page .ticket { white-space: nowrap; --notch: 8px; --ticket-size: 1rem; --ticket-main-padding: 14px 22px; --ticket-stub-padding: 14px; --ticket-stub-size: .72rem; --ticket-stub-leading: 1; }
 .showcase-page .ticket-small { --notch: 6px; }
 .showcase-page .ticket-large { --notch: 13px; --ticket-size: 1.2rem; --ticket-main-padding: 22px 36px; --ticket-stub-padding: 22px; --ticket-stub-size: .85rem; }
