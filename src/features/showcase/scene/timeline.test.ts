@@ -41,31 +41,39 @@ describe("the approved diorama timeline", () => {
 			});
 		}
 	});
-	it("never shows two chapters at any sampled progress", () => {
+	it("keeps at least one chapter at half opacity throughout the showcase", () => {
 		for (let i = 0; i <= 200; i++) {
-			expect(timeline(i * 0.005, 0).chapterOpacities.filter(opacity => opacity > 0).length).toBeLessThanOrEqual(1);
+			const progress = i * 0.005;
+			expect(Math.max(...timeline(progress, 0).chapterOpacities), `progress ${progress}`).toBeGreaterThanOrEqual(0.5);
+		}
+	});
+	it("only shows adjacent chapters together during a crossfade", () => {
+		for (let i = 0; i <= 200; i++) {
+			const opacities = timeline(i * 0.005, 0).chapterOpacities;
+			const firstVisible = opacities.findIndex(opacity => opacity > 0);
+			const lastVisible = opacities.findLastIndex(opacity => opacity > 0);
+			expect(lastVisible - firstVisible).toBeLessThanOrEqual(1);
 		}
 		expect(timeline(0.5, 0).chapterOpacities[2]).toBeGreaterThan(0);
 		expect(timeline(0.5, 0).chapterOpacities[3]).toBe(0);
 	});
-	it("uses the approved plateau windows and 0.035 fades", () => {
-		for (const [chapter, start, end] of [[1, .13, .35], [2, .38, .52], [3, .55, .78]]) {
-			expect(timeline(start, 0).chapterOpacities[chapter]).toBe(0);
-			expect(timeline(end, 0).chapterOpacities[chapter]).toBe(0);
-			expect(timeline(start + .035 / 2, 0).chapterOpacities[chapter]).toBeCloseTo(.5);
-			expect(timeline((start + end) / 2, 0).chapterOpacities[chapter]).toBe(1);
-			expect(timeline(end - .035 / 2, 0).chapterOpacities[chapter]).toBeCloseTo(.5);
+	it("crossfades over 0.035 and reaches full opacity between transitions", () => {
+		for (const [chapter, crossover] of [.115, .365, .535, .8].entries()) {
+			const before = timeline(crossover - .035 / 2, 0).chapterOpacities;
+			const after = timeline(crossover + .035 / 2, 0).chapterOpacities;
+			expect(before[chapter]).toBeCloseTo(1);
+			expect(before[chapter + 1]).toBeCloseTo(0);
+			expect(after[chapter]).toBeCloseTo(0);
+			expect(after[chapter + 1]).toBeCloseTo(1);
 		}
-		expect(timeline(.065, 0).chapterOpacities[0]).toBe(1);
-		expect(timeline(.1, 0).chapterOpacities[0]).toBe(0);
-		expect(timeline(.82, 0).chapterOpacities[4]).toBe(0);
-		expect(timeline(.855, 0).chapterOpacities[4]).toBeCloseTo(1);
 	});
-	it("switches the camera lead at gap midpoints, including fully empty frames", () => {
+	it("switches the camera lead to the incoming chapter at each crossover", () => {
 		const midpoints = [.115, .365, .535, .8];
 		const anchors = ["top", "start", "end", "bottom", "top"];
 		midpoints.forEach((p, index) => {
-			expect(timeline(p, 0).chapterOpacities).toEqual([0, 0, 0, 0, 0]);
+			const atCrossover = [0, 0, 0, 0, 0];
+			atCrossover[index] = atCrossover[index + 1] = 0.5;
+			expect(timeline(p, 0).chapterOpacities).toEqual(atCrossover);
 			expect(timeline(p - Number.EPSILON, 0).lead).toBe(index);
 			expect(timeline(p - Number.EPSILON, 0).anchor).toBe(anchors[index]);
 			expect(timeline(p, 0).lead).toBe(index + 1);
