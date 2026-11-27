@@ -14,20 +14,41 @@ beforeEach(() => {
 });
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
-it.each(["he", "en"])("connects the header, mobile ticket and footer in %s", async (language) => {
+it.each(["he", "en"])("connects the home header and footer in %s", async (language) => {
 	await i18n.changeLanguage(language);
 	window.history.replaceState(null, "", "#/");
 	render(<App />);
 	const header = within(screen.getByRole("banner"));
 	expect(header.getByRole("link", { name: i18n.t("brand") }).getAttribute("href")).toBe("#/");
 	const navigation = within(header.getByRole("navigation"));
-	expect(navigation.getAllByRole("link").map((link) => link.getAttribute("href"))).toEqual(["#/", "#/demo", "#/packages"]);
-	const tickets = screen.getAllByRole("link", { name: i18n.t("bookMeeting") });
-	expect(tickets).toHaveLength(2);
-	for (const ticket of tickets) expect(ticket.getAttribute("href")).toBe("#/book");
-	await act(async () => fireEvent.click(tickets[1]));
+	expect(navigation.getAllByRole("link").map((link) => link.getAttribute("href"))).toEqual(["#get", "#/", "#/demo", "#/packages"]);
+	const ticket = header.getByRole("link", { name: i18n.t("homeBookMeeting") });
+	expect(ticket.getAttribute("href")).toBe("#/book");
+	expect(document.querySelector(".ticket-dock")).toBeNull();
+	const footer = within(screen.getByRole("contentinfo"));
+	expect(footer.getByRole("link").getAttribute("href")).toBe("#/account");
+	expect(footer.getByText("Made by Topsyde Studios")).toBeDefined();
+	await act(async () => fireEvent.click(ticket));
 	expect(window.location.hash).toBe("#/book");
-	expect(within(screen.getByRole("contentinfo")).getByRole("link").getAttribute("href")).toBe("#/account");
+});
+
+it("opens the feature sheet from a directly loaded link", () => {
+	const scrollIntoView = vi.fn();
+	Object.defineProperty(Element.prototype, "scrollIntoView", { configurable: true, value: scrollIntoView });
+	try {
+		window.history.replaceState(null, "", "#get");
+		render(<App />);
+		expect(screen.getByRole("main")).toBeDefined();
+		expect(scrollIntoView.mock.instances).toContain(document.getElementById("get"));
+	} finally {
+		Reflect.deleteProperty(Element.prototype, "scrollIntoView");
+	}
+});
+
+it("keeps the mobile ticket on inner pages", () => {
+	window.history.replaceState(null, "", "#/packages");
+	render(<App />);
+	expect(document.querySelector(".ticket-dock a")?.getAttribute("href")).toBe("#/book");
 });
 
 it.each([

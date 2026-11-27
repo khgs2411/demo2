@@ -20,7 +20,7 @@ export function Routes() {
 function RoutePage() {
 	const route = useRoute();
 	switch (route?.page) {
-		case "showcase": return <ShowcasePage />;
+		case "showcase": return <ShowcasePage section={route.section} />;
 		case "packages": return <PackagesPage />;
 		case "admin-sim": return <AdminSimPage />;
 		case "booking": return <BookingPage key={route.packageId ?? "book"} packageId={route.packageId} />;

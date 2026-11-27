@@ -4,6 +4,7 @@ import { parseHash } from "./router";
 describe("hash routes", () => {
 	it.each([
 		["#/", { page: "showcase" }],
+		["#get", { page: "showcase", section: "get" }],
 		["#/packages", { page: "packages" }],
 		["#/demo", { page: "admin-sim" }],
 		["#/book", { page: "booking" }],
