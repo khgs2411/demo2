@@ -7,7 +7,9 @@ export const ranges = {
 export const chapterAnchors = ["top", "start", "end", "bottom", "top"] as const;
 export const segment = (p: number, a: number, b: number) => clamp((p - a) / (b - a));
 const ease = (t: number) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-const plateau = (p: number, start: number, end: number, fade = .035) => clamp(Math.min((p - start) / fade, (end - p) / fade));
+// Center the existing fade duration on the original camera lead switches.
+const chapterFade = .035;
+const chapterCrossovers = [.115, .365, .535, .8];
 
 export function timeline(p: number, t: number) {
 	const angle = (ease(segment(p, ...ranges.flipDown)) + ease(segment(p, ...ranges.flipUp))) * Math.PI;
@@ -18,8 +20,9 @@ export function timeline(p: number, t: number) {
 	const b = segment(p, ...ranges.beam);
 	const fixed = a >= 0.985;
 	const lit = segment(p, ranges.beam[1], ranges.flipUp[1]);
-	const chapterOpacities = [clamp((.1 - p) / .035), plateau(p, .13, .35), plateau(p, .38, .52), plateau(p, .55, .78), clamp((p - .82) / .035)];
-	const lead = p < .115 ? 0 : p < .365 ? 1 : p < .535 ? 2 : p < .8 ? 3 : 4;
+	const [flip, system, agent, book] = chapterCrossovers.map(crossover => clamp(.5 + (p - crossover) / chapterFade));
+	const chapterOpacities = [1 - flip, flip - system, system - agent, agent - book, book];
+	const lead = chapterCrossovers.findLastIndex(crossover => p >= crossover) + 1;
 	return {
 		angle, night, turning,
 		twistY: Math.sin(angle) * 0.55,

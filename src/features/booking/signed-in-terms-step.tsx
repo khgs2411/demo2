@@ -20,7 +20,7 @@ export function SignedInTermsStep({ state, send }: { state: SignedInTermsState; 
 	const accepted = !reviewing || state.accepted;
 	return <>
 		<h1 tabIndex={-1} lang={terms.locale} dir="auto">{terms.title}</h1>
-		<p className="mono">{t("termsVersion", { version: terms.version })}</p>
+		<p className="booking-label">{t("termsVersion", { version: terms.version })}</p>
 		{reviewing && state.termsChanged && <p role="alert" className="notice">{t("signupMessages.terms_changed")}</p>}
 		{failed && <p role="alert" className="notice error">{t("termsAcceptFailed")}</p>}
 		<form onSubmit={event => {

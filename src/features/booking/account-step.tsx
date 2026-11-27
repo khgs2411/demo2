@@ -25,7 +25,7 @@ export function AccountStep({ product, loading, busy, onPassword, onGoogle, onBa
 		<h1 tabIndex={-1}>{title ?? t("aTitle")}</h1><p className="lede">{description ?? t("aLede")}</p>
 		{loading ? <p role="status">{t("loading")}</p> : <>
 			{product?.google_oauth_enabled && <GoogleSignIn busy={busy} onGoogle={onGoogle} />}
-			{product?.google_oauth_enabled && product.email_password_enabled && <div className="or mono">{t("or")}</div>}
+			{product?.google_oauth_enabled && product.email_password_enabled && <div className="or booking-label">{t("or")}</div>}
 			{product?.email_password_enabled && <form onSubmit={submit}>
 				<fieldset disabled={busy} className="fields">
 					<Input label={t("email")} name="email" ref={emailField} defaultValue={email ?? (readResetEmail() || undefined)} readOnly={emailReadOnly} type="email" dir="ltr" autoComplete="email" required />

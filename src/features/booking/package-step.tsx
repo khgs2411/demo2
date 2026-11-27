@@ -27,7 +27,7 @@ export function PackageStep({ selection, onChange, onContinue }: {
 				</div>)}</div>
 			</section>)}
 		</div>
-		<fieldset className="addons"><legend className="mono">{t("addonsLabel")}</legend>
+		<fieldset className="addons"><legend className="booking-label">{t("addonsLabel")}</legend>
 			<p>{t("packages:addons.price")}</p>
 			{addons.map(entry => <label className="check" key={entry.id}>
 				<input type="checkbox" checked={selection.addonInterests.includes(entry.id)} onChange={event => onChange({ ...selection,
