@@ -44,6 +44,7 @@ it.each(["he", "en"])("compares the offers and provides named add-ons and FAQ di
 	await i18n.changeLanguage(language);
 	render(<PackagesPage />);
 	const t = (key: string) => i18n.t(key, { ns: "packages" });
+	const packageName = (id: string) => i18n.t("packageName", { ns: "packages", name: t(`offers.${id}.name`) });
 	const lines = [
 		{ line: "system", ids: ["system-basic", "system-studio", "system-partner"], row: "support", cells: ["1", "3", "8"] },
 		{ line: "site", ids: ["site-quick", "site-landing", "site-business"], row: "revisions", cells: ["1", "2", "3"] },
@@ -52,10 +53,10 @@ it.each(["he", "en"])("compares the offers and provides named add-ons and FAQ di
 	for (const { line, ids, row, cells } of lines) {
 		const table = screen.getByRole("table", { name: t(`lines.${line}.name`) });
 		expect(within(table).getAllByRole("columnheader").slice(1).map(heading => heading.textContent))
-			.toEqual(ids.map(id => t(`offers.${id}.name`)));
+			.toEqual(ids.map(packageName));
 		const rowHeader = within(table).getByRole("rowheader", { name: t(`comparison.${row}`) });
 		const values = within(rowHeader.closest("tr")!).getAllByRole("cell");
-		expect(values.map(cell => cell.textContent)).toEqual(ids.map((id, index) => t(`offers.${id}.name`) + cells[index]));
+		expect(values.map(cell => cell.textContent)).toEqual(ids.map((id, index) => packageName(id) + cells[index]));
 	}
 	for (const id of ["agent-whatsapp", "agent-social", "agent-voice"]) {
 		expect(screen.getByText(t(`offers.${id}.name`))).toBeTruthy();

@@ -17,7 +17,7 @@ export function PackageStep({ selection, onChange, onContinue }: {
 				<h2 id={`booking-line-${line}`}>{t(`packages:lines.${line}.name`)}</h2>
 				<div className="ledger">{getHeadlineOffers(line).map(entry => <label className="row" key={entry.id}>
 					<input type="radio" name="package" value={entry.id} checked={selection.packageId === entry.id} onChange={() => onChange({ ...selection, packageId: entry.id, slotId: null })} />
-					<span><b>{t(`packages:offers.${entry.id}.name`)}</b><small>{t(`packages:offers.${entry.id}.summary`)}</small></span>
+					<span><b>{t("packages:packageName", { name: t(`packages:offers.${entry.id}.name`) })}</b><small>{t(`packages:offers.${entry.id}.summary`)}</small></span>
 					<span className="price">
 						{entry.recommended && <><span className="rec">{t("packages:recommended")}</span><br /></>}
 						<bdi>{t(`packages:${entry.priceKey}`)}</bdi><br />{t(`packages:lines.${line}.period`)}

@@ -31,6 +31,7 @@ export const en = {
 	packages: {
 		title: "Two ways to begin. One keeps working for you.",
 		label: "Packages",
+		packageName: "{{name}} package",
 		book: "Let’s meet",
 		bookPackage: "Book a meeting about {{name}}",
 		recommended: "Recommended",

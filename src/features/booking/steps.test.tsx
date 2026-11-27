@@ -49,7 +49,8 @@ it.each(["he", "en"])("lists the six packages under their service lines in %s", 
 		const radios = within(groups[index]).getAllByRole<HTMLInputElement>("radio");
 		expect(radios.map(radio => radio.value)).toEqual(ids);
 		for (const radio of radios) {
-			expect(radio.labels?.[0].textContent).toContain(t(`offers.${radio.value}.name`));
+			const name = i18n.t("packageName", { ns: "packages", name: t(`offers.${radio.value}.name`) });
+			expect(radio.labels?.[0].textContent).toContain(name);
 			expect(radio.labels?.[0].textContent).toContain(t(`offers.${radio.value}.price`));
 		}
 	}

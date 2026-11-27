@@ -14,7 +14,7 @@ export function PackageOfferLedger({ offers, emphasizeRecommended = false }: {
 			const mark = entry.recommended ? "recommended" : entry.mark;
 			const markClass = entry.recommended ? "package-mark package-mark-recommended" : "package-mark";
 			return <LedgerRow key={entry.id}
-				name={<h3>{name}{mark && <span className={markClass}>{t(mark)}</span>}</h3>}
+				name={<h3>{t("packageName", { name })}{mark && <span className={markClass}>{t(mark)}</span>}</h3>}
 				price={<><bdi>{t(entry.priceKey)}</bdi><small>{t(`lines.${entry.line}.period`)}</small></>}
 				details={<>
 					<p>{t(`offers.${entry.id}.summary`)}</p>

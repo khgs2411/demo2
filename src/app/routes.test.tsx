@@ -1,4 +1,4 @@
-import { cleanup, render, screen, act, fireEvent, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, act, fireEvent, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Routes } from "./routes";
 import { i18n } from "../i18n";
@@ -155,4 +155,21 @@ it("replaces the restored account entry after the Google sign-in callback", asyn
 	});
 	expect(window.location.hash).toBe("#/");
 	expect(screen.getByRole("main").dataset.module).toBe("showcase");
+});
+
+it.each([
+	["en", "Studio package", "Book a meeting about Studio"],
+	["he", "חבילת סטודיו", "קביעת פגישה בנושא סטודיו"],
+])("carries the package label from offers to booking in %s", async (language, label, action) => {
+	await i18n.changeLanguage(language);
+	window.history.replaceState(null, "", "#/packages");
+	render(<Routes />);
+	expect(screen.getByText(label, { selector: "h3" })).toBeDefined();
+	expect(screen.getByRole("columnheader", { name: label })).toBeDefined();
+
+	fireEvent.click(screen.getByRole("button", { name: action }));
+	const group = await screen.findByRole("radiogroup");
+	const selected = within(group).getByRole<HTMLInputElement>("radio", { checked: true });
+	expect(within(selected.labels![0]).getByText(label)).toBeDefined();
+	expect(within(screen.getByRole("complementary")).getByText(label)).toBeDefined();
 });

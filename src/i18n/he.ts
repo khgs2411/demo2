@@ -31,6 +31,7 @@ export const he = {
 	packages: {
 		title: "שתי דרכים להתחיל. אחת מהן ממשיכה לעבוד בשבילך.",
 		label: "חבילות",
+		packageName: "חבילת {{name}}",
 		book: "לקבוע",
 		bookPackage: "קביעת פגישה בנושא {{name}}",
 		recommended: "מומלץ",
