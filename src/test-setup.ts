@@ -13,12 +13,3 @@ if (typeof window !== "undefined" && !window.matchMedia) {
 		media, matches: false, addEventListener() {}, removeEventListener() {},
 	}) });
 }
-
-// Route tests can mount the scene after a lazy import. jsdom has no layout observers.
-class LayoutObserver {
-	observe() {}
-	disconnect() {}
-}
-
-if (typeof IntersectionObserver === "undefined") vi.stubGlobal("IntersectionObserver", LayoutObserver);
-if (typeof ResizeObserver === "undefined") vi.stubGlobal("ResizeObserver", LayoutObserver);

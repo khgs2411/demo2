@@ -7,8 +7,24 @@ import { i18n } from "../i18n";
 
 let context: ReturnType<typeof useBookingContext>;
 vi.mock("@class-kit/react", () => ({useProductContext:() => context}));
-beforeEach(async () => { context = makeBookingContext(); sessionStorage.clear(); await i18n.changeLanguage("en"); });
-afterEach(cleanup);
+
+// These routes can mount the lazy showcase scene, which needs layout observers jsdom lacks.
+class LayoutObserver {
+	observe() {}
+	disconnect() {}
+}
+
+beforeEach(async () => {
+	vi.stubGlobal("IntersectionObserver", LayoutObserver);
+	vi.stubGlobal("ResizeObserver", LayoutObserver);
+	context = makeBookingContext();
+	sessionStorage.clear();
+	await i18n.changeLanguage("en");
+});
+afterEach(() => {
+	cleanup();
+	vi.unstubAllGlobals();
+});
 it.each(["#/", "#/packages", "#/demo", "#/book", "#/book/system", "#/account", "#/studio"])("keeps studio unlisted in the rendered shell and page at %s", hash => {
 	window.history.replaceState(null,"",hash);
 	render(<App />);
