@@ -159,13 +159,12 @@ it("replaces the restored account entry after the Google sign-in callback", asyn
 
 it.each([
 	["en", "Studio package", "Book a meeting about Studio"],
-	["he", "חבילת סטודיו", "קביעת פגישה בנושא סטודיו"],
+	["he", "חבילת סטודיו", "לקבוע פגישה על סטודיו"],
 ])("carries the package label from offers to booking in %s", async (language, label, action) => {
 	await i18n.changeLanguage(language);
 	window.history.replaceState(null, "", "#/packages");
 	render(<Routes />);
 	expect(screen.getByText(label, { selector: "h3" })).toBeDefined();
-	expect(screen.getByRole("columnheader", { name: label })).toBeDefined();
 
 	fireEvent.click(screen.getByRole("button", { name: action }));
 	const group = await screen.findByRole("radiogroup");

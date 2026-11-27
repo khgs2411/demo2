@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 
-const questions = ["minimum", "advance", "support", "hosting", "partnerAgent"] as const;
+const questions = ["support", "hosting"] as const;
 
 export function PackageFaq() {
 	const { t } = useTranslation("packages");

@@ -12,7 +12,7 @@ it("confirms package and add-on choices using ticket actions", () => {
 	const change = vi.fn(), next = vi.fn();
 	render(<PackageStep selection={{ packageId: "system-studio", addonInterests: [], slotId: null }} onChange={change} onContinue={next} />);
 	expect((screen.getByRole("radio", { name: /^Studio/ }) as HTMLInputElement).checked).toBe(true);
-	fireEvent.click(screen.getByRole("checkbox", { name: "Voice AI agent" }));
+	fireEvent.click(screen.getByRole("checkbox", { name: "AI assistant that answers phone calls" }));
 	expect(change).toHaveBeenCalledWith({ packageId: "system-studio", addonInterests: ["agent-voice"], slotId: null });
 	const button = screen.getByRole("button", { name: "Continue" });
 	expect(button.classList.contains("ticket")).toBe(true);
@@ -45,13 +45,14 @@ it.each(["he", "en"])("lists the six packages under their service lines in %s", 
 	];
 	const groups = within(screen.getByRole("radiogroup")).getAllByRole("region");
 	expect(groups.map(group => group.querySelector("h2")?.textContent)).toEqual(lines.map(({ line }) => t(`lines.${line}.name`)));
-	for (const [index, { ids }] of lines.entries()) {
+	for (const [index, { ids, line }] of lines.entries()) {
 		const radios = within(groups[index]).getAllByRole<HTMLInputElement>("radio");
 		expect(radios.map(radio => radio.value)).toEqual(ids);
 		for (const radio of radios) {
 			const name = i18n.t("packageName", { ns: "packages", name: t(`offers.${radio.value}.name`) });
 			expect(radio.labels?.[0].textContent).toContain(name);
 			expect(radio.labels?.[0].textContent).toContain(t(`offers.${radio.value}.price`));
+			expect(radio.labels?.[0].textContent).toContain(t(`lines.${line}.payment`));
 		}
 	}
 	fireEvent.click(within(groups[1]).getAllByRole("radio")[0]);

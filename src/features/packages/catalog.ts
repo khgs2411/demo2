@@ -6,25 +6,40 @@ const templates = {
 export const serviceLines = ["system", "site"] as const;
 export type ServiceLine = (typeof serviceLines)[number];
 
+const websiteAndApp = ["features.website", "features.app"] as const;
+const studioExtras = ["features.changes", "features.documentsAndAccess", "features.updates"] as const;
+
 const studioPackages = [
 	{
 		id: "system-basic", kind: "base", line: "system", templateId: templates.system, priceKey: "offers.system-basic.price",
-		featureKeys: ["features.site", "features.customers", "features.appointments"], hasAnchorNote: true,
+		featureKeys: [...websiteAndApp, "features.basicHelp"],
 	},
-	{ id: "system-studio", kind: "base", line: "system", templateId: templates.system, priceKey: "offers.system-studio.price", featureKeys: ["features.roles", "features.documents", "features.changes", "features.updates"], recommended: true },
-	{ id: "system-partner", kind: "base", line: "system", templateId: templates.system, priceKey: "offers.system-partner.price", featureKeys: ["features.site"] },
+	{
+		id: "system-studio", kind: "base", line: "system", templateId: templates.system, priceKey: "offers.system-studio.price",
+		featureKeys: [...websiteAndApp, "features.studioHelp", ...studioExtras], recommended: true,
+	},
+	{
+		id: "system-partner", kind: "base", line: "system", templateId: templates.system, priceKey: "offers.system-partner.price",
+		featureKeys: [...websiteAndApp, "features.partnerHelp", ...studioExtras, "features.includedAssistant", "features.review"],
+	},
 	{
 		id: "site-quick", kind: "base", line: "site", templateId: templates.site, priceKey: "offers.site-quick.price",
-		featureKeys: ["features.build"], mark: "liveInSevenDays", hasAnchorNote: true,
+		featureKeys: ["features.studioLayout", "features.oneRound"], mark: "liveInSevenDays",
 	},
-	{ id: "site-landing", kind: "base", line: "site", templateId: templates.site, priceKey: "offers.site-landing.price", featureKeys: ["features.setup", "features.design", "features.build", "features.hosting"] },
-	{ id: "site-business", kind: "base", line: "site", templateId: templates.site, priceKey: "offers.site-business.price", featureKeys: ["features.setup", "features.design", "features.build", "features.hosting"] },
+	{
+		id: "site-landing", kind: "base", line: "site", templateId: templates.site, priceKey: "offers.site-landing.price",
+		featureKeys: ["features.firstMeeting", "features.customPage", "features.copy", "features.twoRounds"],
+	},
+	{
+		id: "site-business", kind: "base", line: "site", templateId: templates.site, priceKey: "offers.site-business.price",
+		featureKeys: ["features.firstMeeting", "features.customSite", "features.copy", "features.threeRounds", "features.fixes"],
+	},
 ] as const;
 
 const addons = [
-	{ id: "agent-whatsapp", kind: "addon", templateId: null, priceKey: "addons.price", featureKeys: ["features.whatsapp"] },
-	{ id: "agent-social", kind: "addon", templateId: null, priceKey: "addons.price", featureKeys: ["features.social"] },
-	{ id: "agent-voice", kind: "addon", templateId: null, priceKey: "addons.price", featureKeys: ["features.voice"] },
+	{ id: "agent-whatsapp", kind: "addon", templateId: null },
+	{ id: "agent-social", kind: "addon", templateId: null },
+	{ id: "agent-voice", kind: "addon", templateId: null },
 ] as const;
 
 export type PackageId = (typeof studioPackages)[number]["id"];
@@ -38,7 +53,6 @@ export type StudioPackage = {
 	readonly featureKeys: readonly string[];
 	readonly recommended?: boolean;
 	readonly mark?: "liveInSevenDays";
-	readonly hasAnchorNote?: true;
 };
 export type PackageEntry = StudioPackage | (typeof addons)[number] & { readonly recommended?: never };
 

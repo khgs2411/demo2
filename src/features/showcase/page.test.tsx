@@ -14,7 +14,7 @@ it.each(["he", "en"])("assembles the story and catalog-backed offers in %s", asy
 	expect(screen.getByRole("main").dataset.module).toBe("showcase");
 	expect(screen.getByRole("heading", { level: 1 }).textContent).toContain(i18n.t("chapters.front.lead", { ns: "showcase" }));
 	const teaser = screen.getByRole("region", { name: i18n.t("title", { ns: "packages" }) });
-	expect(teaser.querySelectorAll(".line")).toHaveLength(2);
+	expect(within(teaser).getAllByRole("article")).toHaveLength(2);
 	for (const id of ["system-studio", "site-quick"]) {
 		expect(within(teaser).getByText(i18n.t(`offers.${id}.price`, { ns: "packages" }))).toBeDefined();
 		const name = i18n.t(`offers.${id}.name`, { ns: "packages" });

@@ -33,13 +33,14 @@ h1 { font: 900 clamp(2.4rem, 1.2rem + 3.6vw, 4.4rem)/.95 var(--font-display); le
 	font: 700 1.5rem/1.1 var(--font-display);
 }
 .ledger { border-block-start: 1px solid var(--rule); }
-.row { display: grid; grid-template-columns: 26px 1fr auto; gap: 16px; align-items: baseline; padding-block: 20px; border-block-end: 1px solid var(--rule); cursor: pointer; }
+.row { --radio-column: 26px; --radio-gap: 16px; padding-block: 20px; border-block-end: 1px solid var(--rule); }
+.row .package-choice { display: grid; grid-template-columns: var(--radio-column) minmax(0, 1fr); gap: var(--radio-gap); align-items: baseline; cursor: pointer; }
 .row input { appearance: none; inline-size: 18px; block-size: 18px; border: 2px solid var(--ink); border-radius: 50%; translate: 0 3px; }
 .row input:checked { background: radial-gradient(circle, var(--coral) 45%, transparent 50%); border-color: var(--coral); }
-.row b { font: 700 1.5rem/1.1 var(--font-display); }
-.row small { display: block; opacity: .65; margin-block-start: 4px; }
-.row .price { font: 500 13px/1.3 var(--font-mono); text-align: end; }
-.row .rec { color: var(--coral); }
+.row .package-choice b { font: 700 1.5rem/1.1 var(--font-display); }
+.row .package-price { display: block; margin-block-start: 6px; }
+.row .package-benefits { margin-block-start: 10px; margin-inline-start: calc(var(--radio-column) + var(--radio-gap)); }
+.row .rec { display: block; font-weight: 600; }
 .addons { margin-block-start: 28px; }
 .addons legend { margin-block-end: 10px; }
 .check { display: flex; gap: 12px; align-items: center; padding-block: 8px; cursor: pointer; }

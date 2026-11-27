@@ -1,7 +1,6 @@
 import { useTranslation } from "react-i18next";
 import type { BookingProfile } from "./machine";
 import type { BookingRegistration, BookingSelection, BookingSlot } from "./machine";
-import { addonCopy } from "./package-step";
 import { formatWhen } from "./calendar";
 
 export function SummaryTicket({ selection, profile, slot, registration, timeZone }: {
@@ -13,7 +12,7 @@ export function SummaryTicket({ selection, profile, slot, registration, timeZone
 		<header><span className="mono">{t("ticketHead")}</span><span className="mono" aria-hidden="true">TOPSYDE</span></header>
 		<dl>
 			<div><dt>{t("tPackage")}</dt><dd>{selection ? t("packages:packageName", { name: t(`packages:offers.${selection.packageId}.name`) }) : "—"}
-				{selection?.addonInterests.map(id => <span className="addons-line" key={id}>+ {t(addonCopy[id])}</span>)}</dd></div>
+				{selection?.addonInterests.map(id => <span className="addons-line" key={id}>+ {t(`packages:offers.${id}.name`)}</span>)}</dd></div>
 			<div><dt>{t("tWhen")}</dt><dd className={slot ? "" : "empty"}>{slot ? formatWhen(slot.startsAt, i18n.language, timeZone) : "—"}</dd></div>
 			<div className="hide-sm"><dt>{t("tFor")}</dt><dd className={person ? "" : "empty"}>{person || "—"}</dd></div>
 		</dl>
