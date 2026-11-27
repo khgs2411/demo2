@@ -8,11 +8,11 @@ export function Pass({ kicker, code, rows, status, num, stamp }: {
 }) {
 	const hasStamp = stamp != null && typeof stamp !== "boolean" && stamp !== "";
 	return <aside className={`pass ${hasStamp ? "stamped" : ""}`}>
-		<header><span className="pass-mono">{kicker}</span><span className="pass-mono">{code}</span></header>
+		<header><span className="pass-label">{kicker}</span><span className="pass-label">{code}</span></header>
 		<dl>{rows.map((row, index) => <div key={index} className={row.state ?? ""}>
-			<dt className="pass-mono">{row.label}</dt><dd>{row.value}</dd>
+			<dt className="pass-label">{row.label}</dt><dd>{row.value}</dd>
 		</div>)}</dl>
-		<div className="pass-tear"><span className="pass-mono">{status}</span><b><bdi dir="ltr">{num}</bdi></b></div>
+		<div className="pass-tear"><span className="pass-label">{status}</span><b><bdi dir="ltr">{num}</bdi></b></div>
 		{hasStamp && <span className="pass-stamp" aria-hidden="true">{stamp}</span>}
 	</aside>;
 }

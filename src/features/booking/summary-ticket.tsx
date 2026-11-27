@@ -10,7 +10,7 @@ export function SummaryTicket({ selection, profile, slot, registration, timeZone
 	const { t, i18n } = useTranslation(["booking", "packages"]);
 	const person = [profile?.displayName, profile?.businessName].filter(Boolean).join(" · ");
 	return <aside className={`summary ${registration ? "requested" : ""}`} aria-label={t("ticketHead")}>
-		<header><span className="mono">{t("ticketHead")}</span><span className="mono" aria-hidden="true">TOPSYDE</span></header>
+		<header><span className="booking-label">{t("ticketHead")}</span><span className="booking-label" aria-hidden="true">TOPSYDE</span></header>
 		<dl>
 			<div><dt>{t("tPackage")}</dt><dd>{selection ? t(`packages:offers.${selection.packageId}.name`) : "—"}
 				{selection?.addonInterests.map(id => <span className="addons-line" key={id}>+ {t(addonCopy[id])}</span>)}</dd></div>

@@ -42,7 +42,7 @@ function StudioSession({ context, access, accountAdapter, passwordChange }: {
 			<header className="page-head">
 				<div>
 					<h1>{t("title")}</h1>
-					{state.step === "ready" && <span className="head-mono">{t("counts", { pending: state.pending.length, upcoming: state.upcoming.length })}</span>}
+					{state.step === "ready" && <span className="head-label">{t("counts", { pending: state.pending.length, upcoming: state.upcoming.length })}</span>}
 				</div>
 				{session && <Ticket small tone="ghost" stub="↩" disabled={busy} onClick={() => void passwordChange.runAuth(signOut)}>{t("signOut")}</Ticket>}
 			</header>

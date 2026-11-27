@@ -1,10 +1,10 @@
 @keyframes booking-rise { from { opacity: 0; transform: translateY(10px); } }
 .shell-content > main.booking-page { display: grid; justify-content: normal; padding: 96px var(--gutter) 80px; }
-.shell-content .booking-page h1 { font: 900 clamp(2.4rem, 1.2rem + 3.6vw, 4.4rem)/.95 var(--font-display); letter-spacing: -.02em; max-inline-size: 14ch; }
+main.booking-page h1 { font: 900 var(--text-h2)/var(--leading-display) var(--font-display); letter-spacing: 0; max-inline-size: 14ch; }
 .booking-page {
  --n: 0; --bg: var(--paper); --fg: var(--ink); --rule: color-mix(in srgb, var(--ink), transparent 82%);
- color: var(--ink); background: var(--paper); font: 500 1rem/1.55 var(--font-sans);
- .mono { font: 500 11px/1.4 var(--font-mono); letter-spacing: .1em; text-transform: uppercase; }
+ color: var(--ink); background: var(--paper); font: 400 var(--text-body)/var(--leading-body) var(--font-sans);
+ .booking-label { font: 500 var(--text-label)/var(--leading-small) var(--font-sans); letter-spacing: var(--tracking-label); text-transform: uppercase; }
 /* layout: the step on one side, the ticket on the other */
 & { display: grid; gap: 40px; padding: 18px var(--gutter) 80px; align-items: start; }
 @media (min-width: 1000px) { & { grid-template-columns: minmax(0, 1fr) 380px; column-gap: clamp(40px, 6vw, 110px); } .summary { position: sticky; inset-block-start: 24px; } }
@@ -12,15 +12,14 @@
 /* the four steps on one rule, numbered, not pills */
 .steps { display: grid; grid-template-columns: repeat(4, 1fr); border-block-start: 2px solid var(--ink); margin-block-end: 44px; }
 .steps.guest-steps { grid-template-columns: repeat(3, 1fr); }
-.steps li { list-style: none; padding-block-start: 10px; display: flex; gap: 8px; opacity: .4; font: 500 12px/1 var(--font-mono); letter-spacing: .08em; position: relative; }
+.steps li { list-style: none; padding-block-start: 10px; display: flex; gap: 8px; opacity: .4; font: 500 var(--text-label)/var(--leading-small) var(--font-sans); letter-spacing: var(--tracking-label); position: relative; }
 .steps li::before { content: ""; position: absolute; inset-block-start: -2px; inset-inline: 0; block-size: 2px; background: var(--coral); transform: scaleX(0); transform-origin: right; transition: transform var(--duration-flip) var(--ease); }
 &:dir(ltr) .steps li::before { transform-origin: left; }
 .steps li.done, .steps li.now { opacity: 1; }
 .steps li.done::before, .steps li.now::before { transform: scaleX(1); }
 .steps { padding: 0; }
 
-h1 { font: 900 clamp(2.4rem, 1.2rem + 3.6vw, 4.4rem)/.95 var(--font-display); letter-spacing: -.02em; max-inline-size: 14ch; }
-.lede { margin-block: 14px 34px; max-inline-size: 46ch; opacity: .78; }
+.lede { font-size: var(--text-lead); margin-block: 14px 34px; max-inline-size: 46ch; opacity: .78; }
 .step { display: none; }
 .step.shown { display: block; animation: booking-rise var(--duration-flip) var(--ease); }
 
@@ -30,49 +29,50 @@ h1 { font: 900 clamp(2.4rem, 1.2rem + 3.6vw, 4.4rem)/.95 var(--font-display); le
 .booking-package-line + .booking-package-line { margin-block-start: 32px; }
 .booking-package-line h2 {
 	margin-block-end: 10px;
-	font: 700 1.5rem/1.1 var(--font-display);
+	font: 700 var(--text-title)/var(--leading-heading) var(--font-display);
 }
 .ledger { border-block-start: 1px solid var(--rule); }
 .row { display: grid; grid-template-columns: 26px 1fr auto; gap: 16px; align-items: baseline; padding-block: 20px; border-block-end: 1px solid var(--rule); cursor: pointer; }
 .row input { appearance: none; inline-size: 18px; block-size: 18px; border: 2px solid var(--ink); border-radius: 50%; translate: 0 3px; }
 .row input:checked { background: radial-gradient(circle, var(--coral) 45%, transparent 50%); border-color: var(--coral); }
-.row b { font: 700 1.5rem/1.1 var(--font-display); }
+.row b { font: 700 var(--text-title)/var(--leading-heading) var(--font-display); }
 .row small { display: block; opacity: .65; margin-block-start: 4px; }
-.row .price { font: 500 13px/1.3 var(--font-mono); text-align: end; }
-.row .rec { color: var(--coral); }
+.row .price { font: 500 var(--text-small)/var(--leading-small) var(--font-sans); text-align: end; }
+.row .price bdi { font: 900 var(--text-small)/var(--leading-display) var(--font-display); letter-spacing: var(--tracking-display); }
+.row .rec { letter-spacing: var(--tracking-label); color: var(--coral); }
 .addons { margin-block-start: 28px; }
 .addons legend { margin-block-end: 10px; }
-.check { display: flex; gap: 12px; align-items: center; padding-block: 8px; cursor: pointer; }
+.check { font-weight: 500; display: flex; gap: 12px; align-items: center; padding-block: 8px; cursor: pointer; }
 .check input { appearance: none; inline-size: 16px; block-size: 16px; border: 2px solid var(--ink); }
 .check input:checked { background: var(--ink); box-shadow: inset 0 0 0 3px var(--paper); }
 
 /* fields: underlines, like the request form in the admin demo */
 .fields { display: grid; gap: 22px; max-inline-size: 460px; }
 .field { display: grid; gap: 4px; }
-.field input { border: 0; border-block-end: 1.5px solid var(--ink); background: transparent; padding: 6px 0 8px; font-size: 1.1rem; outline: 0; }
+.field input { border: 0; border-block-end: 1.5px solid var(--ink); background: transparent; padding: 6px 0 8px; font-size: var(--text-body); outline: 0; }
 .field input:focus { border-color: var(--coral); }
-.hint { font: 500 12px/1.4 var(--font-mono); opacity: .55; }
-.forgot-link { display: inline-block; margin-block-start: 10px; font-size: .9rem; }
+.hint { font: 500 var(--text-label)/var(--leading-small) var(--font-sans); opacity: .55; }
+.forgot-link { display: inline-block; margin-block-start: 10px; font-size: var(--text-small); line-height: var(--leading-small); }
 .or { display: flex; align-items: center; gap: 14px; max-inline-size: 460px; margin-block: 24px; }
 .or::before, .or::after { content: ""; flex: 1; border-block-start: 1px solid var(--rule); }
-.switch { margin-block-start: 18px; font-size: .95rem; }
-.error { color: var(--fault); font: 500 13px/1.5 var(--font-mono); }
+.switch { margin-block-start: 18px; font-size: var(--text-small); line-height: var(--leading-small); }
+.error { color: var(--fault); font: 500 var(--text-small)/var(--leading-small) var(--font-sans); }
 
 /* slot step: a week as columns of start times. no durations, no end times */
 .week-nav { display: flex; align-items: baseline; justify-content: space-between; margin-block-end: 16px; gap: 16px; }
-.week-nav .range { font: 700 1.25rem/1 var(--font-display); }
-.week-nav button { font: 500 12px/1 var(--font-mono); letter-spacing: .08em; }
+.week-nav .range { font: 700 var(--text-title)/var(--leading-heading) var(--font-display); }
+.week-nav button { font: 500 var(--text-label)/var(--leading-small) var(--font-sans); letter-spacing: var(--tracking-label); }
 .week-nav button[disabled] { opacity: .3; }
 .week { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border-block-start: 2px solid var(--ink); }
 .day { border-inline-start: 1px solid var(--rule); padding: 12px 10px 18px; min-block-size: 280px; }
 .day:last-child { border-inline-start: 0; }
 .times { display: grid; gap: 4px; }
-.time { text-align: start; font: 500 15px/1 var(--font-mono); padding: 9px 8px; border: 1.5px solid transparent; transition: border-color var(--duration-ticket), background var(--duration-ticket); }
+.time { text-align: start; font: 500 var(--text-small)/var(--leading-small) var(--font-sans); padding: 9px 8px; border: 1.5px solid transparent; transition: border-color var(--duration-ticket), background var(--duration-ticket); }
 .time:hover { border-color: var(--ink); }
 .time.picked { background: var(--ink); color: var(--paper); }
-.time .mine { display: block; font-size: 10px; letter-spacing: .08em; margin-block-start: 4px; color: var(--coral); }
-.day .none { font: 500 12px/1.4 var(--font-mono); opacity: .4; }
-.tz { margin-block-start: 14px; font: 500 12px/1.4 var(--font-mono); opacity: .6; }
+.time .mine { display: block; font-size: var(--text-label); letter-spacing: var(--tracking-label); margin-block-start: 4px; color: var(--coral); }
+.day .none { font: 500 var(--text-label)/var(--leading-small) var(--font-sans); opacity: .4; }
+.tz { margin-block-start: 14px; font: 500 var(--text-label)/var(--leading-small) var(--font-sans); opacity: .6; }
 .notice { border-inline-start: 3px solid var(--fault); padding: 4px 14px; margin-block-end: 18px; }
 /* phones: day picker row, then one day's times */
 .days-row { display: none; }
@@ -83,14 +83,14 @@ h1 { font: 900 clamp(2.4rem, 1.2rem + 3.6vw, 4.4rem)/.95 var(--font-display); le
 	.times { grid-template-columns: repeat(3, 1fr); }
 	.time { text-align: center; border-color: var(--rule); }
 	.days-row { display: grid; grid-template-columns: repeat(5, 1fr); border-block-start: 2px solid var(--ink); margin-block-end: 18px; }
-	.days-row button { padding: 10px 0; display: grid; gap: 2px; justify-items: center; font: 500 11px/1.2 var(--font-mono); border-block-end: 3px solid transparent; }
-	.days-row button b { font: 700 1.3rem/1 var(--font-display); }
+	.days-row button { padding: 10px 0; display: grid; gap: 2px; justify-items: center; font: 500 var(--text-label)/var(--leading-small) var(--font-sans); letter-spacing: var(--tracking-label); border-block-end: 3px solid transparent; }
+	.days-row button b { font: 700 var(--text-title)/var(--leading-heading) var(--font-display); }
 	.days-row button.active { border-color: var(--coral); }
 }
 
 /* empty: templates not set up yet */
 .closed { margin-block-start: 28px; border-block: 2px solid var(--ink); padding-block: 28px; max-inline-size: 520px; }
-.closed b { font: 700 1.4rem/1.2 var(--font-display); display: block; margin-block-end: 6px; }
+.closed b { font: 700 var(--text-title)/var(--leading-heading) var(--font-display); display: block; margin-block-end: 6px; }
 
 /* the summary ticket. it fills as the visitor goes, and becomes the request */
 .summary { --notch: 16px; background: var(--coral); color: var(--ink); padding: 26px 26px 0; position: relative;
@@ -99,14 +99,14 @@ h1 { font: 900 clamp(2.4rem, 1.2rem + 3.6vw, 4.4rem)/.95 var(--font-display); le
 .summary header { display: flex; justify-content: space-between; margin-block-end: 18px; }
 .summary dl { display: grid; }
 .summary dl div { display: grid; gap: 2px; padding-block: 12px; border-block-end: 1.5px solid color-mix(in srgb, var(--ink), transparent 72%); }
-.summary dt { font: 500 10px/1 var(--font-mono); letter-spacing: .12em; opacity: .7; }
+.summary dt { font: 500 var(--text-label)/var(--leading-small) var(--font-sans); letter-spacing: var(--tracking-label); opacity: .7; }
 .summary dd { font-weight: 600; min-block-size: 1.5em; }
 .summary dd.empty { opacity: .45; font-weight: 500; }
-.summary dd .addons-line { display: block; font: 500 12px/1.4 var(--font-mono); font-weight: 500; opacity: .8; }
+.summary dd .addons-line { display: block; font: 500 var(--text-label)/var(--leading-small) var(--font-sans); opacity: .8; }
 .summary .tear { margin-block-start: 26px; border-block-start: 2px dashed color-mix(in srgb, var(--ink), transparent 55%); display: flex; align-items: center; justify-content: space-between; block-size: 92px; }
-.summary .status { font: 500 12px/1.3 var(--font-mono); letter-spacing: .1em; }
-.summary .num { font: 900 2.2rem/1 var(--font-display); }
-.stamp { position: absolute; inset-block-start: 42%; inset-inline-start: 50%; translate: 50% -50%; rotate: -9deg; border: 3px solid var(--ink); padding: 8px 14px; font: 700 15px/1.1 var(--font-mono); letter-spacing: .12em; text-align: center; opacity: 0; scale: 1.6; transition: opacity var(--duration-ticket), scale var(--duration-flip) var(--ease); background: color-mix(in srgb, var(--coral), var(--paper) 15%); }
+.summary .status { font: 500 var(--text-label)/var(--leading-small) var(--font-sans); letter-spacing: var(--tracking-label); }
+.summary .num { font: 900 var(--text-title)/var(--leading-display) var(--font-display); overflow-wrap: anywhere; max-inline-size: 60%; text-align: end; }
+.stamp { position: absolute; inset-block-start: 42%; inset-inline-start: 50%; translate: 50% -50%; rotate: -9deg; border: 3px solid var(--ink); padding: 8px 14px; font: 500 var(--text-small)/var(--leading-small) var(--font-sans); letter-spacing: var(--tracking-label); text-align: center; opacity: 0; scale: 1.6; transition: opacity var(--duration-ticket), scale var(--duration-flip) var(--ease); background: color-mix(in srgb, var(--coral), var(--paper) 15%); }
 &:dir(ltr) .stamp { translate: -50% -50%; }
 .requested .stamp { opacity: 1; scale: 1; }
 @media (max-width: 999px) {
@@ -117,14 +117,13 @@ h1 { font: 900 clamp(2.4rem, 1.2rem + 3.6vw, 4.4rem)/.95 var(--font-display); le
 	.summary dl { grid-template-columns: 1fr 1fr; column-gap: 14px; }
 	.summary dl div.hide-sm { display: none; }
 	.summary .tear { block-size: 52px; margin-block-start: 12px; }
-	.summary .num { font-size: 1.5rem; }
 }
 
 /* done */
 .done-actions { display: flex; gap: 26px; align-items: center; flex-wrap: wrap; margin-block-start: 30px; }
 .next-list { margin-block-start: 36px; border-block-start: 1px solid var(--rule); max-inline-size: 520px; padding: 0; }
 .next-list li { list-style: none; display: grid; grid-template-columns: 40px 1fr; padding-block: 14px; border-block-end: 1px solid var(--rule); }
-.next-list li span { font: 500 12px/1.6 var(--font-mono); opacity: .55; }
+.next-list li span { font: 500 var(--text-label)/var(--leading-small) var(--font-sans); opacity: .55; }
 
 /* #/account: my requests, a ledger with status in the machine voice */
 .account-columns { display: grid; align-items: start; gap: 56px; }
@@ -139,9 +138,9 @@ h1 { font: 900 clamp(2.4rem, 1.2rem + 3.6vw, 4.4rem)/.95 var(--font-display); le
 	.account-columns { grid-template-columns: minmax(0, 1fr) 380px; }
 }
 .req { display: grid; grid-template-columns: 1fr auto; gap: 6px 20px; padding-block: 20px; border-block-end: 1px solid var(--rule); align-items: baseline; }
-.req b { font: 700 1.35rem/1.15 var(--font-display); }
-.req .when, .accepted-terms .when { font: 500 14px/1.4 var(--font-mono); }
-.req .state { font: 500 11px/1 var(--font-mono); letter-spacing: .12em; display: inline-flex; gap: 8px; align-items: center; }
+.req b { font: 700 var(--text-title)/var(--leading-heading) var(--font-display); }
+.req .when, .accepted-terms .when { font: 500 var(--text-small)/var(--leading-small) var(--font-sans); }
+.req .state { font: 500 var(--text-label)/var(--leading-small) var(--font-sans); letter-spacing: var(--tracking-label); display: inline-flex; gap: 8px; align-items: center; }
 .req .state::before { content: ""; inline-size: 8px; block-size: 8px; background: currentColor; }
 .state.pending { color: color-mix(in srgb, var(--mustard), var(--ink) 35%); }
 .state.approved { color: color-mix(in srgb, var(--sage), var(--ink) 40%); }
@@ -152,7 +151,6 @@ h1 { font: 900 clamp(2.4rem, 1.2rem + 3.6vw, 4.4rem)/.95 var(--font-display); le
 }
 .booking-page {
  .summary { align-self: start; }
- .summary .num { font-size: 1.4rem; overflow-wrap: anywhere; max-inline-size: 60%; text-align: end; }
  fieldset { border: 0; padding: 0; min-inline-size: 0; }
  .ledger { margin-block-start: 0; }
  .ticket:disabled { opacity: .35; transform: none; }
@@ -162,8 +160,8 @@ h1 { font: 900 clamp(2.4rem, 1.2rem + 3.6vw, 4.4rem)/.95 var(--font-display); le
  .booking-link .main { padding: 0; }
  .booking-link .stub, .time .stub, .day-tab .stub { display: none; }
  .week { grid-template-columns: repeat(var(--days, 5), minmax(0, 1fr)); }
- .day h2, .booking-terms-heading { font: 600 .95rem/1.2 var(--font-sans); margin-block-end: 14px; }
- .day h2 span { display: block; font: 500 11px/1.4 var(--font-mono); opacity: .55; letter-spacing: .08em; }
+ .day h2, .booking-terms-heading { font: 500 var(--text-small)/var(--leading-small) var(--font-sans); margin-block-end: 14px; }
+ .day h2 span { display: block; font: 500 var(--text-label)/var(--leading-small) var(--font-sans); opacity: .55; letter-spacing: var(--tracking-label); }
  .time { display: block; inline-size: 100%; }
  .time .main { display: block; padding: 0; }
  .time.picked { background: var(--ink); color: var(--paper); }
@@ -173,7 +171,7 @@ h1 { font: 900 clamp(2.4rem, 1.2rem + 3.6vw, 4.4rem)/.95 var(--font-display); le
  .booking-google { inline-size: 100%; max-inline-size: 520px; }
  .booking-google .main { display: flex; gap: 14px; flex: 1; }
  .booking-google svg { flex: none; }
- .field > span { font: 500 11px/1.4 var(--font-mono); letter-spacing: .1em; text-transform: uppercase; }
+ .field > span { font: 500 var(--text-label)/var(--leading-small) var(--font-sans); letter-spacing: var(--tracking-label); text-transform: uppercase; }
  .actions, .done-actions { row-gap: 18px; }
  .status, .when { overflow-wrap: anywhere; }
  @media (min-width: 1000px) { .summary { inset-block-start: 96px; } }
@@ -187,21 +185,21 @@ h1 { font: 900 clamp(2.4rem, 1.2rem + 3.6vw, 4.4rem)/.95 var(--font-display); le
 .booking-page .acceptance-row .main { display: grid; gap: 6px; padding-block: 16px; }
 .booking-page .acceptance-row bdi { font-weight: 600; text-decoration: underline; text-underline-offset: 4px; }
 .shell-content > main.account-page { grid-template-columns: minmax(0, 1fr); }
-.booking-page .issued-password { font-family: var(--font-mono); }
+.booking-page .issued-password { font: 500 var(--text-body)/var(--leading-body) var(--font-mono); }
 
 /* The section headings share a counter from the top of each ledger. */
 .booking-page:is(.account-page, .studio-page) { counter-reset: part; }
 .booking-page :is(.requests-part, .account-details, .password-change, .accepted-terms, .studio-part) > h2 {
 	counter-increment: part; display: flex; align-items: baseline; gap: 14px; padding-block-start: 14px; border-block-start: 2px solid var(--ink);
-	font: 700 clamp(1.5rem, 1.2rem + .9vw, 2rem)/1.1 var(--font-display); margin-block-end: 22px; }
+	font: 700 var(--text-heading)/var(--leading-heading) var(--font-display); margin-block-end: 22px; }
 .booking-page :is(.requests-part, .account-details, .password-change, .accepted-terms, .studio-part) > h2::before {
-	content: counter(part, decimal-leading-zero) / ""; font: 500 12px/1 var(--font-mono); letter-spacing: .12em; opacity: .6; }
+	content: counter(part, decimal-leading-zero) / ""; font: 500 var(--text-label)/var(--leading-small) var(--font-sans); letter-spacing: var(--tracking-label); opacity: .6; }
 .booking-page .page-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 24px 48px; margin-block-end: 56px; }
 .booking-page .page-head .lede { margin-block-end: 0; }
 
 /* Gate pages put the form beside the pass on desktop. */
 .shell-content > main.booking-page.gate { align-content: center; row-gap: 48px; }
-.booking-page.gate h1 { font-size: clamp(2.8rem, 1.2rem + 4.4vw, 5.4rem); max-inline-size: 11ch; }
+.booking-page.gate h1 { max-inline-size: 11ch; }
 .booking-page.gate :is(.fields, .or) { max-inline-size: 520px; }
 @media (min-width: 1000px) {
 	.shell-content > main.booking-page.gate { grid-template-columns: minmax(0, 580px) 400px; justify-content: center; column-gap: clamp(56px, 7vw, 140px); }
