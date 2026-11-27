@@ -15,15 +15,29 @@
 	max-inline-size: 16ch;
 	overflow-wrap: normal;
 }
-.packages-page .line > * { min-inline-size: 0; }
-.packages-page .line h3 { font: inherit; }
-.packages-page .line .what, .packages-page .line .price small { opacity: 1; }
-.packages-page .package-mark, .showcase-offers .package-mark {
+.shell-content .packages-page > .package-intro { max-inline-size: 64ch; margin-block-start: 20px; }
+.package-line { margin-block-start: 44px; }
+.package-line > h2 { font: 700 var(--text-heading)/var(--leading-heading) var(--font-display); }
+.package-line > .ledger { margin-block-start: 12px; }
+.package-card {
+	display: grid;
+	gap: 16px 32px;
+	align-items: start;
+	padding-block: 24px;
+	border-block-end: 1px solid color-mix(in srgb, var(--fg), transparent 75%);
+}
+.package-card h3 { font: 700 var(--text-heading)/var(--leading-heading) var(--font-display); }
+.package-card .package-price { display: block; margin-block-start: 10px; font: 500 var(--text-small)/var(--leading-small) var(--font-sans); }
+.package-card .package-price bdi { font: 900 var(--text-h2)/var(--leading-display) var(--font-display); letter-spacing: var(--tracking-display); }
+.package-card .ticket { justify-self: start; }
+.package-benefits { list-style: disc; padding-inline-start: 1.25em; }
+.package-benefits li + li { margin-block-start: 4px; }
+.package-mark {
 	display: block;
 	margin-block-start: 10px;
 	font: 500 var(--text-small)/var(--leading-small) var(--font-sans);
 }
-.packages-page .line:has(.package-mark-recommended) {
+.packages-page .package-card:has(.package-mark-recommended) {
 	background: color-mix(in srgb, var(--coral) 8%, var(--paper));
 	border-block-end: 2px solid var(--coral);
 	padding-inline: 12px;
@@ -36,34 +50,22 @@
 	font: 500 var(--text-small)/var(--leading-small) var(--font-sans);
 	letter-spacing: var(--tracking-label);
 }
-.package-line { margin-block-start: 44px; }
-.package-line > h2 { font: 700 var(--text-heading)/var(--leading-heading) var(--font-display); }
-.package-line > p { margin-block-start: 8px; }
-.package-difference { margin-block-start: 9px; font-weight: 600; }
 .package-addons {
 	margin-block-start: 36px;
-	display: flex;
-	flex-wrap: wrap;
-	gap: 10px 28px;
-	align-items: baseline;
+	display: grid;
+	gap: 10px;
 	font-size: var(--text-small);
 	line-height: var(--leading-small);
 }
 .package-addons h2 { font: 500 var(--text-small)/var(--leading-small) var(--font-sans); letter-spacing: var(--tracking-label); }
-.package-addons ul { display: contents; list-style: none; padding: 0; }
+.package-addons ul { list-style: disc; padding-inline-start: 1.25em; }
 .package-section { margin-block-start: 80px; }
 .package-section > h2 { font: 900 var(--text-h2)/var(--leading-display) var(--font-display); }
-.package-comparison-line { margin-block-start: 32px; }
-.package-comparison-line > h3 { font: 700 var(--text-title)/var(--leading-heading) var(--font-display); }
-.package-comparison, .package-disclosures {
+.package-disclosures {
 	margin-block-start: 32px;
 	border-block-start: 2px solid var(--fg);
 }
-.package-comparison { margin-block-start: 12px; inline-size: 100%; border-collapse: collapse; text-align: start; table-layout: fixed; }
-.package-comparison th, .package-comparison td { text-align: start; padding: 24px 0; vertical-align: baseline; }
-.package-comparison th { font-weight: 600; }
-.package-comparison tr, .package-disclosures details { border-block-end: 1px solid color-mix(in oklab, var(--fg), transparent 75%); }
-.comparison-package { display: none; }
+.package-disclosures details { border-block-end: 1px solid color-mix(in oklab, var(--fg), transparent 75%); }
 .package-disclosures summary {
 	display: flex;
 	align-items: baseline;
@@ -79,21 +81,5 @@
 .package-disclosures details[open] summary::after { content: "−"; }
 .package-disclosures p { max-inline-size: 64ch; padding-block-end: 24px; }
 @media (min-width: 900px) {
-	.package-comparison th, .package-comparison td { padding-inline-end: 32px; }
-}
-@media (max-width: 899px) {
-	.package-comparison thead {
-		position: absolute;
-		inline-size: 1px;
-		block-size: 1px;
-		overflow: hidden;
-		clip-path: inset(50%);
-		white-space: nowrap;
-	}
-	.package-comparison, .package-comparison tbody { display: block; }
-	.package-comparison tr { display: grid; gap: 10px; padding-block: 24px; }
-	.package-comparison th, .package-comparison td { display: block; padding: 0; }
-	.package-comparison td { display: flex; justify-content: space-between; gap: 28px; }
-	.comparison-package { display: inline; font-weight: 600; }
-	.package-comparison td > :last-child { text-align: end; }
+	.package-card { grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) auto; }
 }

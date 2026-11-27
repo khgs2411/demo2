@@ -43,7 +43,5 @@
 
 .showcase-offers { --n: 0; --bg: var(--paper); --fg: var(--ink); background: var(--bg); color: var(--fg); padding: clamp(80px, 12vw, 160px) var(--gutter); max-inline-size: 1280px; margin-inline: auto; }
 .showcase-offers > h2 { font: 900 var(--text-h2)/var(--leading-display) var(--font-display); max-inline-size: 16ch; }
-.showcase-offers .line > * { min-inline-size: 0; }
-.showcase-offers .line h3 { font: inherit; }
 .showcase-addons { margin-block-start: 36px; display: flex; flex-wrap: wrap; gap: 10px 28px; align-items: baseline; font-size: var(--text-small); line-height: var(--leading-small); }
 .showcase-addons b { font: 500 var(--text-label)/var(--leading-small) var(--font-sans); letter-spacing: var(--tracking-label); opacity: .6; }

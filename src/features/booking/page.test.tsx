@@ -644,9 +644,9 @@ it("starts recovery only after an existing Google attempt settles", async () => 
 });
 
 it.each([
-	["site", "site-landing", "Landing page"],
-	["system", "system-studio", "Studio"],
-	["system-partner", "system-partner", "Partner"],
+	["site", "site-landing", "Landing page package"],
+	["system", "system-studio", "Studio package"],
+	["system-partner", "system-partner", "Partner package"],
 ])("selects %s at the booking boundary and shows its name on the summary", (link, id, name) => {
 	render(<BookingPage packageId={link} />);
 	const selected = screen.getByRole<HTMLInputElement>("radio", { checked: true });

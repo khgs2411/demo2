@@ -1,29 +1,28 @@
 import { useTranslation } from "react-i18next";
 import { openBooking } from "../../app/open-booking";
-import { LedgerRow } from "../../ui/ledger-row";
 import { Ticket } from "../../ui/ticket";
 import { getHeadlineOffers, serviceLines, type StudioPackage } from "./catalog";
+import { PackageBenefits, PackagePrice } from "./offer-details";
 
 export function PackageOfferLedger({ offers, emphasizeRecommended = false }: {
 	offers: readonly StudioPackage[]; emphasizeRecommended?: boolean;
 }) {
 	const { t } = useTranslation("packages");
 	return <div className="ledger">
-		{offers.map((entry, index) => {
+		{offers.map(entry => {
 			const name = t(`offers.${entry.id}.name`);
 			const mark = entry.recommended ? "recommended" : entry.mark;
 			const markClass = entry.recommended ? "package-mark package-mark-recommended" : "package-mark";
-			return <LedgerRow key={entry.id}
-				name={<h3>{name}{mark && <span className={markClass}>{t(mark)}</span>}</h3>}
-				price={<><bdi>{t(entry.priceKey)}</bdi><small>{t(`lines.${entry.line}.period`)}</small></>}
-				details={<>
-					<p>{t(`offers.${entry.id}.summary`)}</p>
-					{entry.hasAnchorNote && <p className="package-difference">{t(`offers.${entry.id}.difference`)}</p>}
-				</>}>
-				<Ticket stub={`№ 0${index + 1}`} tone={emphasizeRecommended && !entry.recommended ? "ghost" : "coral"}
+			return <article className="package-card" key={entry.id}>
+				<div>
+					<h3>{t("packageName", { name })}{mark && <span className={markClass}>{t(mark)}</span>}</h3>
+					<PackagePrice offer={entry} />
+				</div>
+				<PackageBenefits offer={entry} />
+				<Ticket stub="↗" tone={emphasizeRecommended && !entry.recommended ? "ghost" : "coral"}
 					aria-label={t("bookPackage", { name })}
 					onClick={() => openBooking({ packageId: entry.id })}>{t("book")}</Ticket>
-			</LedgerRow>;
+			</article>;
 		})}
 	</div>;
 }
@@ -32,7 +31,6 @@ export function PackageLedger() {
 	const { t } = useTranslation("packages");
 	return <>{serviceLines.map(line => <section className="package-line" key={line} aria-labelledby={`package-line-${line}`}>
 		<h2 id={`package-line-${line}`}>{t(`lines.${line}.name`)}</h2>
-		<p>{t(`lines.${line}.terms`)}</p>
 		<PackageOfferLedger offers={getHeadlineOffers(line)} emphasizeRecommended />
 	</section>)}</>;
 }

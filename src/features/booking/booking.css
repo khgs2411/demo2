@@ -32,14 +32,15 @@ main.booking-page h1 { font: 900 var(--text-h2)/var(--leading-display) var(--fon
 	font: 700 var(--text-title)/var(--leading-heading) var(--font-display);
 }
 .ledger { border-block-start: 1px solid var(--rule); }
-.row { display: grid; grid-template-columns: 26px 1fr auto; gap: 16px; align-items: baseline; padding-block: 20px; border-block-end: 1px solid var(--rule); cursor: pointer; }
+.row { --radio-column: 26px; --radio-gap: 16px; padding-block: 20px; border-block-end: 1px solid var(--rule); }
+.row .package-choice { display: grid; grid-template-columns: var(--radio-column) minmax(0, 1fr); gap: var(--radio-gap); align-items: baseline; cursor: pointer; }
 .row input { appearance: none; inline-size: 18px; block-size: 18px; border: 2px solid var(--ink); border-radius: 50%; translate: 0 3px; }
 .row input:checked { background: radial-gradient(circle, var(--coral) 45%, transparent 50%); border-color: var(--coral); }
-.row b { font: 700 var(--text-title)/var(--leading-heading) var(--font-display); }
-.row small { display: block; opacity: .65; margin-block-start: 4px; }
-.row .price { font: 500 var(--text-small)/var(--leading-small) var(--font-sans); text-align: end; }
-.row .price bdi { font: 900 var(--text-small)/var(--leading-display) var(--font-display); letter-spacing: var(--tracking-display); }
-.row .rec { letter-spacing: var(--tracking-label); color: var(--coral); }
+.row .package-choice b { font: 700 var(--text-title)/var(--leading-heading) var(--font-display); }
+.row .package-price { display: block; margin-block-start: 6px; font: 500 var(--text-small)/var(--leading-small) var(--font-sans); }
+.row .package-price bdi { font: 900 var(--text-small)/var(--leading-display) var(--font-display); letter-spacing: var(--tracking-display); }
+.row .package-benefits { margin-block-start: 10px; margin-inline-start: calc(var(--radio-column) + var(--radio-gap)); }
+.row .rec { display: block; font-weight: 600; letter-spacing: var(--tracking-label); }
 .addons { margin-block-start: 28px; }
 .addons legend { margin-block-end: 10px; }
 .check { font-weight: 500; display: flex; gap: 12px; align-items: center; padding-block: 8px; cursor: pointer; }
