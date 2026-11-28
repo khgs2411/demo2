@@ -8,7 +8,7 @@ import { ResetPass } from "../gate-passes";
 import { useTurnstile } from "../use-turnstile";
 import { forgotTransition, initialForgotState } from "./machine";
 import { readResetEmail, rememberResetEmail } from "./memory";
-import "../booking.css";
+
 
 export function ForgotPasswordPage() {
 	const { t, i18n } = useTranslation("passwordReset");
@@ -39,12 +39,12 @@ export function ForgotPasswordPage() {
 
 	const busy = state.step === "sending";
 	const notice = state.step === "editing" ? state.notice ?? (turnstile.status === "unavailable" ? "turnstile_unavailable" : null) : null;
-	return <main data-module="booking" className="booking-page account-page gate" ref={main}>
-		<section aria-busy={busy}>
+	return <main data-module="booking" className="inner-page password-page gate" ref={main}>
+		<div className="inner-wrap gate-layout"><section aria-busy={busy}>
 			{state.step === "sent" ? <>
 				<h1 tabIndex={-1}>{t("sentTitle")}</h1>
 				<p className="lede" role="status">{t("sent")}</p>
-				<div className="actions"><Ticket href="#/account" stub="→">{t("backToSignIn")}</Ticket></div>
+				<div className="actions"><Ticket href="#/account" stub="↩">{t("backToSignIn")}</Ticket></div>
 			</> : <>
 				<h1 tabIndex={-1}>{t("forgotTitle")}</h1><p className="lede">{t("forgotLede")}</p>
 				{notice && <p className="notice error" role="alert">{t(`requestMessages.${notice}`)}</p>}
@@ -52,14 +52,15 @@ export function ForgotPasswordPage() {
 					<fieldset className="fields" disabled={busy}>
 						<Input label={t("email")} name="email" value={email} onChange={event => setEmail(event.target.value)} type="email" dir="ltr" autoComplete="email" required />
 					</fieldset>
-					<div ref={turnstile.container} />
+					<div className="turnstile-host" ref={turnstile.container} />
 					<div className="actions">
-						<Ticket type="submit" stub="→" disabled={busy || turnstile.status !== "verified"}>{t(busy ? "loading" : "send")}</Ticket>
+						<Ticket type="submit" stub="1/3" disabled={busy || turnstile.status !== "verified"}>{t(busy ? "loading" : "send")}</Ticket>
 						<TextLink href="#/account">{t("backToSignIn")}</TextLink>
 					</div>
 				</form>
 			</>}
 		</section>
-		<ResetPass step={1} />
+		<ResetPass step={state.step === "sent" ? 2 : 1} />
+		</div>
 	</main>;
 }

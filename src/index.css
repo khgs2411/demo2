@@ -38,6 +38,7 @@
 	--duration-link: .3s;
 	--duration-ticket: .35s;
 	--duration-flip: .6s;
+	--duration-reveal: .4s; --duration-stamp: .5s; --duration-control: .25s;
 }
 
 html:lang(en) { --font-sans: "IBM Plex Sans", "IBM Plex Sans Hebrew", system-ui, sans-serif; }
@@ -245,3 +246,20 @@ small { font-size: var(--text-small); line-height: var(--leading-small); }
 .inner-page .switch { margin-block-start: 26px; font-size: .92rem; }
 .inner-page .booking-terms { white-space: pre-wrap; overflow-wrap: anywhere; }
 .inner-page .ticket-ghost { background: var(--sand); }
+
+.punch-hole { inline-size: var(--hole-size, 28px); block-size: var(--hole-size, 28px); border-radius: 50%; border: 1.5px dashed color-mix(in srgb, var(--ink) 45%, transparent); display: grid; place-items: center; font: 500 .75rem/1 var(--font-mono); flex: none; }
+.done > .punch-hole { border: 0; background: var(--paper); box-shadow: inset 0 2px 4px color-mix(in srgb, var(--ink) 45%, transparent); color: transparent; }
+.now > .punch-hole { border: 0; background: var(--coral); color: var(--ink); }
+.gate-layout .pass-numbered dl > div { grid-template-columns: 30px 1fr; gap: 3px 14px; align-items: center; }
+.pass-numbered .punch-hole { --hole-size: 26px; grid-row: span 2; }
+.pass-numbered :is(.done, .now) dt::before, .pass-numbered :is(.done, .now) dt::after { display: none; }
+.pass-numbered .done dd { opacity: .6; }
+.gate-layout .pass-numbered .pass-stamp {
+	inset: auto auto 8px calc(50% - 38px); inline-size: 76px; block-size: 76px; padding: 0;
+	display: grid; place-items: center; border-radius: 50%; border: 2px solid var(--ink); translate: none; rotate: -14deg;
+	background: var(--sand); box-shadow: 0 0 0 4px var(--sand), 0 0 0 5.5px var(--ink);
+	font: 900 1.1rem/1 var(--font-display); animation: pass-stamp var(--duration-stamp) var(--duration-reveal) var(--spring) both;
+}
+.shell-content .password-page h1 { font-size: clamp(2.2rem, 1.3rem + 3vw, 3.6rem); }
+.password-page .turnstile-host { margin-block-start: 22px; }
+@media (prefers-reduced-motion: reduce) { .gate-layout .pass-numbered .pass-stamp { animation: none; } }

@@ -483,7 +483,7 @@ it("clears mismatched passwords and keeps the SDK out of local validation", asyn
 	const inputs = fillPasswordChange(form, passwordCopy.en.fields, "different-password");
 	fireEvent.click(form.getByRole("button", { name: "Change password" }));
 
-	await form.findByText("The two passwords don't match.");
+	await form.findByText("The two passwords don’t match.");
 	expect(adapter.changePassword).not.toHaveBeenCalled();
 	for (const input of inputs) expect(input.value).toBe("");
 });

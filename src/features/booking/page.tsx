@@ -14,7 +14,7 @@ import { SlotStep } from "./slot-step";
 import { RequestedStep } from "./requested-step";
 import { SummaryTicket } from "./summary-ticket";
 import { RetryTicket } from "./retry-ticket";
-import "./book.css";
+import "./booking.css";
 
 export function BookingPage({ packageId }: { packageId?: string }) {
 	const { t, i18n } = useTranslation("booking");
@@ -61,7 +61,7 @@ export function BookingPage({ packageId }: { packageId?: string }) {
 	return <main className="inner-page book" data-module="booking" ref={main}>
 		<div className="inner-wrap book-layout"><section>
 			<ol className="booking-strip" aria-label={t("ticketHead")}>{stepLabels.map((key, index) => <li key={key} className={index < stepIndex ? "done" : index === stepIndex ? "now" : ""} aria-current={index === stepIndex ? "step" : undefined}>
-				<span className="hole" aria-hidden="true">{index + 1}</span><span>{t(key)}</span>
+				<span className="punch-hole" aria-hidden="true">{index + 1}</span><span>{t(key)}</span>
 			</li>)}</ol>
 			<div className="step" key={isSignup ? "signup_details" : view.step} aria-busy={view.step === "recovering_session" || view.step === "signing_in" || view.step === "signing_up" || view.step === "submitting" || view.step === "sending" || view.step === "signing_in_for_signup" || view.step === "checking_terms" || view.step === "accepting_terms" || profileBusy}>
 				{state.step === "failed" ? <><h1 tabIndex={-1}>{t(stepIndex === 1 ? "aTitle" : stepIndex === 2 ? "prTitle" : "sTitle")}</h1>
