@@ -4,6 +4,7 @@
 @media (min-width: 900px) { .package-intro { grid-template-columns: 1fr 1fr; } }
 .inner-page .package-explain h2 { font: 700 1.25rem/1.2 var(--font-display); letter-spacing: -.01em; }
 .package-explain p { color: var(--muted); margin-block-start: 8px; max-inline-size: 46ch; }
+.package-explain .link-arrow { display: inline-block; margin-block-start: 8px; }
 
 /* A service line */
 .package-line { padding-block: clamp(48px, 7vw, 88px) 0; }

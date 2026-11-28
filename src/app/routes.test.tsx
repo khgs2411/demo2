@@ -158,6 +158,33 @@ it("replaces the restored account entry after the Google sign-in callback", asyn
 });
 
 it.each([
+	["he", "עוד על ClassKit", "מה זה ClassKit?"],
+	["en", "More about ClassKit", "What is ClassKit?"],
+])("opens the home explanation from the packages explainer in %s", async (language, label, title) => {
+	await i18n.changeLanguage(language);
+	window.history.replaceState(null, "", "#/packages");
+	const scrollIntoView = vi.fn();
+	Object.defineProperty(Element.prototype, "scrollIntoView", { configurable: true, value: scrollIntoView });
+	try {
+		render(<Routes />);
+		const main = screen.getByRole("main");
+		const explainer = within(main).getByRole("heading", { name: title }).parentElement!;
+		const link = within(explainer).getByRole("link", { name: label });
+		expect(link.getAttribute("href")).toBe("#what-is-classkit");
+
+		fireEvent.click(link);
+		const section = await screen.findByRole("region", { name: title });
+		expect(section.id).toBe("what-is-classkit");
+		expect(section.previousElementSibling?.id).toBe("get");
+		expect(section.nextElementSibling?.id).toBe("packs");
+		expect(scrollIntoView.mock.instances).toContain(section);
+		expect(window.location.hash).toBe("#what-is-classkit");
+	} finally {
+		Reflect.deleteProperty(Element.prototype, "scrollIntoView");
+	}
+});
+
+it.each([
 	["en", "Studio", "Studio package", "Book a meeting about the Studio package"],
 	["he", "סטודיו", "חבילת סטודיו", "לקבוע פגישה על חבילת סטודיו"],
 ])("carries the package label from offers to booking in %s", async (language, offer, label, action) => {
