@@ -10,7 +10,8 @@ import { useRoute } from "./router";
 export function Header() {
 	const { t } = useTranslation("shell");
 	const studioAccess = getStudioAccess(useProductContext());
-	const home = useRoute()?.page === "showcase";
+	const route = useRoute();
+	const home = route?.page === "showcase";
 	return <header className={home ? "topline home-topline" : "topline"}><div className="chrome-wrap">
 		<a className="mark" href="#/">{t("brand")}</a>
 		<nav className="links" aria-label={t("navigation")}>
@@ -25,6 +26,6 @@ export function Header() {
 			</TextLink>}
 			<LanguageSwitch />
 		</div>
-		<Ticket href="#/book" stub={t("ticketNumber")} tone="ink" small className={home ? "home-ticket" : "inner-ticket"}>{t(home ? "homeBookMeeting" : "bookMeeting")}</Ticket>
+		{route?.page !== "booking" && <Ticket href="#/book" stub={t("ticketNumber")} tone="ink" small className={home ? "home-ticket" : "inner-ticket"}>{t(home ? "homeBookMeeting" : "bookMeeting")}</Ticket>}
 	</div></header>;
 }

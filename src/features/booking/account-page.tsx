@@ -106,7 +106,7 @@ export function AccountPage() {
 			{!revoked && auth.error && <p role="alert" className="notice error">{t(auth.error)}</p>}
 			{context.loading ? <><h1>{t("accTitle")}</h1><p role="status">{t("loading")}</p></> : signedOut ? <>
 				{passwordChange.signedOut && <p role="status">{t("passwordChange.outcomes.signed_out")}</p>}
-				<AccountStep product={context.product} loading={false} busy={auth.busy} signInOnly title={t("signIn")} description={t("accSignInLede")}
+				<AccountStep product={context.product} loading={false} busy={auth.busy} signInOnly title={t("signIn", { ns: "shell" })} description={t("accSignInLede")}
 					onPassword={(_method,email,password) => void authenticate(() => adapter.signIn(email,password))} onGoogle={() => void authenticate(() => adapter.signInWithGoogle())} />
 				<p className="switch"><TextLink href="#/book">{t("accBookToCreate")}</TextLink></p>
 			</> : noAccess ? <>

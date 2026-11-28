@@ -1,7 +1,6 @@
 import { catalog, getHeadlineOffers, type PackageEntry, type PackageId } from "./catalog";
 
 export { getHeadlineOffers, serviceLines } from "./catalog";
-export { PackageBenefits, PackagePrice } from "./offer-details";
 export type { AddonId, PackageId, ServiceLine, StudioPackage } from "./catalog";
 
 export function getBookingOptions() {

@@ -5,7 +5,7 @@ import { TextLink } from "../../ui/text-link";
 import { Ticket } from "../../ui/ticket";
 import { readResetEmail, rememberResetEmail } from "./password-reset/memory";
 
-export function AccountStep({ product, loading, busy, onPassword, onGoogle, onBack, signInOnly = false, title, description, email, emailReadOnly }: {
+export function AccountStep({ stepStub = "02", product, loading, busy, onPassword, onGoogle, onBack, signInOnly = false, title, description, email, emailReadOnly }: { stepStub?: string;
 	product: { auth_mode: string; email_password_enabled: boolean; google_oauth_enabled: boolean } | null;
 	loading: boolean; busy: boolean; onPassword: (method: "signIn" | "signUp", email: string, password: string) => void;
 	onGoogle: () => void; onBack?: () => void;
@@ -34,7 +34,7 @@ export function AccountStep({ product, loading, busy, onPassword, onGoogle, onBa
 						{signIn && <TextLink className="forgot-link" href="#/forgot-password" onClick={() => rememberResetEmail(emailField.current?.value ?? "")}>{t("forgotLink", { ns: "passwordReset" })}</TextLink>}</div>
 				</fieldset>
 				{canSignUp && <p className="switch">{!signIn && <>{t("haveAccount")} </>}<Ticket stub="" className="booking-link" disabled={busy} onClick={() => setSigningIn(!signingIn)}>{t(signIn ? "createAccount" : "signIn")}</Ticket></p>}
-				<div className="actions"><Ticket type="submit" stub="02" disabled={busy}>{busy ? t("loading") : t(signIn ? "signIn" : "createAccount")}</Ticket>
+				<div className="actions"><Ticket type="submit" stub={stepStub} disabled={busy}>{busy ? t("loading") : t(signIn ? "signIn" : "createAccount")}</Ticket>
 					{onBack && <Ticket stub="" className="booking-link" disabled={busy} onClick={onBack}>{t("back")}</Ticket>}</div>
 			</form>}
 			{!product?.email_password_enabled && !product?.google_oauth_enabled && <p role="status">{t("authUnavailable")}</p>}

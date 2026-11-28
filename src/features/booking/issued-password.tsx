@@ -14,10 +14,10 @@ export function IssuedPassword({ credentials }: { credentials: BookingCredential
 			setCopyStatus("copyFailed");
 		}
 	}
-	return <>
+	return <div className="issued">
 		<p>{t("savePassword")}</p>
-		<p><code className="issued-password" dir="ltr">{credentials.formatted}</code></p>
+		<code className="issued-password" dir="ltr">{credentials.formatted}</code>
 		<Ticket stub="" className="booking-link" onClick={() => void copy()}>{t("copyPassword")}</Ticket>
 		{copyStatus && <p role="status">{t(copyStatus)}</p>}
-	</>;
+	</div>;
 }

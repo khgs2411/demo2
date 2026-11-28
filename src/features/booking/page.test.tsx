@@ -329,7 +329,7 @@ it("restores OAuth only after the provider session is loaded and revalidates the
 	expect(fakeAdapter.loadSlots).not.toHaveBeenCalled();
 	context = { ...context, loading:false, session:{ access_token:"test", refresh_token:"test", token_type:"bearer", expires_in:3600, user:{ id:"visitor", app_metadata:{}, user_metadata:{}, aud:"authenticated", created_at:"2026-11-07" } } };
 	view.rerender(<BookingPage />);
-	await screen.findByText("The calendar isn't open yet.");
+	await screen.findByText("The calendar isn’t open yet.");
 	expect(fakeAdapter.loadSlots).toHaveBeenCalledOnce();
 });
 
@@ -445,7 +445,7 @@ it("finishes an existing account request after the same email returns from Googl
 
 it.each([
 	["en", "Send request", "Try again", "The terms of service are unavailable. Please try again later.", "We couldn't record your acceptance. Please try again.", "The terms of service have changed. Please read and accept them again."],
-	["he", "לשלוח בקשה", "ניסיון נוסף", "תנאי השירות אינם זמינים כרגע. כדאי לנסות שוב מאוחר יותר.", "לא הצלחנו לשמור את האישור. כדאי לנסות שוב.", "תנאי השירות השתנו. יש לקרוא ולאשר אותם שוב."],
+	["he", "לשלוח בקשה", "ניסיון נוסף", "תנאי השירות אינם זמינים כרגע. כדאי לנסות שוב מאוחר יותר.", "לא הצלחנו לשמור את האישור. כדאי לנסות שוב.", "תנאי השירות השתנו. צריך לקרוא ולאשר אותם שוב."],
 ])("retries terms load and acceptance and requires fresh consent after a publication change in %s", async (locale, sendLabel, retryLabel, loadError, acceptError, changedMessage) => {
 	await i18n.changeLanguage(locale);
 	const terms = { ...signedInTerms, locale };
@@ -537,7 +537,7 @@ it("retains the route package when a signed-in client visits a closed calendar",
 	fireEvent.click(screen.getByRole("button", { name: "Continue" }));
 	await screen.findByDisplayValue("Dana");
 	fireEvent.click(screen.getByRole("button", { name: "Continue" }));
-	await screen.findByText("The calendar isn't open yet.");
+	await screen.findByText("The calendar isn’t open yet.");
 	expect(fakeAdapter.saveProfile).toHaveBeenCalledWith(expect.objectContaining({ displayName: "Dana", businessName: "Dana Studio" }), expect.objectContaining({ packageId: "site-landing" }));
 	expect(screen.queryByRole("button", { name: "Send request" })).toBeNull();
 });

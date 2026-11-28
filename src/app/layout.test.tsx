@@ -69,3 +69,10 @@ it.each([
 	const link = within(screen.getByRole("contentinfo")).queryByRole("link", { name: "My requests" });
 	expect(link?.getAttribute("href") ?? null).toBe(requestsHref);
 });
+
+it("leaves booking without a second booking action in the header or dock", () => {
+	window.history.replaceState(null, "", "#/book");
+	render(<App />);
+	expect(screen.queryByRole("link", { name: i18n.t("bookMeeting") })).toBeNull();
+	expect(document.querySelector(".ticket-dock")).toBeNull();
+});

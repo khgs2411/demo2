@@ -122,7 +122,7 @@ it("takes a visitor signing in with a password on the account page to their stud
 		view.rerender(<Routes />);
 	};
 	const view = render(<Routes />);
-	expect(screen.getByRole("heading", { name: i18n.t("signIn", { ns: "booking" }) })).toBeDefined();
+	expect(screen.getByRole("heading", { name: i18n.t("signIn", { ns: "shell" }) })).toBeDefined();
 	fireEvent.change(screen.getByLabelText(i18n.t("email", { ns: "booking" })), { target: { value: "manager@example.test" } });
 	fireEvent.change(screen.getByLabelText(i18n.t("password", { ns: "booking" })), { target: { value: "test-password" } });
 	await act(async () => fireEvent.click(screen.getByRole("button", { name: i18n.t("signIn", { ns: "booking" }) })));
@@ -169,6 +169,6 @@ it.each([
 	window.location.hash = screen.getByRole("link", { name: action }).getAttribute("href")!;
 	const group = await screen.findByRole("radiogroup");
 	const selected = within(group).getByRole<HTMLInputElement>("radio", { checked: true });
-	expect(within(selected.labels![0]).getByText(label)).toBeDefined();
+	expect(within(selected.labels![0]).getByText(offer)).toBeDefined();
 	expect(within(screen.getByRole("complementary")).getByText(label)).toBeDefined();
 });

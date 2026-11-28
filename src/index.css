@@ -169,3 +169,44 @@ small { font-size: var(--text-small); line-height: var(--leading-small); }
 	overflow-wrap: normal;
 }
 .inner-page h2 { font: 900 clamp(2rem, 1.2rem + 2.8vw, 3.3rem)/1.06 var(--font-display); letter-spacing: var(--tracking-display); }
+
+.inner-page .lede { font-size: clamp(1.02rem, .96rem + .3vw, 1.18rem); color: var(--muted); max-inline-size: 42ch; margin-block-start: 14px; }
+.inner-page .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 24px; margin-block-start: 28px; }
+.inner-page .tag { display: inline-block; font: 500 .75rem/1.2 var(--font-sans); padding: 4px 8px; border-radius: 4px; background: rgb(141 181 150 / .32); white-space: nowrap; }
+.inner-page .tag.wait { background: rgb(242 179 61 / .38); }
+.inner-page .tag.off { background: rgb(26 24 20 / .07); color: var(--muted); }
+.inner-page .notice { padding: 12px 16px; border-radius: 12px; background: rgb(242 179 61 / .28); font-size: .92rem; max-inline-size: 46ch; margin-block-start: 18px; }
+.inner-page .notice.error { background: rgb(194 64 42 / .1); color: #8a2817; box-shadow: inset 3px 0 0 var(--status-error); }
+.inner-page:dir(rtl) .notice.error { box-shadow: inset -3px 0 0 var(--status-error); }
+.inner-page .notice.ok { background: rgb(141 181 150 / .28); }
+
+/* Forms: plain fields on the paper, no panels */
+.inner-page .fields { display: grid; gap: 18px; border: 0; max-inline-size: 440px; margin-block-start: 26px; }
+.inner-page .field { display: grid; gap: 6px; }
+.inner-page .field > span { font: 500 .875rem/1.3 var(--font-sans); }
+.inner-page .field .input { inline-size: 100%; min-block-size: 50px; padding: 12px 14px; border-radius: 12px; border: 1.5px solid rgb(26 24 20 / .2); background: var(--surface); transition: border-color .2s; }
+.inner-page .field .input:hover { border-color: rgb(26 24 20 / .4); }
+.inner-page .field .input:focus-visible { outline: 2px solid var(--coral); outline-offset: 1px; border-color: var(--ink); }
+.inner-page .field .input[dir="ltr"] { text-align: start; }
+.inner-page:dir(rtl) .field .input[dir="ltr"] { text-align: right; }
+.inner-page .field .hint { font-size: .8rem; color: var(--muted); }
+.inner-page .field .row-between { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.inner-page .check { display: flex; gap: 10px; align-items: flex-start; font-size: .95rem; cursor: pointer; }
+.inner-page .check input { inline-size: 20px; block-size: 20px; margin-block-start: 2px; accent-color: var(--ink); flex: none; }
+.inner-page .or { display: flex; align-items: center; gap: 14px; font-size: .84rem; color: var(--muted); max-inline-size: 440px; margin-block: 22px 0; }
+.inner-page .or::before, .inner-page .or::after { content: ""; flex: 1; border-block-start: 2px dashed var(--perf); }
+.inner-page .booking-google { margin-block-start: 26px; }
+.inner-page .booking-google .main { display: inline-flex; align-items: center; gap: 10px; }
+.inner-page .booking-google svg { inline-size: 18px; block-size: 18px; }
+
+
+.inner-page .ticket:not(.ticket-small) { --notch: 8px; --ticket-main-padding: 14px 22px; --ticket-stub-padding: 14px; --ticket-size: 1rem; }
+.inner-page .ticket:disabled { opacity: .4; transform: none; }
+.inner-page .booking-google { background: var(--sand); }
+.inner-page .hint { font-size: .8rem; color: var(--muted); }
+.inner-page .forgot-link { font-size: .84rem; }
+.inner-page .booking-link { font-size: inherit; background: none; mask: none; text-decoration: underline; text-underline-offset: 6px; }
+.inner-page .booking-link .main { padding: 0; }
+.inner-page .booking-link .stub { display: none; }
+.inner-page .booking-link:hover { transform: none; }
+.inner-page .booking-link:focus-visible { outline: 2px solid var(--ink); }

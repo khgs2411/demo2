@@ -1,52 +1,11 @@
-@keyframes booking-rise { from { opacity: 0; transform: translateY(10px); } }
 .shell-content > main.booking-page { display: grid; justify-content: normal; padding: 96px var(--gutter) 80px; }
 main.booking-page h1 { font: 900 var(--text-h2)/var(--leading-display) var(--font-display); letter-spacing: 0; max-inline-size: 14ch; }
 .booking-page {
  --rule: color-mix(in srgb, var(--ink), transparent 82%);
  color: var(--ink); background: var(--paper); font: 400 var(--text-body)/var(--leading-body) var(--font-sans);
  .booking-label { font: 500 var(--text-label)/var(--leading-small) var(--font-sans); letter-spacing: var(--tracking-label); text-transform: uppercase; }
-/* layout: the step on one side, the ticket on the other */
-& { display: grid; gap: 40px; padding: 18px var(--gutter) 80px; align-items: start; }
-@media (min-width: 1000px) { & { grid-template-columns: minmax(0, 1fr) 380px; column-gap: clamp(40px, 6vw, 110px); } .summary { position: sticky; inset-block-start: 24px; } }
-
-/* the four steps on one rule, numbered, not pills */
-.steps { display: grid; grid-template-columns: repeat(4, 1fr); border-block-start: 2px solid var(--ink); margin-block-end: 44px; }
-.steps.guest-steps { grid-template-columns: repeat(3, 1fr); }
-.steps li { list-style: none; padding-block-start: 10px; display: flex; gap: 8px; opacity: .4; font: 500 var(--text-label)/var(--leading-small) var(--font-sans); letter-spacing: var(--tracking-label); position: relative; }
-.steps li::before { content: ""; position: absolute; inset-block-start: -2px; inset-inline: 0; block-size: 2px; background: var(--coral); transform: scaleX(0); transform-origin: right; transition: transform var(--duration-flip) var(--ease); }
-&:dir(ltr) .steps li::before { transform-origin: left; }
-.steps li.done, .steps li.now { opacity: 1; }
-.steps li.done::before, .steps li.now::before { transform: scaleX(1); }
-.steps { padding: 0; }
-
 .lede { font-size: var(--text-lead); margin-block: 14px 34px; max-inline-size: 46ch; opacity: .78; }
-.step { display: none; }
-.step.shown { display: block; animation: booking-rise var(--duration-flip) var(--ease); }
-
 .actions { display: flex; align-items: center; gap: 22px; margin-block-start: 34px; flex-wrap: wrap; }
-
-/* package step: ledger rows with a radio, same rules as #/packages */
-.booking-package-line + .booking-package-line { margin-block-start: 32px; }
-.booking-package-line h2 {
-	margin-block-end: 10px;
-	font: 700 var(--text-title)/var(--leading-heading) var(--font-display);
-}
-.ledger { border-block-start: 1px solid var(--rule); }
-.row { --radio-column: 26px; --radio-gap: 16px; padding-block: 20px; border-block-end: 1px solid var(--rule); }
-.row .package-choice { display: grid; grid-template-columns: var(--radio-column) minmax(0, 1fr); gap: var(--radio-gap); align-items: baseline; cursor: pointer; }
-.row input { appearance: none; inline-size: 18px; block-size: 18px; border: 2px solid var(--ink); border-radius: 50%; translate: 0 3px; }
-.row input:checked { background: radial-gradient(circle, var(--coral) 45%, transparent 50%); border-color: var(--coral); }
-.row .package-choice b { font: 700 var(--text-title)/var(--leading-heading) var(--font-display); }
-.row .package-price { display: block; margin-block-start: 6px; font: 500 var(--text-small)/var(--leading-small) var(--font-sans); }
-.row .package-price bdi { font: 900 var(--text-small)/var(--leading-display) var(--font-display); letter-spacing: var(--tracking-display); }
-.row .package-benefits { margin-block-start: 10px; margin-inline-start: calc(var(--radio-column) + var(--radio-gap)); }
-.row .rec { display: block; font-weight: 600; letter-spacing: var(--tracking-label); }
-.addons { margin-block-start: 28px; }
-.addons legend { margin-block-end: 10px; }
-.check { font-weight: 500; display: flex; gap: 12px; align-items: center; padding-block: 8px; cursor: pointer; }
-.check input { appearance: none; inline-size: 16px; block-size: 16px; border: 2px solid var(--ink); }
-.check input:checked { background: var(--ink); box-shadow: inset 0 0 0 3px var(--paper); }
-
 /* fields: underlines, like the request form in the admin demo */
 .fields { display: grid; gap: 22px; max-inline-size: 460px; }
 .field { display: grid; gap: 4px; }
@@ -59,72 +18,7 @@ main.booking-page h1 { font: 900 var(--text-h2)/var(--leading-display) var(--fon
 .switch { margin-block-start: 18px; font-size: var(--text-small); line-height: var(--leading-small); }
 .error { color: var(--status-error); font: 500 var(--text-small)/var(--leading-small) var(--font-sans); }
 
-/* slot step: a week as columns of start times. no durations, no end times */
-.week-nav { display: flex; align-items: baseline; justify-content: space-between; margin-block-end: 16px; gap: 16px; }
-.week-nav .range { font: 700 var(--text-title)/var(--leading-heading) var(--font-display); }
-.week-nav button { font: 500 var(--text-label)/var(--leading-small) var(--font-sans); letter-spacing: var(--tracking-label); }
-.week-nav button[disabled] { opacity: .3; }
-.week { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border-block-start: 2px solid var(--ink); }
-.day { border-inline-start: 1px solid var(--rule); padding: 12px 10px 18px; min-block-size: 280px; }
-.day:last-child { border-inline-start: 0; }
-.times { display: grid; gap: 4px; }
-.time { text-align: start; font: 500 var(--text-small)/var(--leading-small) var(--font-sans); padding: 9px 8px; border: 1.5px solid transparent; transition: border-color var(--duration-ticket), background var(--duration-ticket); }
-.time:hover { border-color: var(--ink); }
-.time.picked { background: var(--ink); color: var(--paper); }
-.time .mine { display: block; font-size: var(--text-label); letter-spacing: var(--tracking-label); margin-block-start: 4px; color: var(--coral); }
-.day .none { font: 500 var(--text-label)/var(--leading-small) var(--font-sans); opacity: .4; }
-.tz { margin-block-start: 14px; font: 500 var(--text-label)/var(--leading-small) var(--font-sans); opacity: .6; }
 .notice { border-inline-start: 3px solid var(--status-error); padding: 4px 14px; margin-block-end: 18px; }
-/* phones: day picker row, then one day's times */
-.days-row { display: none; }
-@media (max-width: 719px) {
-	.week { display: block; border: 0; }
-	.day { display: none; border: 0; padding: 0; min-block-size: 0; }
-	.day.active { display: block; }
-	.times { grid-template-columns: repeat(3, 1fr); }
-	.time { text-align: center; border-color: var(--rule); }
-	.days-row { display: grid; grid-template-columns: repeat(5, 1fr); border-block-start: 2px solid var(--ink); margin-block-end: 18px; }
-	.days-row button { padding: 10px 0; display: grid; gap: 2px; justify-items: center; font: 500 var(--text-label)/var(--leading-small) var(--font-sans); letter-spacing: var(--tracking-label); border-block-end: 3px solid transparent; }
-	.days-row button b { font: 700 var(--text-title)/var(--leading-heading) var(--font-display); }
-	.days-row button.active { border-color: var(--coral); }
-}
-
-/* empty: templates not set up yet */
-.closed { margin-block-start: 28px; border-block: 2px solid var(--ink); padding-block: 28px; max-inline-size: 520px; }
-.closed b { font: 700 var(--text-title)/var(--leading-heading) var(--font-display); display: block; margin-block-end: 6px; }
-
-/* the summary ticket. it fills as the visitor goes, and becomes the request */
-.summary { --notch: 16px; background: var(--coral); color: var(--ink); padding: 26px 26px 0; position: relative;
-	-webkit-mask: radial-gradient(circle var(--notch) at 0 calc(100% - 92px), transparent 97%, var(--ink)) 0 0 / 51% 100% no-repeat, radial-gradient(circle var(--notch) at 100% calc(100% - 92px), transparent 97%, var(--ink)) 100% 0 / 51% 100% no-repeat;
-	mask: radial-gradient(circle var(--notch) at 0 calc(100% - 92px), transparent 97%, var(--ink)) 0 0 / 51% 100% no-repeat, radial-gradient(circle var(--notch) at 100% calc(100% - 92px), transparent 97%, var(--ink)) 100% 0 / 51% 100% no-repeat; }
-.summary header { display: flex; justify-content: space-between; margin-block-end: 18px; }
-.summary dl { display: grid; }
-.summary dl div { display: grid; gap: 2px; padding-block: 12px; border-block-end: 1.5px solid color-mix(in srgb, var(--ink), transparent 72%); }
-.summary dt { font: 500 var(--text-label)/var(--leading-small) var(--font-sans); letter-spacing: var(--tracking-label); opacity: .7; }
-.summary dd { font-weight: 600; min-block-size: 1.5em; }
-.summary dd.empty { opacity: .45; font-weight: 500; }
-.summary dd .addons-line { display: block; font: 500 var(--text-label)/var(--leading-small) var(--font-sans); opacity: .8; }
-.summary .tear { margin-block-start: 26px; border-block-start: 2px dashed color-mix(in srgb, var(--ink), transparent 55%); display: flex; align-items: center; justify-content: space-between; block-size: 92px; }
-.summary .status { font: 500 var(--text-label)/var(--leading-small) var(--font-sans); letter-spacing: var(--tracking-label); }
-.summary .num { font: 900 var(--text-title)/var(--leading-display) var(--font-display); overflow-wrap: anywhere; max-inline-size: 60%; text-align: end; }
-.stamp { position: absolute; inset-block-start: 42%; inset-inline-start: 50%; translate: 50% -50%; rotate: -9deg; border: 3px solid var(--ink); padding: 8px 14px; font: 500 var(--text-small)/var(--leading-small) var(--font-sans); letter-spacing: var(--tracking-label); text-align: center; opacity: 0; scale: 1.6; transition: opacity var(--duration-ticket), scale var(--duration-flip) var(--ease); background: color-mix(in srgb, var(--coral), var(--paper) 15%); }
-&:dir(ltr) .stamp { translate: -50% -50%; }
-.requested .stamp { opacity: 1; scale: 1; }
-@media (max-width: 999px) {
-	.summary { order: -1; padding: 16px 18px 0; --notch: 12px;
-		-webkit-mask: radial-gradient(circle var(--notch) at 0 calc(100% - 52px), transparent 97%, var(--ink)) 0 0 / 51% 100% no-repeat, radial-gradient(circle var(--notch) at 100% calc(100% - 52px), transparent 97%, var(--ink)) 100% 0 / 51% 100% no-repeat;
-		mask: radial-gradient(circle var(--notch) at 0 calc(100% - 52px), transparent 97%, var(--ink)) 0 0 / 51% 100% no-repeat, radial-gradient(circle var(--notch) at 100% calc(100% - 52px), transparent 97%, var(--ink)) 100% 0 / 51% 100% no-repeat; }
-	.summary header { margin-block-end: 4px; }
-	.summary dl { grid-template-columns: 1fr 1fr; column-gap: 14px; }
-	.summary dl div.hide-sm { display: none; }
-	.summary .tear { block-size: 52px; margin-block-start: 12px; }
-}
-
-/* done */
-.done-actions { display: flex; gap: 26px; align-items: center; flex-wrap: wrap; margin-block-start: 30px; }
-.next-list { margin-block-start: 36px; border-block-start: 1px solid var(--rule); max-inline-size: 520px; padding: 0; }
-.next-list li { list-style: none; display: grid; grid-template-columns: 40px 1fr; padding-block: 14px; border-block-end: 1px solid var(--rule); }
-.next-list li span { font: 500 var(--text-label)/var(--leading-small) var(--font-sans); opacity: .55; }
 
 /* #/account: my requests, a ledger with status in the machine voice */
 .account-columns { display: grid; align-items: start; gap: 56px; }
@@ -151,33 +45,18 @@ main.booking-page h1 { font: 900 var(--text-h2)/var(--leading-display) var(--fon
 
 }
 .booking-page {
- .summary { align-self: start; }
  fieldset { border: 0; padding: 0; min-inline-size: 0; }
  .ledger { margin-block-start: 0; }
  .ticket:disabled { opacity: .35; transform: none; }
  .ticket:where(:not(.ticket-small)) .main { padding: 16px 22px; }
- .booking-link, .time, .day-tab { background: transparent; mask: none; -webkit-mask: none; }
- .booking-link { font-size: inherit; font-weight: 500; text-decoration: underline; text-underline-offset: 4px; }
+ .booking-link { background: transparent; mask: none; font-size: inherit; font-weight: 500; text-decoration: underline; text-underline-offset: 4px; }
  .booking-link .main { padding: 0; }
- .booking-link .stub, .time .stub, .day-tab .stub { display: none; }
- .week { grid-template-columns: repeat(var(--days, 5), minmax(0, 1fr)); }
- .day h2, .booking-terms-heading { font: 500 var(--text-small)/var(--leading-small) var(--font-sans); margin-block-end: 14px; }
- .day h2 span { display: block; font: 500 var(--text-label)/var(--leading-small) var(--font-sans); opacity: .55; letter-spacing: var(--tracking-label); }
- .time { display: block; inline-size: 100%; }
- .time .main { display: block; padding: 0; }
- .time.picked { background: var(--ink); color: var(--paper); }
- .time:disabled { text-decoration: line-through; }
- .day-tab { justify-content: center; }
- .day-tab .main { padding: 0; display: grid; gap: 2px; }
+ .booking-link .stub { display: none; }
  .booking-google { inline-size: 100%; max-inline-size: 520px; }
  .booking-google .main { display: flex; gap: 14px; flex: 1; }
  .booking-google svg { flex: none; }
  .field > span { font: 500 var(--text-label)/var(--leading-small) var(--font-sans); letter-spacing: var(--tracking-label); text-transform: uppercase; }
- .actions, .done-actions { row-gap: 18px; }
  .status, .when { overflow-wrap: anywhere; }
- @media (min-width: 1000px) { .summary { inset-block-start: 96px; } }
- @media (max-width: 719px) { .day h2 { display: none; } .week-nav .range { text-align: center; } }
- @media (prefers-reduced-motion: reduce) { .step { animation: none; } .steps li::before, .stamp, .time { transition: none; } }
 }
 
 .booking-page .booking-terms { white-space: pre-wrap; overflow-wrap: anywhere; }

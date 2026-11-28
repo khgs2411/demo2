@@ -169,8 +169,8 @@ export const en = {
 		recommended: "Recommended",
 		liveInSevenDays: "Live in 7 days",
 		lines: {
-			system: { name: "Website + ClassKit", payment: "a month for your website and app. You sign up for at least 3 months and pay for the first month up front.", terms: "A monthly price for your website and app. You sign up for at least 3 months and pay for the first month up front." },
-			site: { name: "Just a website", payment: "to build your website, paid once. You pay separately each month for your web address and keeping the site online. The cost depends on the address.", terms: "One payment to build your website. You pay separately each month for your web address and keeping the site online. The cost depends on the address." },
+			system: { name: "Website + ClassKit", terms: "A monthly price for your website and app. You sign up for at least 3 months and pay for the first month up front." },
+			site: { name: "Just a website", terms: "One payment to build your website. You pay separately each month for your web address and keeping the site online. The cost depends on the address." },
 		},
 		offers: {
 			"system-basic": { name: "Basic", price: "₪150" },
@@ -343,6 +343,39 @@ export const en = {
 		signInDescription: "Sign in to manage business meetings.",
 	},
 	booking: {
+		lineTerms: {
+			"system": "Monthly, 3-month minimum",
+			"site": "Paid once"
+		},
+		pricePeriod: {
+			"system": "a month",
+			"site": "once"
+		},
+		benefits: {
+			"system-basic": [
+				"A website your customers see, and an app for your customers and appointments.",
+				"1 hour of help a month. Change requests answered within 5 business days."
+			],
+			"system-studio": [
+				"Everything in Basic.",
+				"3 hours of help a month. Answers within 2 business days.",
+				"An AI assistant makes your change requests and puts them on your site."
+			],
+			"system-partner": [
+				"Everything in Studio.",
+				"8 hours of help a month. Same-day answers.",
+				"One AI assistant included, and a meeting every 3 months."
+			],
+			"site-quick": [
+				"One page with your content on a ready-made design. 1 round of changes."
+			],
+			"site-landing": [
+				"A one-page site designed for your business. Help with the words, 2 rounds of changes."
+			],
+			"site-business": [
+				"Up to 5 pages in Hebrew and English. Help with the words, 3 rounds of changes, 30 days of fixes."
+			]
+		},
 		signupTitle: "Your details for the meeting.",
 		acceptTerms: "I accept the terms of service",
 		termsTitle: "Terms of service",
@@ -376,7 +409,7 @@ export const en = {
 		next: "Continue",
 		back: "Back",
 		aTitle: "First, who are you?",
-		aLede: "Your account opens in ClassKit, the same system you'd get. That's also how I see your request.",
+		aLede: "Your account opens in ClassKit, the same app you’d get. That’s how I see your request.",
 		google: "Continue with Google",
 		or: "or with email",
 		email: "Email",
@@ -393,16 +426,16 @@ export const en = {
 		website: "Current website",
 		optional: "Optional",
 		sTitle: "When suits you?",
-		sLede: "Pick a start time. You can request a time someone else already asked for. I'll confirm it or suggest another.",
-		prevWeek: "← Previous week",
-		nextWeek: "Next week →",
+		sLede: "Pick a start time. You can ask for a time someone else already asked for: I’ll confirm it or suggest another.",
+		prevWeek: "Previous week",
+		nextWeek: "Next week",
 		tz: "Times are in Israel time.",
 		send: "Send request",
 		slotFull: "That time just filled up. The calendar is refreshed; pick another time.",
-		closedTitle: "The calendar isn't open yet.",
+		closedTitle: "The calendar isn’t open yet.",
 		closedBody: "The first times open soon. Come back any time; your choices are saved.",
 		dTitle: "Request sent.",
-		dLede: "I'll confirm the time or suggest another. The status updates here and in your account.",
+		dLede: "I’ll confirm the time or suggest another. The status updates here and in your account.",
 		n1: "I receive your request with the details you filled in.",
 		n2: "I confirm the time, or suggest another.",
 		n3: "We meet, and build what you need together.",
@@ -451,8 +484,8 @@ export const en = {
 		tWhen: "Time",
 		tFor: "For",
 		draft: "Draft",
-		requestedStatus: "REQUESTED · awaiting confirmation",
-		stamp: "SENT",
+		requestedStatus: "Awaiting confirmation",
+		stamp: "Sent",
 		picked: "Picked",
 		noSlots: "No times",
 		loading: "Loading…",

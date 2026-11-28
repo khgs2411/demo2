@@ -14,7 +14,7 @@ import { SlotStep } from "./slot-step";
 import { RequestedStep } from "./requested-step";
 import { SummaryTicket } from "./summary-ticket";
 import { RetryTicket } from "./retry-ticket";
-import "./booking.css";
+import "./book.css";
 
 export function BookingPage({ packageId }: { packageId?: string }) {
 	const { t, i18n } = useTranslation("booking");
@@ -41,15 +41,16 @@ export function BookingPage({ packageId }: { packageId?: string }) {
 	const selection = "selection" in view ? view.selection : draft;
 	const isSignup = view.step === "signup_details" || view.step === "sending";
 	const showsTerms = isSignedInTermsState(view) && (view.step !== "checking_terms" || view.termsChanged);
-	const guestSteps = isSignup || (view.step === "choosing_slot" && view.userId === null)
+	const guestSteps = (view.step === "choosing_package" && flow.canBookAsGuest) || isSignup || (view.step === "choosing_slot" && view.userId === null)
 		|| (view.step === "requested" && !!view.credentials) || view.step === "signup_password";
 	const stepLabels = guestSteps ? ["sPackage", "sSlot", "sProfile"] : ["sPackage", "sAccount", "sProfile", "sSlot"];
 	const isAccount = view.step === "needs_account" || view.step === "signing_up" || view.step === "signing_in"
 		|| view.step === "recovering_session" || view.step === "session_recovery_failed"
 		|| view.step === "resuming_signup" || view.step === "signing_in_for_signup";
 	const stepIndex = guestSteps
-		? view.step === "choosing_slot" ? 1 : isSignup ? 2 : 3
+		? view.step === "choosing_package" ? 0 : view.step === "choosing_slot" ? 1 : isSignup ? 2 : 3
 		: view.step === "choosing_package" ? 0 : isAccount ? 1 : view.step === "completing_profile" ? 2 : view.step === "requested" ? 4 : 3;
+	const stepStub = `${Math.min(stepIndex + 1, stepLabels.length)}/${stepLabels.length}`;
 	const profileBusy = view.step === "completing_profile" && (view.saving || (!editedProfile && prefill === undefined));
 	const slot = view.step === "requested" || isSignup ? view.slot
 		: "continuation" in view ? view.continuation.slot
@@ -57,26 +58,26 @@ export function BookingPage({ packageId }: { packageId?: string }) {
 				: "slots" in view ? view.slots.find(slot => slot.id === view.selection.slotId) : undefined;
 	useEffect(() => { main.current?.querySelector<HTMLElement>("h1")?.focus(); }, [view.step]);
 	useEffect(() => { saveBookingChoice(selection); }, [selection]);
-	return <main className="booking-page book" data-module="booking" ref={main}>
-		<section>
-			<ol className={guestSteps ? "steps guest-steps" : "steps"} aria-label={t("ticketHead")}>{stepLabels.map((key, index) => <li key={key} className={index < stepIndex ? "done" : index === stepIndex ? "now" : ""} aria-current={index === stepIndex ? "step" : undefined}>
-				<span aria-hidden="true">0{index + 1}</span><span>{t(key)}</span>
+	return <main className="inner-page book" data-module="booking" ref={main}>
+		<div className="inner-wrap book-layout"><section>
+			<ol className="booking-strip" aria-label={t("ticketHead")}>{stepLabels.map((key, index) => <li key={key} className={index < stepIndex ? "done" : index === stepIndex ? "now" : ""} aria-current={index === stepIndex ? "step" : undefined}>
+				<span className="hole" aria-hidden="true">{index + 1}</span><span>{t(key)}</span>
 			</li>)}</ol>
-			<div className="step shown" key={isSignup ? "signup_details" : view.step} aria-busy={view.step === "recovering_session" || view.step === "signing_in" || view.step === "signing_up" || view.step === "submitting" || view.step === "sending" || view.step === "signing_in_for_signup" || view.step === "checking_terms" || view.step === "accepting_terms" || profileBusy}>
+			<div className="step" key={isSignup ? "signup_details" : view.step} aria-busy={view.step === "recovering_session" || view.step === "signing_in" || view.step === "signing_up" || view.step === "submitting" || view.step === "sending" || view.step === "signing_in_for_signup" || view.step === "checking_terms" || view.step === "accepting_terms" || profileBusy}>
 				{state.step === "failed" ? <><h1 tabIndex={-1}>{t(stepIndex === 1 ? "aTitle" : stepIndex === 2 ? "prTitle" : "sTitle")}</h1>
 					<p role="alert" className="notice error">{t(`messages.${state.reason === "redirect_storage" ? "redirect_storage" : `${state.operation}_failed`}`)}</p>
 					<RetryTicket onClick={() => flow.send({ type:"retry_requested" })} /></> : <>
-					{view.step === "choosing_package" && <PackageStep selection={draft} onChange={setDraft} onContinue={() => flow.choosePackage(draft)} />}
+					{view.step === "choosing_package" && <PackageStep stepStub={stepStub} selection={draft} onChange={setDraft} onContinue={() => flow.choosePackage(draft)} />}
 					{isAccount && <>
 						{"continuation" in view && view.continuation && <p role="alert" className="notice">
 							{t(view.continuation.kind === "book" ? "signupMessages.account_exists" : "signupMessages.account_created")}
 						</p>}
-						<AccountStep signInOnly email={"email" in view ? view.email : undefined} emailReadOnly={"continuation" in view && Boolean(view.continuation)} product={context.product} loading={context.loading} busy={view.step !== "needs_account" && view.step !== "resuming_signup" && view.step !== "session_recovery_failed"}
+						<AccountStep stepStub={stepStub} signInOnly email={"email" in view ? view.email : undefined} emailReadOnly={"continuation" in view && Boolean(view.continuation)} product={context.product} loading={context.loading} busy={view.step !== "needs_account" && view.step !== "resuming_signup" && view.step !== "session_recovery_failed"}
 						onPassword={(...args) => void flow.auth(...args)} onGoogle={() => void flow.google()} onBack={() => flow.send({ type:"account_back" })} />
 					</>}
-					{isSignup && <SignupStep flow={flow} draft={signup} onChange={setSignup} />}
-					{showsTerms && <SignedInTermsStep state={view} send={flow.send} />}
-					{view.step === "completing_profile" && <ProfileStep profile={profile} onChange={setProfile} onSubmit={() => { setProfile(profile); void flow.saveProfile(profile); }} busy={Boolean(profileBusy)} />}
+					{isSignup && <SignupStep stepStub={stepStub} flow={flow} draft={signup} onChange={setSignup} />}
+					{showsTerms && <SignedInTermsStep stepStub={stepStub} state={view} send={flow.send} />}
+					{view.step === "completing_profile" && <ProfileStep stepStub={stepStub} profile={profile} onChange={setProfile} onSubmit={() => { setProfile(profile); void flow.saveProfile(profile); }} busy={Boolean(profileBusy)} />}
 					{(view.step === "choosing_slot" || view.step === "submitting" || (view.step === "checking_terms" && !showsTerms)) && <SlotStep flow={flow} timeZone={timeZone} />}
 					{view.step === "signup_password" && <>
 						<h1 tabIndex={-1}>{t(view.next.step === "choosing_slot" ? "sTitle" : "signIn")}</h1>
@@ -91,5 +92,6 @@ export function BookingPage({ packageId }: { packageId?: string }) {
 			</div>
 		</section>
 		<SummaryTicket selection={selection} profile={profile} slot={slot} registration={view.step === "requested" ? view.registration : undefined} timeZone={timeZone} />
+		</div>
 	</main>;
 }

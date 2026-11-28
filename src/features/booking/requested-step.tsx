@@ -24,7 +24,7 @@ export function RequestedStep({ flow }: { flow: ReturnType<typeof useBooking> })
 		{requests.state.step === "ready" && requests.state.cancellationFailed && <p role="alert" className="notice error">{t("cancelFailed")}</p>}
 		{requests.state.step === "failed" && <p role="alert" className="notice error">{t("messages.slots_failed")}</p>}
 		{requests.state.step === "signed_out" && <p role="status">{t("messages.auth_failed")}</p>}
-		<div className="done-actions"><Ticket href="#/account" stub={`№ ${state.registration.id}`}>{t("myRequests")}</Ticket>
+		<div className="actions"><Ticket href="#/account" stub={`№ ${state.registration.id}`}>{t("myRequests")}</Ticket>
 			{request?.canCancelRegistration && <Ticket stub="" className="booking-link" disabled={requests.state.step === "ready" && requests.state.cancellingId !== null} onClick={() => void requests.cancel(state.registration.id)}>{t("cancel")}</Ticket>}
 			{requests.state.step === "failed" && <RetryTicket className="booking-link" onClick={() => void requests.refresh()} />}
 		</div>
