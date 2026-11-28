@@ -12,7 +12,7 @@ export const en = {
 		myAccount: "My account",
 		brand: "Topsyde Studios",
 		sample: { kicker: "ClassKit", meeting: "Business meeting", request: "Request", name: "Name", log: "agent ▸ idle", book: "Book a meeting", demo: "See it work", ticketNumber: "№ 01" },
-		description: "Websites and systems built with ClassKit. Choose a package and book a business meeting.",
+		description: "Websites with ClassKit for businesses that run classes and appointments. Choose a package and book a meeting.",
 		credit: "Made by Topsyde Studios",
 		whatYouGet: "What you get",
 		homeBookMeeting: "Book a meeting",

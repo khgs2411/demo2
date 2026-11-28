@@ -12,7 +12,7 @@ export const he = {
 		myAccount: "החשבון שלי",
 		brand: "Topsyde Studios",
 		sample: { kicker: "ClassKit", meeting: "פגישה עסקית", request: "בקשה", name: "שם", log: "agent ▸ idle", book: "קביעת פגישה", demo: "לראות את זה עובד", ticketNumber: "№ 01" },
-		description: "בניית אתרים ומערכות עם ClassKit. בחרו חבילה וקבעו פגישה עסקית.",
+		description: "אתרים עם ClassKit לעסקים שמנהלים שיעורים ותורים. בוחרים חבילה וקובעים פגישה.",
 		credit: "Made by Topsyde Studios",
 		whatYouGet: "מה מקבלים",
 		homeBookMeeting: "לקבוע פגישה",
