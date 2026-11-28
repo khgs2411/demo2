@@ -7,7 +7,7 @@
 .account-page .req {
 	--date-width: 96px; --notch: 10px; --tear-position: var(--date-width);
 	display: grid; grid-template-columns: var(--date-width) minmax(0, 1fr);
-	background: var(--surface); border-radius: 16px; transition: background var(--duration-ticket);
+	background: var(--surface); border-radius: 16px; mask: var(--tear-across-mask); transition: background var(--duration-ticket);
 }
 .account-page .req:dir(rtl) { --tear-position: calc(100% - var(--date-width)); }
 .account-page .req .date { display: grid; place-content: center; text-align: center; gap: 2px; padding: 16px 8px; border-inline-end: 2px dashed var(--perf); margin-block: 12px; }

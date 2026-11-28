@@ -46,7 +46,7 @@ function MonthlyPasses({ offers }: { offers: readonly StudioPackage[] }) {
 
 function SiteTickets({ offers }: { offers: readonly StudioPackage[] }) {
 	const { t } = useTranslation("packages");
-	return <div className="rides">{offers.map(offer => <article className="ride" key={offer.id}>
+	return <div className="rides">{offers.map(offer => <article className="ride tear-across" key={offer.id}>
 		<div className="r-body">
 			<div className="r-name"><h3>{t(`offers.${offer.id}.name`)}</h3>{offer.mark && <span className="mark">{t(offer.mark)}</span>}</div>
 			<PackageBenefits offer={offer} />

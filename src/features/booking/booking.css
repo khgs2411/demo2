@@ -41,16 +41,6 @@ main.booking-page h1 { font: 900 var(--text-h2)/var(--leading-display) var(--fon
 .booking-page .booking-terms { white-space: pre-wrap; overflow-wrap: anywhere; }
 .booking-page .issued-password { font: 500 var(--text-body)/var(--leading-body) var(--font-mono); }
 
-/* The section headings share a counter from the top of each ledger. */
-.booking-page.studio-page { counter-reset: part; }
-.booking-page :is(.account-details, .password-change, .studio-part) > h2 {
-	counter-increment: part; display: flex; align-items: baseline; gap: 14px; padding-block-start: 14px; border-block-start: 2px solid var(--ink);
-	font: 700 var(--text-heading)/var(--leading-heading) var(--font-display); margin-block-end: 22px; }
-.booking-page :is(.account-details, .password-change, .studio-part) > h2::before {
-	content: counter(part, decimal-leading-zero) / ""; font: 500 var(--text-label)/var(--leading-small) var(--font-sans); letter-spacing: var(--tracking-label); opacity: .6; }
-.booking-page .page-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 24px 48px; margin-block-end: 56px; }
-.booking-page .page-head .lede { margin-block-end: 0; }
-
 /* Gate pages put the form beside the pass on desktop. */
 .shell-content > main.booking-page.gate { align-content: center; row-gap: 48px; }
 .booking-page.gate h1 { max-inline-size: 11ch; }

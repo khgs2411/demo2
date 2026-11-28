@@ -81,7 +81,7 @@ it("shows the staff pass only on the studio sign-in gate", () => {
 	const view = render(<StudioPage />);
 	const main = screen.getByRole("main");
 	const pass = within(main).getByRole("complementary");
-	expect(within(pass).getByText("STAFF")).toBeDefined();
+	expect(within(pass).getByText("The studio")).toBeDefined();
 	expect(main.classList.contains("gate")).toBe(true);
 
 	signedIn("email");
@@ -116,8 +116,8 @@ it.each(["role", "permission"])("loads empty sections for manager access granted
 });
 
 it.each([
-	["en", "2 pending · 1 upcoming", "Pending requests", "Upcoming meetings", "History"],
-	["he", "2 ממתינות · 1 קרובות", "בקשות ממתינות", "פגישות קרובות", "היסטוריה"],
+	["en", "2 pending, 1 upcoming", "Pending requests", "Upcoming meetings", "History"],
+	["he", "2 ממתינות, 1 קרובות", "בקשות ממתינות", "פגישות קרובות", "היסטוריה"],
 ])("shows studio totals and keeps the section names accessible in %s", async (language, total, pending, upcoming, history) => {
 	await i18n.changeLanguage(language);
 	managerWithIdentities("email");
@@ -292,7 +292,7 @@ it("pauses studio decisions and sign-out while changing the password", async () 
 	render(<StudioPage />);
 	await submitPasswordChange();
 
-	const controls = ["Approve", "Reject", "Sign out"].map(name => screen.getByRole("button", { name }));
+	const controls = ["Approve", "Decline", "Sign out"].map(name => screen.getByRole("button", { name }));
 	for (const control of controls) expect(control.matches(":disabled")).toBe(true);
 	await act(async () => { finish(); });
 	for (const control of controls) expect(control.matches(":disabled")).toBe(false);
@@ -321,14 +321,15 @@ it.each(["approve","reject"] as const)("waits for %s and refetches all lists, wi
 	let finish!: () => void;
 	(action === "approve" ? approve : reject).mockImplementation(() => new Promise(resolve => { finish = () => resolve({registration:row}); }));
 	render(<StudioPage />);
-	const button = await screen.findByRole("button",{name:action === "approve" ? "Approve" : "Reject"});
-	fireEvent.change(screen.getByLabelText("Rejection reason (optional)"),{target:{value:"Another day please"}});
+	const button = await screen.findByRole("button",{name:action === "approve" ? "Approve" : "Decline"});
+	fireEvent.change(screen.getByLabelText("Reason for declining (optional)"),{target:{value:"Another day please"}});
 	fireEvent.click(button); fireEvent.click(button);
 	expect(screen.getByText("Dana")).toBeDefined();
 	expect(screen.getByText("No upcoming meetings.")).toBeDefined();
 	expect(action === "approve" ? approve : reject).toHaveBeenCalledOnce();
 	await act(async () => finish());
-	await screen.findByText("No requests waiting.");
+	expect(document.querySelector(".studio-meetings .stamp")?.textContent).toBe(action === "approve" ? "Approved" : "Declined");
+	await screen.findByText("No requests waiting.", {}, { timeout: 2300 }); // 1.3 s mockup exit plus Testing Library's 1 s lookup.
 	expect(listPending).toHaveBeenCalledTimes(2); expect(listRegistered).toHaveBeenCalledTimes(2); expect(listHistory).toHaveBeenCalledTimes(2);
 	expect(screen.queryByRole("button",{name:"Approve"})).toBeNull();
 	if (action === "approve") expect(screen.getByText("Dana")).toBeDefined();

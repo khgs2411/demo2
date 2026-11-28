@@ -213,9 +213,10 @@ small { font-size: var(--text-small); line-height: var(--leading-small); }
 
 /* A ticket with its tear line running across the inline axis. */
 .tear-across {
-	mask: radial-gradient(circle var(--notch) at var(--tear-position) 0, transparent 97%, var(--ink)) 0 0 / 100% 51% no-repeat,
+	--tear-across-mask: radial-gradient(circle var(--notch) at var(--tear-position) 0, transparent 97%, var(--ink)) 0 0 / 100% 51% no-repeat,
 		radial-gradient(circle var(--notch) at var(--tear-position) 100%, transparent 97%, var(--ink)) 0 100% / 100% 51% no-repeat;
 }
+
 
 .gate-layout { display: grid; gap: 48px; align-items: center; }
 @media (min-width: 900px) {

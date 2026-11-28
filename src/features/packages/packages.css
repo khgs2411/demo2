@@ -40,10 +40,8 @@ html[dir="ltr"] .packages-page .package-passes { --side: -1; } html[dir="rtl"] .
 .ride { -webkit-mask: radial-gradient(circle var(--cut) at 0 calc(100% - 132px), transparent 97%, #000) 0 0 / 51% 100% no-repeat, radial-gradient(circle var(--cut) at 100% calc(100% - 132px), transparent 97%, #000) 100% 0 / 51% 100% no-repeat;
 	mask: radial-gradient(circle var(--cut) at 0 calc(100% - 132px), transparent 97%, #000) 0 0 / 51% 100% no-repeat, radial-gradient(circle var(--cut) at 100% calc(100% - 132px), transparent 97%, #000) 100% 0 / 51% 100% no-repeat; }
 @media (min-width: 760px) {
-	.ride { grid-template-columns: 1fr var(--stubw); --x: calc(100% - var(--stubw));
-		-webkit-mask: radial-gradient(circle var(--cut) at var(--x) 0, transparent 97%, #000) 0 0 / 100% 51% no-repeat, radial-gradient(circle var(--cut) at var(--x) 100%, transparent 97%, #000) 0 100% / 100% 51% no-repeat;
-		mask: radial-gradient(circle var(--cut) at var(--x) 0, transparent 97%, #000) 0 0 / 100% 51% no-repeat, radial-gradient(circle var(--cut) at var(--x) 100%, transparent 97%, #000) 0 100% / 100% 51% no-repeat; }
-	html[dir="rtl"] .ride { --x: var(--stubw); }
+	.ride { grid-template-columns: minmax(0, 1fr) var(--stubw); --tear-position: calc(100% - var(--stubw)); --notch: var(--cut); mask: var(--tear-across-mask); }
+	.ride:dir(rtl) { --tear-position: var(--stubw); }
 	.ride .r-stub { border-block-start: 0; border-inline-start: 2px dashed var(--perf); margin: 16px 0; padding-block: 10px; }
 }
 .terms { margin-block-start: 14px; font-size: .84rem; color: var(--muted); max-inline-size: 70ch; }
