@@ -3,6 +3,7 @@ import { StudioPage } from "../features/studio/page";
 import { StudioReturn } from "../features/studio/studio-return";
 import { ShowcasePage } from "../features/showcase/page";
 import { PackagesPage } from "../features/packages/page";
+import { AboutPage } from "../features/about/page";
 import { AdminSimPage } from "../features/admin-sim/page";
 import { BookingPage } from "../features/booking/page";
 import { AccountPage } from "../features/booking/account-page";
@@ -22,6 +23,7 @@ function RoutePage() {
 	switch (route?.page) {
 		case "showcase": return <ShowcasePage section={route.section} />;
 		case "packages": return <PackagesPage />;
+		case "about": return <AboutPage />;
 		case "admin-sim": return <AdminSimPage />;
 		case "booking": return <BookingPage key={route.packageId ?? "book"} packageId={route.packageId} />;
 		case "studio": return <StudioPage />;

@@ -33,6 +33,14 @@ describe("route placeholders", () => {
 		expect(screen.getByRole("heading", { level: 1 }).textContent).not.toBe("");
 	});
 
+	it("renders the About placeholder at #/about", () => {
+		window.history.replaceState(null, "", "#/about");
+		render(<Routes />);
+		const page = screen.getByRole("main");
+		expect(page.dataset.module).toBe("about");
+		expect(page.classList.contains("about-page")).toBe(true);
+	});
+
 	it("responds to hash changes and replaces unknown routes with home", () => {
 		window.history.replaceState(null, "", "#/packages");
 		render(<Routes />);

@@ -19,6 +19,7 @@ export function Header() {
 			<TextLink href="#/">{t("howItWorks")}</TextLink>
 			<TextLink href="#/demo" aria-current={route?.page === "admin-sim" ? "page" : undefined}>{t("liveDemo")}</TextLink>
 			<TextLink href="#/packages" aria-current={route?.page === "packages" ? "page" : undefined}>{t("packages")}</TextLink>
+			<TextLink href="#/about" aria-current={route?.page === "about" ? "page" : undefined}>{t("about")}</TextLink>
 		</nav>
 		<div className="account-tools">
 			{studioAccess !== "loading" && <TextLink className="account-link" href={studioAccess === "manager" ? "#/studio" : "#/account"}>
