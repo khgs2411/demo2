@@ -1,5 +1,8 @@
 import type { SimulationScenario } from "./types";
 
+const playbackSpeed = 1.5;
+const pacedMs = (originalMs: number) => Math.round(originalMs / playbackSpeed);
+
 export const brokenBookingButton = {
 	id: "broken-booking-button",
 	siteNameKey: "scenarios.brokenBookingButton.siteName",
@@ -42,13 +45,19 @@ export const brokenBookingButton = {
 	fixedRender: { bookingButtonFixed: true },
 	timing: {
 		// Allow reading time up front, then shorter holds after the animated beats.
-		// The opening dwell plus its log reveal fits within the four-second opening beat.
-		beatDwellMs: { bug: 3600, ticket_drafting: 2400, ticket_submitted: 3300, agent_fixing: 3000, deploying: 1700 },
-		// Keep the site's existing 300 ms log reveal in step with the playback clock.
-		logRevealMs: 300,
+		beatDwellMs: {
+			bug: pacedMs(3600), ticket_drafting: pacedMs(2400), ticket_submitted: pacedMs(3300),
+			agent_fixing: pacedMs(3000), deploying: pacedMs(1700),
+		},
+		logRevealMs: pacedMs(300),
 		// BEATS/render()/type()/flyTo() in the approved admin-sim.html, in milliseconds.
-		characterMs: 28, inboxLogMs: 420, fixLineMs: 520, deployLogMs: 700, scanStartMs: 2400,
-		scanDurationMs: 1600, stageFillMs: 600, flightMs: 920, flightMotionMs: 900,
+		characterMs: pacedMs(28), inboxLogMs: pacedMs(420), fixLineMs: pacedMs(520), deployLogMs: pacedMs(700),
+		scanStartMs: pacedMs(2400), scanDurationMs: pacedMs(1600), stageFillMs: pacedMs(600),
+		flightMs: pacedMs(920), flightMotionMs: pacedMs(900),
 	},
-	deployStages: [{ labelKey: "ship.build", startMs: 400 }, { labelKey: "ship.test", startMs: 1100 }, { labelKey: "ship.deploy", startMs: 1800 }],
+	deployStages: [
+		{ labelKey: "ship.build", startMs: pacedMs(400) },
+		{ labelKey: "ship.test", startMs: pacedMs(1100) },
+		{ labelKey: "ship.deploy", startMs: pacedMs(1800) },
+	],
 } satisfies SimulationScenario;

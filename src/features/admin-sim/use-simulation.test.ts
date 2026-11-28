@@ -8,8 +8,7 @@ import type { SimStep } from "./machine";
 import { i18n } from "../../i18n";
 
 const timedSteps = ["agent_fixing", "deploying"] as const;
-// The log reveal uses the site's established 300 ms timing.
-const logRevealMs = 300;
+const logRevealMs = 200;
 const inboxEffectsMs = 2 * scenario.timing.inboxLogMs + logRevealMs;
 const bugBeatMs = logRevealMs + scenario.timing.beatDwellMs.bug;
 const deployMs = scenario.timing.scanStartMs + scenario.timing.scanDurationMs;
