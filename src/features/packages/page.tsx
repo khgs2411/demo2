@@ -6,11 +6,15 @@ import "./packages.css";
 
 export function PackagesPage() {
 	const { t } = useTranslation("packages");
-	return <main data-module="packages" className="packages-page">
-		<h1>{t("pageTitle")}</h1>
-		<p className="package-intro">{t("intro")}</p>
-		<PackageLedger />
-		<PackageAddons />
-		<PackageFaq />
+	return <main data-module="packages" className="inner-page packages-page">
+		<div className="inner-wrap">
+			<section className="package-intro">
+				<h1>{t("pageTitle")}</h1>
+				<div className="package-explain"><h2>{t("explainTitle")}</h2><p>{t("intro")}</p></div>
+			</section>
+			<PackageLedger />
+			<PackageAddons />
+			<PackageFaq />
+		</div>
 	</main>;
 }

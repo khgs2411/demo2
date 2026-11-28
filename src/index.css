@@ -97,7 +97,7 @@ small { font-size: var(--text-small); line-height: var(--leading-small); }
 	-webkit-mask: radial-gradient(circle var(--notch) at 0 calc(100% - var(--tear)), transparent 97%, var(--ink)) 0 0 / 51% 100% no-repeat, radial-gradient(circle var(--notch) at 100% calc(100% - var(--tear)), transparent 97%, var(--ink)) 100% 0 / 51% 100% no-repeat;
 	mask: radial-gradient(circle var(--notch) at 0 calc(100% - var(--tear)), transparent 97%, var(--ink)) 0 0 / 51% 100% no-repeat, radial-gradient(circle var(--notch) at 100% calc(100% - var(--tear)), transparent 97%, var(--ink)) 100% 0 / 51% 100% no-repeat; }
 .gate-pass { padding: 28px 28px 0; }
-.package-pass { --notch: 13px; --tear: 76px; display: flex; flex-direction: column; border-radius: 18px; background: var(--sand); }
+.package-pass { align-self: stretch; --notch: 13px; --tear: 76px; display: flex; flex-direction: column; border-radius: 18px; background: var(--sand); }
 .package-pass-coral { background: var(--coral); z-index: 2; }
 .package-pass-ink { background: var(--ink); color: var(--paper); }
 .pass-label { font: 500 var(--text-label)/var(--leading-small) var(--font-sans); letter-spacing: var(--tracking-label); text-transform: uppercase; }
@@ -136,3 +136,36 @@ small { font-size: var(--text-small); line-height: var(--leading-small); }
  .ticket { transition: none; }
  .ticket:hover { transform: none; }
 }
+
+.package-passes { display: grid; gap: 22px; padding-block: 16px; }
+@media (min-width: 860px) { .package-passes { grid-template-columns: repeat(3, 1fr); gap: 20px; } }
+
+.package-pass .body { padding: 28px 28px 24px; display: flex; flex-direction: column; gap: 16px; flex: 1; }
+.package-pass .name { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.package-pass h3 { font-size: 1.7rem; }
+.package-pass .admit { font: 500 .74rem/1.3 var(--font-sans); opacity: .7; text-align: end; }
+.package-pass .price { font: 900 clamp(3rem, 2.4rem + 1.6vw, 3.8rem)/1 var(--font-display); letter-spacing: -.03em; }
+.package-pass .price small { font: 500 .88rem/1 var(--font-sans); opacity: .7; letter-spacing: 0; margin-inline-start: 6px; }
+.package-pass ul { list-style: none; display: grid; gap: 9px; font-size: .92rem; }
+.package-pass li { display: flex; gap: 10px; }
+.package-pass li::before { content: ""; inline-size: 9px; block-size: 9px; border-radius: 50%; border: 1.5px solid currentColor; margin-block-start: .5em; flex: none; }
+.package-pass .stub { block-size: var(--tear); border-block-start: 2px dashed rgb(26 24 20 / .3); margin-inline: 18px; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-inline: 10px; }
+.package-pass-ink .stub { border-color: rgb(242 234 219 / .3); }
+.package-pass .stub a { font-weight: 600; text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 6px; }
+.package-pass .stub .serial { font-size: .78rem; opacity: .65; }
+.package-pass .stamp { position: absolute; inset-block-start: 74px; inset-inline-end: 22px; inline-size: 78px; block-size: 78px; border-radius: 50%; border: 2px solid var(--ink); display: grid; place-items: center; text-align: center;
+	font: 700 .9rem/1.05 var(--font-display); rotate: -14deg; hyphens: manual; box-shadow: 0 0 0 4px var(--coral), 0 0 0 5.5px var(--ink); }
+
+/* Inner page layout, shared by the redesign. */
+.shell-content > main.inner-page {
+	display: block;
+	min-block-size: auto;
+	padding: clamp(28px, 5vw, 64px) 0 clamp(56px, 8vw, 110px);
+}
+.inner-wrap { max-inline-size: 1120px; margin-inline: auto; padding-inline: var(--gutter); }
+.shell-content .inner-page h1 {
+	max-inline-size: none;
+	font: 900 clamp(2.4rem, 1.2rem + 3.6vw, 4.1rem)/1.04 var(--font-display);
+	overflow-wrap: normal;
+}
+.inner-page h2 { font: 900 clamp(2rem, 1.2rem + 2.8vw, 3.3rem)/1.06 var(--font-display); letter-spacing: var(--tracking-display); }
