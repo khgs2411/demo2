@@ -175,6 +175,13 @@ export const en = {
 	packages: {
 		pageTitle: "A website for your business",
 		explainTitle: "What is ClassKit?",
+		priceHint: "Price doesn’t fit?",
+		priceHintLink: "Talk to me, it can be adjusted.",
+		priceNote: {
+			title: "Price doesn’t fit?",
+			body: "Don’t let the price stop you. Tell me what works for your business and we’ll find a way, such as a lower price for the first months, until your site starts bringing in customers.",
+			cta: "Talk about the price",
+		},
 		moreAboutClassKit: "More about ClassKit",
 		monthly: "a month",
 		once: "paid once",
