@@ -68,7 +68,7 @@ export const en = {
 			left: "{{count}} left",
 			used: "{{count}} of 10"
 		},
-		getSub: "With ClassKit you get a website with its own management system, built around what your business needs: your classes, bookings and class cards, the way you work.",
+		getSub: ["With ClassKit you get a website with its own management system, built around what your business needs", "Your classes, bookings and class cards, the way you work."],
 		tiles: {
 			site: [
 				"Your website",
@@ -100,10 +100,26 @@ export const en = {
 				"Included in Studio and Partner"
 			]
 		},
+		build: {
+			pick: "Pick what your site does, and see what it gives your business.", all: "Add everything", reset: "Start over",
+			base: "The base, always included", add: "Add", added: "Added",
+			now: "What you have now", start: "A website that shows your business.",
+			startGain: "This is where you start. Each thing you add does more of the work for you.",
+			notJust: "Not just a website that shows your business.", a: "A site", and: " and ", andSerial: ", and ", andIn: "",
+			clauses: {
+				book: ["where customers book on their own", "Fewer calls and messages: customers see what’s open and book, even in the middle of the night."],
+				cards: ["that brings them back with class cards and memberships", "A customer with a card keeps coming back, and you don’t count: every booking takes one class by itself."],
+				rules: ["that keeps your rules", "No reminding anyone: who gets in and how late they can cancel, the site already knows."],
+				sched: ["that opens every week’s classes by itself", "Set your week once, and the next classes are already open for booking."],
+				app: ["that shows you the whole business on one page", "Who’s coming, who’s waiting for your OK and who your customers are, from your phone."],
+				change: ["that changes when your business does", "A new class or an offer: write a request, and the change goes on your site."],
+			},
+			note: "All of this comes in every package. The AI assistant for changes comes with Studio and Partner.",
+			site: { banner: "New: a beginners’ intro class", contact: "Get in touch", members: "Members only", cancel: "Cancel up to 12 hours before", next: "Next weeks", offers: [["10-class card", "Any class"], ["Monthly membership", "Unlimited"]] },
+		},
 		cancelNote: "Dana cancelled in time, and the class went back on her card.",
 		mini: {
 			nav: ["Classes", "Memberships", "Contact"],
-			logo: "Shaked",
 			h: "Strength you feel beyond the studio.",
 			p: "Pilates and yoga in small groups.",
 			cta: "Book a class"

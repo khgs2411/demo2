@@ -30,3 +30,23 @@ it.each([
 	expect(sheet.querySelectorAll(".steps .on")).toHaveLength(4);
 	expect(sheet.querySelectorAll(".dates .on")).toHaveLength(5);
 });
+
+it("picks dependent features with their prerequisites and resets to the website", async () => {
+	await i18n.changeLanguage("en");
+	render(<ShowcasePage />);
+	const cards = screen.getByRole("button", { name: "Class cards and memberships", pressed: false });
+	const booking = screen.getByRole("button", { name: "Customers book on their own", pressed: false });
+
+	fireEvent.click(cards);
+	expect(cards.getAttribute("aria-pressed")).toBe("true");
+	expect(booking.getAttribute("aria-pressed")).toBe("true");
+
+	fireEvent.click(booking);
+	expect(cards.getAttribute("aria-pressed")).toBe("false");
+	expect(booking.getAttribute("aria-pressed")).toBe("false");
+
+	fireEvent.click(screen.getByRole("button", { name: "Add everything" }));
+	expect(screen.getAllByRole("button", { pressed: true })).toHaveLength(6);
+	fireEvent.click(screen.getByRole("button", { name: "Start over" }));
+	expect(screen.getAllByRole("button", { pressed: false })).toHaveLength(6);
+});
