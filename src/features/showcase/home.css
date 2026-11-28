@@ -101,7 +101,8 @@
 .showcase-page .fly .ticket { --ticket-size: .74rem; --ticket-main-padding: 8px 12px; --ticket-stub-padding: 8px; --ticket-stub-size: .62rem; }
 
 /* What you get: one perforated sheet */
-.showcase-page .get { scroll-margin-block-start: 68px; padding-block: clamp(48px, 7vw, 90px); }
+.showcase-page :is(.get, .what-is-classkit) { scroll-margin-block-start: 68px; }
+.showcase-page .get { padding-block: clamp(48px, 7vw, 90px); }
 .showcase-page .head { display: grid; gap: 14px 40px; margin-block-end: 36px; align-items: end; }
 @media (min-width: 820px) { .showcase-page .head { grid-template-columns: 1.1fr 1fr; } }
 .showcase-page .head p { color: var(--muted); max-inline-size: 42ch; }
@@ -169,6 +170,8 @@
 @media (max-width: 520px) { .showcase-page .steps { grid-template-columns: 1fr 1fr; } }
 
 /* Packages: three admission passes */
+.showcase-page .what-is-classkit { border-block-start: 2px dashed var(--perf); padding-block-start: clamp(48px, 7vw, 90px); }
+.showcase-page .what-is-classkit p { margin-block-start: 14px; max-inline-size: 60ch; }
 .showcase-page .packs { padding-block: clamp(48px, 7vw, 100px); overflow-x: clip; }
 .showcase-page .terms { margin-block-start: 10px; font-size: .84rem; color: var(--muted); }
 .showcase-page .extras { margin-block-start: 22px; display: grid; gap: 14px; }

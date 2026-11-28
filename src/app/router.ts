@@ -1,12 +1,15 @@
 import { useEffect, useSyncExternalStore } from "react";
 
+export type ShowcaseSection = "get" | "what-is-classkit";
+
 export type Route =
-	| { page: "showcase"; section?: "get" }
+	| { page: "showcase"; section?: ShowcaseSection }
 	| { page: "packages" | "admin-sim" | "account" | "studio" | "forgot-password" | "reset-password" }
 	| { page: "booking"; packageId?: string };
 
 export function parseHash(hash: string): Route | null {
 	if (hash === "#get") return { page: "showcase", section: "get" };
+	if (hash === "#what-is-classkit") return { page: "showcase", section: "what-is-classkit" };
 	if (hash && !hash.startsWith("#/")) return null;
 	switch (hash) {
 		case "#/packages": return { page: "packages" };

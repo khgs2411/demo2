@@ -120,6 +120,10 @@ export const en = {
 		],
 		req: "Add to the home page that there’s a beginners’ intro class.",
 		steps: ["Received", "In progress", "Checked", "On your site ✓"],
+		whatIsClassKit: {
+			title: "What is ClassKit?",
+			description: "ClassKit is the ready-made app yours is built from: customers, appointments, who can do what, and sign-in, all already working. That is why your app can be ready in days instead of months. It started as a kit for businesses that run classes and appointments, and the name stayed.",
+		},
 		packsTitle: ["Three packages.", "A fixed price every month."],
 		packsSub: "Each one has your website and ClassKit. What changes is how much help you get, and how fast.",
 		min: "3-month minimum",
@@ -155,6 +159,7 @@ export const en = {
 	packages: {
 		pageTitle: "A website for your business",
 		explainTitle: "What is ClassKit?",
+		moreAboutClassKit: "More about ClassKit",
 		monthly: "a month",
 		once: "paid once",
 		minimum: "3-month minimum",
