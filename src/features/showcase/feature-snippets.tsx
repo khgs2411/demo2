@@ -28,12 +28,12 @@ export function CardSnippet({ copy, animate }: SnippetProps) {
 
 export function RulesSnippet({ copy, animate }: SnippetProps) {
 	const { frame } = useSnippet(rulesDelays, animate);
-	return <div className="snip"><div>
+	return <div className="snip">
 		<div className="seg"><div className={frame ? "thumb members" : "thumb"} />
 			{copy.who.map((who, i) => <span className={i === frame ? "on" : undefined} key={who}>{who}</span>)}
 		</div>
 		<div className="kv"><span>{copy.cutoff[0]}</span><b>{copy.cutoff[1]}</b></div>
-	</div></div>;
+	</div>;
 }
 
 export function ScheduleSnippet({ copy, animate }: SnippetProps) {
@@ -55,10 +55,10 @@ export function ChangeSnippet({ copy, animate }: SnippetProps) {
 	], [length, stepCount]);
 	const { frame, playing } = useSnippet(delays, animate);
 	return <div className="snip flow">
-			<div className="req"><span>{characters.slice(0, frame).join("")}</span><span className={playing ? "caret blinking" : "caret"} /></div>
-			<div className="steps">{copy.steps.map((step, i) =>
-				<span key={step} className={`${i < frame - length ? "on" : ""} ${i === stepCount - 1 ? "last" : ""}`}>{step}</span>
-			)}</div>
+		<div className="req"><span>{characters.slice(0, frame).join("")}</span><span className={playing ? "caret blinking" : "caret"} /></div>
+		<div className="steps">{copy.steps.map((step, i) =>
+			<span key={step} className={`${i < frame - length - 1 ? "on" : ""} ${i === stepCount - 1 ? "last" : ""}`}>{step}</span>
+		)}</div>
 	</div>;
 }
 

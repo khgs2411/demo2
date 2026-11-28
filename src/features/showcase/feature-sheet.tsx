@@ -1,4 +1,5 @@
 import { useEffect, useReducer, useRef, type ReactNode } from "react";
+import { FeatureResult } from "./feature-result";
 import { featureOrder, updatePicks, type Feature } from "./feature-picks";
 import { AppSnippet, BookingSnippet, CardSnippet, ChangeSnippet, RulesSnippet, ScheduleSnippet } from "./feature-snippets";
 import { animateChad, useFrames, useInView } from "./home-motion";
@@ -53,7 +54,7 @@ export function FeatureSheet({ copy, reduced, english }: { copy: HomeCopy; reduc
 	const build = copy.build;
 	const [siteTitle, siteDescription] = copy.tiles.site;
 	return <section className="get" id="get" aria-labelledby="get-heading"><div className="wrap">
-		<h2 className="lead" id="get-heading">{copy.getSub[0]}<span>{copy.getSub[1]}</span></h2>
+		<h2 className="lead" id="get-heading">{copy.getSub[0]} <span>{copy.getSub[1]}</span></h2>
 		<div className="build"><div className="picker">
 			<div className="pickbar"><p>{build.pick}</p><div className="pick-acts">
 				<button type="button" className="linkbtn" onClick={() => { touched.current = true; dispatch({ type: "addAll" }); }}>{build.all}</button>
@@ -76,6 +77,6 @@ export function FeatureSheet({ copy, reduced, english }: { copy: HomeCopy; reduc
 					</Tile>;
 				})}
 			</div></div>
-		</div></div>
+		</div><FeatureResult copy={copy} picks={picks} reduced={reduced} sheet={sheet} /></div>
 	</div></section>;
 }

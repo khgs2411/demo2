@@ -87,3 +87,23 @@ export function animateChad(hole: HTMLElement, host: HTMLElement, className: str
 	animation.onfinish = () => chad.remove();
 	return () => { animation.cancel(); chad.remove(); };
 }
+
+export function useResultBar(sheet: RefObject<HTMLDivElement | null>, stage: RefObject<HTMLDivElement | null>) {
+	const [shown, setShown] = useState(false);
+	useEffect(() => {
+		const sheetNode = sheet.current, stageNode = stage.current;
+		if (!sheetNode || !stageNode || typeof IntersectionObserver === "undefined") return;
+		let sheetVisible = false, stageVisible = false;
+		const observer = new IntersectionObserver(entries => {
+			for (const entry of entries) {
+				if (entry.target === sheetNode) sheetVisible = entry.isIntersecting;
+				else stageVisible = entry.isIntersecting;
+			}
+			setShown(sheetVisible && !stageVisible);
+		});
+		observer.observe(sheetNode);
+		observer.observe(stageNode);
+		return () => observer.disconnect();
+	}, [sheet, stage]);
+	return shown;
+}
