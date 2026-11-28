@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useReducedMotion } from "../../motion/use-reduced-motion";
 import { initialState, transition } from "./machine";
 import type { SimEvent } from "./machine";
-import { requestTyping } from "./mock-admin";
+import { requestTyping } from "./request-draft";
 import { brokenBookingButton } from "./scenarios/broken-booking-button";
 import type { SimulationScenario } from "./scenarios/types";
 

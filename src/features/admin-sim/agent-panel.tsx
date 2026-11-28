@@ -2,7 +2,7 @@ import type { CSSProperties } from "react";
 import { useTranslation } from "react-i18next";
 import type { SimState } from "./machine";
 import type { SimulationScenario } from "./scenarios/types";
-import type { RequestDraft } from "./mock-admin";
+import type { RequestDraft } from "./request-draft";
 
 type AgentPanelProps = { scenario: SimulationScenario; state: SimState; reducedMotion: boolean; draft?: RequestDraft };
 

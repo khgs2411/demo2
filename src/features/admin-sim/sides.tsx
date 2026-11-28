@@ -5,7 +5,7 @@ import type { SimState } from "./machine";
 import type { SimulationScenario, SimulationSide } from "./scenarios/types";
 import { MockSite } from "./mock-site";
 import { MockAdmin } from "./mock-admin";
-import type { RequestDraft } from "./mock-admin";
+import type { RequestDraft } from "./request-draft";
 import { AgentPanel } from "./agent-panel";
 
 type SidesProps = {
