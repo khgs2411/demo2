@@ -2,7 +2,7 @@ import type { CSSProperties } from "react";
 import { useTranslation } from "react-i18next";
 import type { SimState } from "./machine";
 import type { SimulationScenario } from "./scenarios/types";
-import type { RequestDraft } from "./mock-admin";
+import type { RequestDraft } from "./request-draft";
 
 type AgentPanelProps = { scenario: SimulationScenario; state: SimState; reducedMotion: boolean; draft?: RequestDraft };
 
@@ -24,7 +24,7 @@ export function AgentPanel({ scenario, state, reducedMotion, draft }: AgentPanel
 				</span>}
 			</section>)}
 		</div>
-		<div className="sim-log" role="log" aria-live="polite" dir="ltr">
+		<div className="sim-log" style={{ "--sim-log-reveal": `${scenario.timing.logRevealMs}ms` } as CSSProperties} role="log" aria-live="polite" dir="ltr">
 			{log.slice(0, visible).map((line, index) => <div className={line.tone} key={line.textKey} style={{ animationDelay: `${index * gap}ms` }}>{t(line.textKey, { type: draft?.type ?? scenario.ticket.type })}</div>)}
 		</div>
 		{state.step === "agent_fixing" && <progress className="sim-progress" max="1" value={reducedMotion ? 1 : state.progress} aria-label={t("progressLabel")} />}

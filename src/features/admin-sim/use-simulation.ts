@@ -1,13 +1,49 @@
-import { useEffect, useReducer } from "react";
+import { useEffect, useReducer, useRef, useState, useSyncExternalStore } from "react";
+import { useTranslation } from "react-i18next";
 import { useReducedMotion } from "../../motion/use-reduced-motion";
 import { initialState, transition } from "./machine";
 import type { SimEvent } from "./machine";
+import { requestTyping } from "./request-draft";
 import { brokenBookingButton } from "./scenarios/broken-booking-button";
 import type { SimulationScenario } from "./scenarios/types";
 
+function subscribeToVisibility(onChange: () => void) {
+	document.addEventListener("visibilitychange", onChange);
+	return () => document.removeEventListener("visibilitychange", onChange);
+}
+
+function logDuration(lineCount: number, revealMs: number, gapMs = 0) {
+	return lineCount === 0 ? 0 : (lineCount - 1) * gapMs + revealMs;
+}
+
 export function useSimulation(scenario: SimulationScenario = brokenBookingButton) {
-	const [state, dispatch] = useReducer(transition, initialState);
+	const [state, send] = useReducer(transition, initialState);
+	const [autoplay, setAutoplay] = useState(true);
+	const requestForm = useRef<HTMLFormElement>(null);
+	const automaticallyAdvanced = useRef(false);
+	const autoSubmitting = useRef(false);
+	const { t } = useTranslation("admin-sim");
 	const reducedMotion = useReducedMotion();
+	const hidden = useSyncExternalStore(subscribeToVisibility, () => document.hidden, () => true);
+	const playing = autoplay && !reducedMotion && state.step !== "live";
+	const typingMs = state.step === "ticket_drafting"
+		? requestTyping(scenario, t).durationMs
+		: 0;
+
+	function pausePlayback() {
+		setAutoplay(false);
+	}
+
+	function dispatch(event: SimEvent) {
+		automaticallyAdvanced.current = autoSubmitting.current;
+		if (event.type === "restarted" && state.step === "live") setAutoplay(true);
+		else if (!autoSubmitting.current) pausePlayback();
+		send(event);
+	}
+
+	function togglePlayback() {
+		if (!reducedMotion && state.step !== "live") setAutoplay((enabled) => !enabled);
+	}
 
 	useEffect(() => {
 		if (state.step !== "ticket_submitted" || reducedMotion) return;
@@ -38,7 +74,6 @@ export function useSimulation(scenario: SimulationScenario = brokenBookingButton
 	}, [state, scenario, reducedMotion]);
 
 	useEffect(() => {
-		// Each beat waits for Next, as in the reference. Only its effects run on a clock.
 		if (reducedMotion) return;
 		let event: SimEvent;
 		let delay: number;
@@ -48,11 +83,58 @@ export function useSimulation(scenario: SimulationScenario = brokenBookingButton
 			delay = scenario.timing.fixLineMs;
 		} else if (state.step === "deploying" && !state.finished) {
 			event = { type: "deploy_finished" };
-			delay = scenario.timing.scanStartMs + scenario.timing.scanDurationMs;
+			const { timing, logs, deployStages } = scenario;
+			delay = Math.max(
+				timing.scanStartMs + timing.scanDurationMs,
+				logDuration(logs.deploy.length, timing.logRevealMs, timing.deployLogMs),
+				...deployStages.map((stage) => stage.startMs + timing.stageFillMs),
+			);
 		} else return;
-		const timer = setTimeout(() => dispatch(event), delay);
+		const timer = setTimeout(() => send(event), delay);
 		return () => clearTimeout(timer);
 	}, [state, scenario, reducedMotion]);
 
-	return { state, dispatch, scenario, reducedMotion };
+	useEffect(() => {
+		if (!playing || hidden) return;
+		if (state.step === "agent_fixing" && state.progress < 1) return;
+		if (state.step === "deploying" && !state.finished) return;
+
+		const { timing, logs } = scenario;
+		let effectMs: number;
+		switch (state.step) {
+			case "bug":
+				effectMs = logDuration(logs.idle.length, timing.logRevealMs);
+				break;
+			case "ticket_drafting":
+				effectMs = typingMs;
+				break;
+			case "ticket_submitted":
+				effectMs = Math.max(timing.flightMs, logDuration(logs.inbox.length, timing.logRevealMs, timing.inboxLogMs));
+				break;
+			case "agent_fixing":
+				effectMs = logDuration(logs.agent.length, timing.logRevealMs);
+				break;
+			case "deploying":
+				effectMs = 0;
+				break;
+		}
+		const timer = setTimeout(() => {
+			if (document.hidden) return;
+			if (state.step === "ticket_drafting") {
+				// Native submission shares validation and the visitor's submit handler.
+				autoSubmitting.current = true;
+				try {
+					requestForm.current?.requestSubmit();
+				} finally {
+					autoSubmitting.current = false;
+				}
+			} else {
+				automaticallyAdvanced.current = true;
+				send({ type: "next_requested" });
+			}
+		}, effectMs + timing.beatDwellMs[state.step]);
+		return () => clearTimeout(timer);
+	}, [state, scenario, playing, hidden, typingMs]);
+
+	return { state, dispatch, scenario, reducedMotion, playing, automaticallyAdvanced, pausePlayback, togglePlayback, requestForm };
 }

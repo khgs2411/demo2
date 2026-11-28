@@ -223,6 +223,8 @@ export const he = {
 		"demoTiming": "זמני ההדגמה מקוצרים.",
 		"back": "לחזור",
 		"restart": "להתחיל מחדש",
+		"pause": "להשהות",
+		"play": "להמשיך",
 		"railLabel": "שלבי ההדגמה",
 		"topTab": "האתר",
 		"underTab": "עמוד הניהול",

@@ -243,6 +243,8 @@ export const en = {
 		"demoTiming": "Demo timings are shortened.",
 		"back": "Back",
 		"restart": "Restart",
+		"pause": "Pause",
+		"play": "Play",
 		"railLabel": "Demo steps",
 		"topTab": "The site",
 		"underTab": "Manage page",

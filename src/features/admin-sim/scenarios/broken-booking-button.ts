@@ -40,7 +40,14 @@ export const brokenBookingButton = {
 		"+ .booking-cta { transform: none; }",
 	] },
 	fixedRender: { bookingButtonFixed: true },
-	// BEATS/render()/type()/flyTo() in the approved admin-sim.html, in milliseconds.
-	timing: { characterMs: 28, inboxLogMs: 420, fixLineMs: 520, deployLogMs: 700, scanStartMs: 2400, scanDurationMs: 1600, stageFillMs: 600, flightMs: 920, flightMotionMs: 900 },
+	timing: {
+		// Allow reading time up front, then shorter holds after the animated beats.
+		beatDwellMs: { bug: 7000, ticket_drafting: 2400, ticket_submitted: 3300, agent_fixing: 3000, deploying: 1700 },
+		// Keep the site's existing 300 ms log reveal in step with the playback clock.
+		logRevealMs: 300,
+		// BEATS/render()/type()/flyTo() in the approved admin-sim.html, in milliseconds.
+		characterMs: 28, inboxLogMs: 420, fixLineMs: 520, deployLogMs: 700, scanStartMs: 2400,
+		scanDurationMs: 1600, stageFillMs: 600, flightMs: 920, flightMotionMs: 900,
+	},
 	deployStages: [{ labelKey: "ship.build", startMs: 400 }, { labelKey: "ship.test", startMs: 1100 }, { labelKey: "ship.deploy", startMs: 1800 }],
 } satisfies SimulationScenario;
