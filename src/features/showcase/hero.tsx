@@ -61,7 +61,7 @@ function HeroScene({ copy, reduced }: { copy: HomeCopy; reduced: boolean }) {
 	useLayoutEffect(() => {
 		const element = stage.current;
 		if (!element || typeof ResizeObserver === "undefined") return;
-		const fit = () => element.style.setProperty("--s", Math.min(1, element.clientWidth / sceneWidth).toFixed(4));
+		const fit = () => element.style.setProperty("--s", Math.min(1.2, element.clientWidth / sceneWidth).toFixed(4));
 		const observer = new ResizeObserver(fit);
 		observer.observe(element);
 		fit();

@@ -31,7 +31,7 @@ it.each(["he", "en"])("connects the home header and footer in %s", async (langua
 	const header = within(screen.getByRole("banner"));
 	expect(header.getByRole("link", { name: i18n.t("brand") }).getAttribute("href")).toBe("#/");
 	const navigation = within(header.getByRole("navigation"));
-	expect(navigation.getAllByRole("link").map((link) => link.getAttribute("href"))).toEqual(["#get", "#/", "#/demo", "#/packages"]);
+	expect(navigation.getAllByRole("link").map((link) => link.getAttribute("href"))).toEqual(["#get", "#/", "#/demo", "#/packages", "#/about"]);
 	const ticket = header.getByRole("link", { name: i18n.t("homeBookMeeting") });
 	expect(ticket.getAttribute("href")).toBe("#/book");
 	expect(document.querySelector(".ticket-dock")).toBeNull();
@@ -55,9 +55,11 @@ it("opens the feature sheet from a directly loaded link", () => {
 	}
 });
 
-it("keeps the mobile ticket on inner pages", () => {
-	window.history.replaceState(null, "", "#/packages");
+it.each(["#/packages", "#/about"])("keeps the booking tickets at %s", (hash) => {
+	window.history.replaceState(null, "", hash);
 	render(<App />);
+	const header = within(screen.getByRole("banner"));
+	expect(header.getByRole("link", { name: i18n.t("bookMeeting") }).getAttribute("href")).toBe("#/book");
 	expect(document.querySelector(".ticket-dock a")?.getAttribute("href")).toBe("#/book");
 });
 

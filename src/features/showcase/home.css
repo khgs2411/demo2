@@ -1,10 +1,10 @@
 /* Home page proportions from the approved 14.4 mockup. */
 .shell-content > .showcase-page { display: block; min-block-size: 0; padding: 0; }
 .showcase-page { font-size: 1rem; }
-.showcase-page .wrap { max-inline-size: 1120px; margin-inline: auto; padding-inline: var(--gutter); }
+.showcase-page .wrap { max-inline-size: var(--measure); margin-inline: auto; padding-inline: var(--gutter); }
 .showcase-page h1, .showcase-page h2, .showcase-page h3 { font-family: var(--font-display); font-weight: 900; letter-spacing: -.02em; }
-.shell-content .showcase-page h1, .showcase-page h1 { font-size: clamp(2.4rem, 1.2rem + 3.6vw, 4.1rem); line-height: 1.04; max-inline-size: none; overflow-wrap: normal; }
-.showcase-page h2 { font-size: clamp(2rem, 1.2rem + 2.8vw, 3.3rem); line-height: 1.06; }
+.shell-content .showcase-page h1, .showcase-page h1 { font-size: clamp(2.4rem, 1.1rem + 3.6vw, 4.6rem); line-height: 1.04; max-inline-size: none; overflow-wrap: normal; }
+.showcase-page h2 { font-size: clamp(2rem, 1rem + 3vw, 3.9rem); line-height: 1.06; }
 .showcase-page h3 { font-size: 1.4rem; line-height: 1.15; font-weight: 700; letter-spacing: -.01em; }
 .showcase-page .muted { color: var(--muted); }
 .showcase-page :focus-visible { outline-color: var(--coral); }
@@ -17,11 +17,11 @@
 .showcase-page .hero { padding-block: clamp(28px, 6vw, 80px) clamp(56px, 8vw, 110px); }
 .showcase-page .hero .wrap { display: grid; grid-template-columns: minmax(0, 1fr); gap: 40px; align-items: center; }
 .showcase-page .hero .wrap > * { min-inline-size: 0; }
-@media (min-width: 940px) { .showcase-page .hero .wrap { max-inline-size: 1240px; grid-template-columns: 1fr 460px; gap: 56px; } }
+@media (min-width: 940px) { .showcase-page .hero .wrap { grid-template-columns: minmax(0, 1.3fr) minmax(460px, 1fr); gap: clamp(40px, 4vw, 72px); } }
 .showcase-page .hero p.sub { font-size: clamp(1.02rem, .96rem + .3vw, 1.18rem); color: var(--muted); max-inline-size: 38ch; margin-block-start: 24px; }
 .showcase-page .hero .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 26px; margin-block-start: 32px; }
 
-/* The scene is drawn at 460x545 and scaled to fit, so every width plays the same moment. */
+/* The scene is drawn at 460x545 and scaled to its column, up to 1.2 on wide screens, so every width plays the same moment. */
 .showcase-page .stage { --s: 1; inline-size: 100%; min-inline-size: 0; block-size: calc(545px * var(--s)); position: relative; }
 .showcase-page .scene { position: absolute; top: 0; left: 50%; translate: -50% 0; inline-size: 460px; block-size: 545px; scale: var(--s); transform-origin: top center; }
 
@@ -102,11 +102,10 @@
 
 /* What you get: one perforated sheet */
 .showcase-page :is(.get, .what-is-classkit) { scroll-margin-block-start: 68px; }
-.showcase-page .get { padding-block: clamp(48px, 7vw, 90px); }
+.showcase-page .get { padding-block: var(--section-y); }
 .showcase-page .head { display: grid; gap: 14px 40px; margin-block-end: 36px; align-items: end; }
 @media (min-width: 820px) { .showcase-page .head { grid-template-columns: 1.1fr 1fr; } }
 .showcase-page .head p { color: var(--muted); max-inline-size: 42ch; }
-.showcase-page .get .wrap { max-inline-size: 1240px; }
 .showcase-page .get h2.lead { font: 600 clamp(1.2rem, 1rem + .8vw, 1.6rem)/1.4 var(--font-sans); letter-spacing: normal; text-wrap: pretty; margin-block-end: 36px; }
 .showcase-page .lead span { display: block; font-size: .8em; margin-block-start: 4px; }
 .showcase-page .sheet { background: var(--surface); border-radius: 22px; overflow: hidden; position: relative; }
@@ -285,9 +284,13 @@
 }
 
 /* Packages: three admission passes */
-.showcase-page .what-is-classkit { border-block-start: 2px dashed var(--perf); padding-block-start: clamp(48px, 7vw, 90px); }
-.showcase-page .what-is-classkit p { margin-block-start: 14px; max-inline-size: 60ch; }
-.showcase-page .packs { padding-block: clamp(48px, 7vw, 100px); overflow-x: clip; }
+.showcase-page .what-is-classkit { border-block-start: 2px dashed var(--perf); padding-block-start: var(--section-y); }
+.showcase-page .what-is-classkit p { margin-block-start: 14px; max-inline-size: 60ch; font-size: clamp(1rem, .94rem + .3vw, 1.18rem); }
+@media (min-width: 900px) {
+	.showcase-page .what-is-classkit .wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); gap: 0 clamp(40px, 5vw, 96px); align-items: baseline; }
+	.showcase-page .what-is-classkit p { margin: 0; }
+}
+.showcase-page .packs { padding-block: var(--section-y); overflow-x: clip; }
 .showcase-page .terms { margin-block-start: 10px; font-size: .84rem; color: var(--muted); }
 .showcase-page .extras { margin-block-start: 22px; display: grid; gap: 14px; }
 @media (min-width: 820px) { .showcase-page .extras { grid-template-columns: 1fr 1fr; } }
@@ -298,7 +301,7 @@
 .showcase-page .pills span { font-size: .78rem; padding: 7px 12px; border-radius: 999px; background: var(--sand); }
 
 /* Close */
-.showcase-page .close { background: var(--ink); color: var(--paper); padding-block: clamp(70px, 10vw, 130px); margin-block-start: clamp(30px, 5vw, 60px); position: relative; overflow: hidden; }
+.showcase-page .close { background: var(--ink); color: var(--paper); padding-block: clamp(70px, 9vw, 130px); position: relative; overflow: hidden; }
 .showcase-page .close .wrap { display: grid; gap: 36px; align-items: center; position: relative; }
 @media (min-width: 860px) { .showcase-page .close .wrap { grid-template-columns: 1.3fr 1fr; } }
 .showcase-page .close h2 { font-size: clamp(2.4rem, 1.2rem + 4vw, 4.4rem); line-height: 1.02; }
@@ -306,6 +309,34 @@
 .showcase-page .close .cta { justify-self: start; rotate: -4deg; }
 @media (min-width: 860px) { .showcase-page .close .cta { justify-self: center; } }
 .showcase-page .close .perfrow { position: absolute; inset-inline: 0; inset-block-start: 0; block-size: 2px; background: repeating-linear-gradient(90deg, rgb(242 234 219 / .25) 0 10px, transparent 10px 18px); }
+
+/* Why me: a stub torn across the page, between the hero and the sheet */
+.showcase-page .why { --notch: 18px; position: relative; background: var(--sand); padding-block: clamp(40px, 4.5vw, 64px);
+	-webkit-mask: radial-gradient(circle var(--notch) at 0 50%, transparent 97%, #000) 0 0 / 51% 100% no-repeat, radial-gradient(circle var(--notch) at 100% 50%, transparent 97%, #000) 100% 0 / 51% 100% no-repeat;
+	mask: radial-gradient(circle var(--notch) at 0 50%, transparent 97%, #000) 0 0 / 51% 100% no-repeat, radial-gradient(circle var(--notch) at 100% 50%, transparent 97%, #000) 100% 0 / 51% 100% no-repeat; }
+.showcase-page .why::before, .showcase-page .why::after { content: ""; position: absolute; inset-inline: 0; block-size: 2px; background: repeating-linear-gradient(90deg, var(--perf) 0 10px, transparent 10px 18px); }
+.showcase-page .why::before { inset-block-start: 10px; }
+.showcase-page .why::after { inset-block-end: 10px; }
+.showcase-page .why .wrap { display: grid; gap: 36px; align-items: center; }
+@media (min-width: 900px) { .showcase-page .why .wrap { grid-template-columns: minmax(0, 1fr) minmax(360px, 500px); gap: clamp(48px, 5vw, 96px); } }
+.showcase-page .why h2 { font-size: clamp(1.9rem, 1.1rem + 2.3vw, 3.1rem); text-wrap: balance; }
+.showcase-page .why-text p { color: var(--muted); max-inline-size: 46ch; margin-block: 12px 18px; font-size: clamp(1rem, .96rem + .2vw, 1.1rem); }
+.showcase-page .why-prompt { position: relative; margin-inline-end: 18px; }
+.showcase-page .prompt-box { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 14px; align-items: end; padding: 14px 16px 14px 18px; border-radius: 22px; background: var(--surface);
+	box-shadow: 0 0 0 1px var(--line), 0 26px 40px -30px rgb(26 24 20 / .5); rotate: -1deg; }
+.showcase-page .prompt-label { grid-column: 1 / -1; display: inline-flex; align-items: center; gap: 7px; font-size: .74rem; font-weight: 500; color: var(--muted); }
+.showcase-page .prompt-label::before { content: ""; inline-size: 7px; block-size: 7px; border-radius: 50%; background: var(--sage); }
+.showcase-page .prompt-text { font-size: clamp(1.05rem, 1rem + .25vw, 1.2rem); line-height: 1.45; min-block-size: 2.9em; text-decoration: line-through 2px transparent; transition: color .4s, text-decoration-color .4s; }
+.showcase-page .prompt-text .caret { display: inline-block; inline-size: 2px; block-size: 1.1em; margin-inline-start: 2px; background: var(--ink); vertical-align: text-bottom; }
+.showcase-page .prompt-text .caret.blinking { animation: home-caret 1s steps(1) infinite; }
+.showcase-page .prompt-send { inline-size: 34px; block-size: 34px; border-radius: 50%; background: var(--ink); display: grid; place-items: center; }
+.showcase-page .prompt-send::before { content: ""; inline-size: 9px; block-size: 9px; border-top: 2px solid var(--paper); border-left: 2px solid var(--paper); rotate: 45deg; translate: 0 2px; }
+.showcase-page .stamped .prompt-text { color: var(--muted); text-decoration-color: var(--coral); }
+.showcase-page .stamped .caret { visibility: hidden; }
+.showcase-page .why-stamp { position: absolute; inset-block-start: -30px; inset-inline-end: -20px; z-index: 2; inline-size: 88px; block-size: 88px; border-radius: 50%; display: grid; place-items: center;
+	background: var(--coral); border: 2px solid var(--ink); box-shadow: 0 0 0 4px var(--coral), 0 0 0 5.5px var(--ink); font: 900 1.4rem/1 var(--font-display); rotate: -12deg;
+	animation: pass-stamp var(--duration-stamp) var(--spring) both; }
+@media (max-width: 899px) { .showcase-page .why-stamp { inline-size: 72px; block-size: 72px; font-size: 1.15rem; inset-block-start: -26px; inset-inline-end: -10px; } }
 
 @keyframes home-caret { 50% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) {

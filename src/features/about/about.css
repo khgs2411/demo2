@@ -1,0 +1,90 @@
+/* Why me: the about page, in the ticket language. */
+.shell-content > main.inner-page.about-page { overflow-x: clip; }
+.shell-content .about-page h1 { font-size: clamp(2.6rem, 1.2rem + 3.8vw, 4.8rem); text-wrap: balance; }
+.about-page .lede { max-inline-size: 44ch; margin-block-start: 22px; font-size: clamp(1.05rem, .98rem + .35vw, 1.25rem); }
+.about-page .actions { margin-block-start: 32px; }
+.about-page :focus-visible { outline-color: var(--coral); }
+
+.about-hero { padding-block: clamp(8px, 2vw, 32px) clamp(40px, 4vw, 64px); }
+.about-hero .inner-wrap { display: grid; gap: 48px; align-items: center; }
+@media (min-width: 960px) {
+	.about-hero .inner-wrap { grid-template-columns: minmax(0, 1.1fr) minmax(420px, 1fr); gap: clamp(48px, 6vw, 112px); }
+}
+
+/* The job list: a torn ticket whose jobs move from the reader to me */
+.jobs { --notch: 14px; --tear: 84px; position: relative; inline-size: min(100%, 560px); justify-self: center; padding: 20px 24px 0; border-radius: 20px; background: var(--surface); rotate: 1.5deg;
+	-webkit-mask: radial-gradient(circle var(--notch) at 0 calc(100% - var(--tear)), transparent 97%, #000) 0 0 / 51% 100% no-repeat, radial-gradient(circle var(--notch) at 100% calc(100% - var(--tear)), transparent 97%, #000) 100% 0 / 51% 100% no-repeat;
+	mask: radial-gradient(circle var(--notch) at 0 calc(100% - var(--tear)), transparent 97%, #000) 0 0 / 51% 100% no-repeat, radial-gradient(circle var(--notch) at 100% calc(100% - var(--tear)), transparent 97%, #000) 100% 0 / 51% 100% no-repeat; }
+.jobs-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; padding-block-end: 16px; border-block-end: 2px dashed var(--perf); font-size: .84rem; font-weight: 500; color: var(--muted); }
+.jobs-switch { position: relative; display: grid; grid-template-columns: 1fr 1fr; border: 1.5px solid var(--ink); border-radius: 999px; }
+.jobs-switch button { position: relative; z-index: 1; padding: 8px 14px; border: 0; border-radius: 999px; background: none; color: var(--ink); font: 600 .8rem/1.2 var(--font-sans); white-space: nowrap; cursor: pointer; transition: color .35s; }
+.jobs-switch button[aria-pressed="true"] { color: var(--paper); }
+.jobs-switch .thumb { position: absolute; inset-block: 2px; inset-inline-start: 2px; inline-size: calc(50% - 2px); border-radius: 999px; background: var(--ink); transition: inset-inline-start .5s var(--ease), background .4s; }
+.jobs.mine .jobs-switch .thumb { inset-inline-start: 50%; background: var(--coral); }
+.jobs.mine .jobs-switch button[aria-pressed="true"] { color: var(--ink); }
+.jobs-switch button:focus-visible { outline-offset: 2px; }
+
+.jobs-list { list-style: none; padding: 0; }
+.jobs-list li { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding-block: 13px; }
+.jobs-list li + li { border-block-start: 1px solid var(--line); }
+.jobs-hole { position: relative; inline-size: 22px; block-size: 22px; border-radius: 50%; border: 1.5px dashed rgb(26 24 20 / .45); }
+.jobs-hole::after { content: ""; position: absolute; inset: -1.5px; border-radius: 50%; background: var(--paper); box-shadow: inset 0 2px 4px rgb(26 24 20 / .4); scale: 0; transition: scale .3s var(--spring) calc(var(--i) * 110ms); }
+.jobs.mine .jobs-hole::after { scale: 1; }
+.jobs-owner { display: grid; justify-items: center; padding: 6px 9px; border-radius: 6px; background: rgb(26 24 20 / .07); font: 600 .76rem/1 var(--font-sans); white-space: nowrap; transition: background .3s calc(var(--i) * 110ms); }
+.jobs-owner > span { grid-area: 1 / 1; transition: opacity .25s calc(var(--i) * 110ms); }
+.jobs-owner .me, .jobs.mine .jobs-owner .you { opacity: 0; }
+.jobs.mine .jobs-owner .me { opacity: 1; }
+.jobs.mine .jobs-owner { background: var(--coral); }
+.jobs-left { block-size: var(--tear); margin: 8px -24px 0; padding-inline: 24px; display: flex; align-items: center; border-block-start: 2px dashed var(--perf); font: 700 clamp(1.05rem, 1rem + .3vw, 1.25rem)/1.25 var(--font-display); }
+
+/* The three reasons and the close: one perforated sheet with a dark stub, as on home */
+.about-reasons { padding-block-end: 0; }
+.reasons { display: grid; border-radius: 22px; overflow: hidden; background: var(--surface); }
+.reason { display: grid; gap: 28px; align-content: start; padding: clamp(26px, 3vw, 44px); border-block-end: 2px dashed var(--perf); min-inline-size: 0; }
+.reason h2 { font-size: clamp(1.7rem, 1.1rem + 1.5vw, 2.5rem); line-height: 1.08; text-wrap: balance; }
+.reason-text p { margin-block-start: 14px; max-inline-size: 46ch; color: var(--muted); font-size: clamp(1rem, .96rem + .2vw, 1.1rem); }
+@media (min-width: 900px) {
+	.reasons { grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); }
+	.r-work { grid-template-columns: minmax(0, 1.15fr) minmax(240px, 1fr); align-items: center; border-inline-end: 2px dashed var(--perf); }
+	.r-tool { grid-column: 1 / -1; grid-template-columns: minmax(0, 1fr) minmax(300px, 380px); align-items: center; gap: clamp(32px, 5vw, 96px); }
+	.r-tool .reason-text p { max-inline-size: 58ch; }
+}
+
+.site-log { padding: 16px 18px 6px; border-radius: 16px; background: var(--card); rotate: -1deg; }
+.site-log-title { display: block; padding-block-end: 10px; border-block-end: 2px dashed var(--perf); font-size: .8rem; font-weight: 500; color: var(--muted); }
+.site-log ul { list-style: none; padding: 0; }
+.site-log li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-block: 11px; font-size: .9rem; }
+.site-log li + li { border-block-start: 1px solid var(--line); }
+.site-log b { padding: 5px 8px; border-radius: 6px; background: rgb(141 181 150 / .32); font: 600 .72rem/1.2 var(--font-sans); white-space: nowrap; }
+.site-log .live b { background: var(--ink); color: var(--paper); }
+
+.years-card { --hole: 26px; position: relative; inline-size: min(100%, 340px); padding: 18px 22px 20px; border-radius: 14px; background: var(--mustard); rotate: -3deg; box-shadow: 0 24px 40px -26px rgb(26 24 20 / .55); }
+.years-card::before, .years-card::after { content: ""; position: absolute; inset-block-start: 50%; inline-size: 16px; block-size: 16px; margin-block-start: -8px; border-radius: 50%; background: var(--surface); }
+.years-card::before { inset-inline-start: -8px; }
+.years-card::after { inset-inline-end: -8px; }
+.years-top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.years-top b { font: 700 1.1rem/1.1 var(--font-display); }
+.years-top span { font-size: .78rem; opacity: .75; white-space: nowrap; }
+.years-holes { display: grid; grid-template-columns: repeat(5, var(--hole)); justify-content: space-between; gap: 12px; margin-block: 18px 14px; }
+.years-holes i { position: relative; inline-size: var(--hole); block-size: var(--hole); border-radius: 50%; border: 1.5px dashed rgb(26 24 20 / .45); display: grid; place-items: center; font: 500 .66rem/1 var(--font-mono); font-style: normal; color: rgb(26 24 20 / .55); }
+.years-holes i::after { content: ""; position: absolute; inset: -1.5px; border-radius: 50%; background: var(--surface); box-shadow: inset 0 2px 4px rgb(26 24 20 / .4); scale: 0; transition: scale .3s var(--spring) calc(200ms + var(--i) * 90ms); }
+.years-card.punched .years-holes i::after { scale: 1; }
+.years-big { font: 900 clamp(2.4rem, 1.8rem + 1.6vw, 3.2rem)/1 var(--font-display); letter-spacing: -.02em; }
+
+.tool-pass { inline-size: 100%; rotate: 2deg; }
+.tool-pass .package-pass h3 { font: 900 1.6rem/1.1 var(--font-display); letter-spacing: -.01em; }
+.tool-pass .package-pass ul { gap: 10px; font-size: 1rem; }
+.tool-pass .package-pass .body { padding-block-end: 24px; }
+.tool-pass .fine { font-size: .78rem; opacity: .7; }
+
+.r-close { position: relative; grid-column: 1 / -1; align-items: center; gap: 32px; border: 0; background: var(--ink); color: var(--paper); padding-block: clamp(40px, 5vw, 72px); }
+@media (min-width: 900px) { .r-close { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); } }
+.r-close h2 { font-size: clamp(2.4rem, 1.4rem + 3vw, 4rem); }
+.r-close p { margin-block-start: 12px; max-inline-size: 40ch; color: rgb(242 234 219 / .65); }
+.r-close .cta { justify-self: start; rotate: -4deg; }
+@media (min-width: 900px) { .r-close .cta { justify-self: center; } }
+.about-page .ticket.ticket-large { --notch: 13px; --ticket-size: 1.2rem; --ticket-main-padding: 22px 36px; --ticket-stub-padding: 22px; --ticket-stub-size: .85rem; white-space: nowrap; }
+
+@media (prefers-reduced-motion: reduce) {
+	.about-page *, .about-page *::before, .about-page *::after { transition: none !important; animation: none !important; }
+}
