@@ -107,7 +107,7 @@ button.sim-defect-mark { pointer-events: auto; }
 .sim-ghost { opacity: 0; }
 .sim-fly { position: fixed; z-index: 50; pointer-events: none; transition: transform var(--flight-motion) var(--ease), opacity var(--flight-motion); }
 .sim-log { font: 500 .82rem/1.6 var(--font-mono); direction: ltr; text-align: start; min-block-size: 9.6em; overflow-wrap: anywhere; }
-.sim-log div { opacity: 0; transform: translateY(6px); animation: sim-in var(--duration-link) var(--ease) forwards; white-space: pre-wrap; }
+.sim-log div { opacity: 0; transform: translateY(6px); animation: sim-in var(--sim-log-reveal) var(--ease) forwards; white-space: pre-wrap; }
 .sim-log .ok, .sim-log .add { color: var(--sage); }
 .sim-log .del { color: color-mix(in srgb, var(--coral) 70%, var(--paper)); }
 .sim-log .dim { opacity: .5; }

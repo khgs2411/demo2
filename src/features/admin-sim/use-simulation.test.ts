@@ -8,6 +8,10 @@ import type { SimStep } from "./machine";
 import { i18n } from "../../i18n";
 
 const timedSteps = ["agent_fixing", "deploying"] as const;
+// The log reveal uses the site's established 300 ms timing.
+const logRevealMs = 300;
+const inboxEffectsMs = 2 * scenario.timing.inboxLogMs + logRevealMs;
+const bugBeatMs = logRevealMs + scenario.timing.beatDwellMs.bug;
 const deployMs = scenario.timing.scanStartMs + scenario.timing.scanDurationMs;
 let media: { matches: boolean; addEventListener: ReturnType<typeof vi.fn>; removeEventListener: ReturnType<typeof vi.fn> };
 
@@ -33,8 +37,8 @@ describe("simulation effects", () => {
 	it("plays every beat untouched and waits for typing, flight, fix and deployment before advancing", async () => {
 		await i18n.changeLanguage("en");
 		const { result } = renderHook(() => useSimulation());
-		const { beatDwellMs, characterMs, flightMs, fixLineMs } = scenario.timing;
-		advance(beatDwellMs.bug - 1);
+		const { beatDwellMs, characterMs, fixLineMs } = scenario.timing;
+		advance(bugBeatMs - 1);
 		expect(result.current.state.step).toBe("bug");
 		advance(1);
 		expect(result.current.state.step).toBe("ticket_drafting");
@@ -51,13 +55,15 @@ describe("simulation effects", () => {
 		advance(1);
 		expect(result.current.state).toEqual({ step: "ticket_submitted", ticketId: scenario.ticket.id });
 
-		advance(flightMs + beatDwellMs.ticket_submitted - 1);
+		advance(inboxEffectsMs + beatDwellMs.ticket_submitted - 1);
 		expect(result.current.state.step).toBe("ticket_submitted");
 		advance(1);
 		expect(result.current.state.step).toBe("agent_fixing");
 		for (let line = 1; line < scenario.logs.agent.length; line++) advance(fixLineMs);
 		expect(result.current.state).toHaveProperty("progress", 1);
-		advance(beatDwellMs.agent_fixing);
+		advance(logRevealMs + beatDwellMs.agent_fixing - 1);
+		expect(result.current.state.step).toBe("agent_fixing");
+		advance(1);
 		expect(result.current.state.step).toBe("deploying");
 		advance(deployMs);
 		expect(result.current.state).toHaveProperty("finished", true);
@@ -72,7 +78,7 @@ describe("simulation effects", () => {
 		act(() => { vi.runAllTimers(); });
 		expect(result.current.state.step).toBe("ticket_submitted");
 		act(() => { result.current.togglePlayback(); });
-		advance(scenario.timing.flightMs + scenario.timing.beatDwellMs.ticket_submitted);
+		advance(inboxEffectsMs + scenario.timing.beatDwellMs.ticket_submitted);
 		expect(result.current.state.step).toBe("agent_fixing");
 	});
 
@@ -80,7 +86,7 @@ describe("simulation effects", () => {
 		const hidden = vi.spyOn(document, "hidden", "get").mockReturnValue(false);
 		try {
 			const { result } = renderHook(() => useSimulation());
-			const dwell = scenario.timing.beatDwellMs.bug;
+			const dwell = bugBeatMs;
 			advance(dwell / 2);
 			hidden.mockReturnValue(true);
 			act(() => { document.dispatchEvent(new Event("visibilitychange")); });

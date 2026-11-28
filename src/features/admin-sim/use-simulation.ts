@@ -3,13 +3,17 @@ import { useTranslation } from "react-i18next";
 import { useReducedMotion } from "../../motion/use-reduced-motion";
 import { initialState, transition } from "./machine";
 import type { SimEvent } from "./machine";
-import { requestFields } from "./mock-admin";
+import { requestTyping } from "./mock-admin";
 import { brokenBookingButton } from "./scenarios/broken-booking-button";
 import type { SimulationScenario } from "./scenarios/types";
 
 function subscribeToVisibility(onChange: () => void) {
 	document.addEventListener("visibilitychange", onChange);
 	return () => document.removeEventListener("visibilitychange", onChange);
+}
+
+function logDuration(lineCount: number, revealMs: number, gapMs = 0) {
+	return lineCount === 0 ? 0 : (lineCount - 1) * gapMs + revealMs;
 }
 
 export function useSimulation(scenario: SimulationScenario = brokenBookingButton) {
@@ -23,7 +27,7 @@ export function useSimulation(scenario: SimulationScenario = brokenBookingButton
 	const hidden = useSyncExternalStore(subscribeToVisibility, () => document.hidden, () => true);
 	const playing = autoplay && !reducedMotion && state.step !== "live";
 	const typingMs = state.step === "ticket_drafting"
-		? requestFields(scenario, t).reduce((total, field) => total + field.text.length, 0) * scenario.timing.characterMs
+		? requestTyping(scenario, t).durationMs
 		: 0;
 
 	function pausePlayback() {
@@ -79,7 +83,12 @@ export function useSimulation(scenario: SimulationScenario = brokenBookingButton
 			delay = scenario.timing.fixLineMs;
 		} else if (state.step === "deploying" && !state.finished) {
 			event = { type: "deploy_finished" };
-			delay = scenario.timing.scanStartMs + scenario.timing.scanDurationMs;
+			const { timing, logs, deployStages } = scenario;
+			delay = Math.max(
+				timing.scanStartMs + timing.scanDurationMs,
+				logDuration(logs.deploy.length, timing.logRevealMs, timing.deployLogMs),
+				...deployStages.map((stage) => stage.startMs + timing.stageFillMs),
+			);
 		} else return;
 		const timer = setTimeout(() => send(event), delay);
 		return () => clearTimeout(timer);
@@ -90,9 +99,25 @@ export function useSimulation(scenario: SimulationScenario = brokenBookingButton
 		if (state.step === "agent_fixing" && state.progress < 1) return;
 		if (state.step === "deploying" && !state.finished) return;
 
-		const { timing } = scenario;
-		const effectMs = state.step === "ticket_drafting" ? typingMs
-			: state.step === "ticket_submitted" ? timing.flightMs : 0;
+		const { timing, logs } = scenario;
+		let effectMs: number;
+		switch (state.step) {
+			case "bug":
+				effectMs = logDuration(logs.idle.length, timing.logRevealMs);
+				break;
+			case "ticket_drafting":
+				effectMs = typingMs;
+				break;
+			case "ticket_submitted":
+				effectMs = Math.max(timing.flightMs, logDuration(logs.inbox.length, timing.logRevealMs, timing.inboxLogMs));
+				break;
+			case "agent_fixing":
+				effectMs = logDuration(logs.agent.length, timing.logRevealMs);
+				break;
+			case "deploying":
+				effectMs = 0;
+				break;
+		}
 		const timer = setTimeout(() => {
 			if (document.hidden) return;
 			if (state.step === "ticket_drafting") {

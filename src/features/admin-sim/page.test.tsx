@@ -11,6 +11,8 @@ afterEach(() => { cleanup(); expect(vi.getTimerCount()).toBe(0); vi.useRealTimer
 
 const click = (name: string) => fireEvent.click(screen.getByRole("button", { name }));
 
+const bugBeatMs = scenario.timing.logRevealMs + scenario.timing.beatDwellMs.bug;
+
 function advance(ms: number) {
 	act(() => { vi.advanceTimersByTime(ms); });
 }
@@ -18,24 +20,24 @@ function advance(ms: number) {
 it("plays to the comparison without a click and can replay from the end", async () => {
 	await i18n.changeLanguage("en");
 	render(<AdminSimPage />);
-	const { beatDwellMs, characterMs, flightMs, fixLineMs, scanStartMs, scanDurationMs } = scenario.timing;
+	const { beatDwellMs, characterMs, inboxLogMs, logRevealMs, fixLineMs, scanStartMs, scanDurationMs } = scenario.timing;
 
-	advance(beatDwellMs.bug);
+	advance(bugBeatMs);
 	expect(document.activeElement).toBe(screen.getByRole("heading", { level: 1 }));
 	const title = screen.getByLabelText<HTMLInputElement>("Title");
 	const description = screen.getByLabelText<HTMLTextAreaElement>("Description");
 	advance(("Problem".length + title.value.length + description.value.length) * characterMs + beatDwellMs.ticket_drafting);
 	expect(within(screen.getByRole("group", { name: "Open" })).getByText("Clipped button")).toBeDefined();
-	advance(flightMs + beatDwellMs.ticket_submitted);
+	advance(2 * inboxLogMs + logRevealMs + beatDwellMs.ticket_submitted);
 	for (let line = 1; line < scenario.logs.agent.length; line++) advance(fixLineMs);
-	advance(beatDwellMs.agent_fixing);
+	advance(logRevealMs + beatDwellMs.agent_fixing);
 	advance(scanStartMs + scanDurationMs);
 	advance(beatDwellMs.deploying);
 	expect(screen.getByRole("slider")).toBeDefined();
 	expect(vi.getTimerCount()).toBe(0);
 
 	click("Restart");
-	advance(beatDwellMs.bug);
+	advance(bugBeatMs);
 	expect(screen.getByRole("form", { name: "New request" })).toBeDefined();
 	expect(fetch).not.toHaveBeenCalled();
 });
@@ -43,10 +45,10 @@ it("plays to the comparison without a click and can replay from the end", async 
 it("pauses on form focus and editing, then submits the visitor's draft when Play is pressed", async () => {
 	await i18n.changeLanguage("en");
 	render(<AdminSimPage />);
-	advance(scenario.timing.beatDwellMs.bug);
+	advance(bugBeatMs);
 	const title = screen.getByLabelText<HTMLInputElement>("Title");
 	act(() => { title.focus(); });
-	advance(scenario.timing.beatDwellMs.ticket_drafting + title.value.length * scenario.timing.characterMs);
+	act(() => { vi.runOnlyPendingTimers(); });
 	expect(document.activeElement).toBe(title);
 	expect(screen.getByRole("button", { name: "Play" })).toBeDefined();
 	fireEvent.change(title, { target: { value: "Please fix my booking button" } });
@@ -59,14 +61,25 @@ it("pauses on form focus and editing, then submits the visitor's draft when Play
 	expect(document.activeElement).toBe(play);
 });
 
+it("lets a visitor pause and play from the controls row", async () => {
+	await i18n.changeLanguage("en");
+	render(<AdminSimPage />);
+	click("Pause");
+	advance(bugBeatMs);
+	expect(screen.queryByRole("form", { name: "New request" })).toBeNull();
+	click("Play");
+	advance(bugBeatMs);
+	expect(screen.getByRole("form", { name: "New request" })).toBeDefined();
+});
+
 it("pauses on a tab click and resumes from the same beat", async () => {
 	await i18n.changeLanguage("en");
 	render(<AdminSimPage />);
 	fireEvent.click(screen.getByRole("tab", { name: "Manage page" }));
-	advance(scenario.timing.beatDwellMs.bug);
+	advance(bugBeatMs);
 	expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("Something broke: the booking button is cut off.");
 	click("Play");
-	advance(scenario.timing.beatDwellMs.bug);
+	advance(bugBeatMs);
 	expect(screen.getByRole("form", { name: "New request" })).toBeDefined();
 });
 
@@ -160,7 +173,7 @@ it("shows the complete fix with reduced motion and keeps Next visitor-paced", as
 	vi.stubGlobal("matchMedia", () => ({ matches: true, addEventListener() {}, removeEventListener() {} }));
 	render(<AdminSimPage />);
 	expect(screen.queryByRole("button", { name: /^(Pause|Play)$/ })).toBeNull();
-	advance(scenario.timing.beatDwellMs.bug);
+	advance(bugBeatMs);
 	expect(screen.getByRole("heading", { level: 1 }).textContent).toBe(i18n.t(scenario.beats.bug.titleKey, { ns: "admin-sim" }));
 	click("04 AI assistant");
 	expect(screen.getByText(scenario.diff.lines[1])).toBeDefined();

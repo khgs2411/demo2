@@ -19,6 +19,6 @@ export interface SimulationScenario {
 	logs: { idle: readonly LogLine[]; inbox: readonly LogLine[]; agent: readonly LogLine[]; deploy: readonly LogLine[]; done: readonly LogLine[] };
 	diff: { file: string; lines: readonly string[] };
 	fixedRender: { bookingButtonFixed: boolean };
-	timing: { beatDwellMs: Record<Exclude<SimStep, "live">, number>; characterMs: number; inboxLogMs: number; fixLineMs: number; deployLogMs: number; scanStartMs: number; scanDurationMs: number; stageFillMs: number; flightMs: number; flightMotionMs: number };
+	timing: { beatDwellMs: Record<Exclude<SimStep, "live">, number>; characterMs: number; logRevealMs: number; inboxLogMs: number; fixLineMs: number; deployLogMs: number; scanStartMs: number; scanDurationMs: number; stageFillMs: number; flightMs: number; flightMotionMs: number };
 	deployStages: readonly { labelKey: string; startMs: number }[];
 }
