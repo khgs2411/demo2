@@ -42,7 +42,8 @@ export const brokenBookingButton = {
 	fixedRender: { bookingButtonFixed: true },
 	timing: {
 		// Allow reading time up front, then shorter holds after the animated beats.
-		beatDwellMs: { bug: 7000, ticket_drafting: 2400, ticket_submitted: 3300, agent_fixing: 3000, deploying: 1700 },
+		// The opening dwell plus its log reveal fits within the four-second opening beat.
+		beatDwellMs: { bug: 3600, ticket_drafting: 2400, ticket_submitted: 3300, agent_fixing: 3000, deploying: 1700 },
 		// Keep the site's existing 300 ms log reveal in step with the playback clock.
 		logRevealMs: 300,
 		// BEATS/render()/type()/flyTo() in the approved admin-sim.html, in milliseconds.

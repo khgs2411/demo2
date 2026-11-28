@@ -17,6 +17,14 @@ function advance(ms: number) {
 	act(() => { vi.advanceTimersByTime(ms); });
 }
 
+it("starts drafting within four seconds of showing the demo untouched", async () => {
+	await i18n.changeLanguage("en");
+	render(<AdminSimPage />);
+	expect(screen.queryByRole("form", { name: "New request" })).toBeNull();
+	advance(4000);
+	expect(screen.getByRole("form", { name: "New request" })).toBeDefined();
+});
+
 it("plays to the comparison without a click and can replay from the end", async () => {
 	await i18n.changeLanguage("en");
 	render(<AdminSimPage />);
