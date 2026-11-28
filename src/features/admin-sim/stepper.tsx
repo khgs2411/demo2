@@ -1,3 +1,5 @@
+import { useEffect, useRef } from "react";
+import type { CSSProperties } from "react";
 import { useTranslation } from "react-i18next";
 import { simulationSteps } from "./machine";
 import type { SimStep } from "./machine";
@@ -37,5 +39,3 @@ export function Stepper({ scenario, step, playback, reducedMotion, onSelect }: S
 		</button>)}
 	</nav>;
 }
-import { useEffect, useRef } from "react";
-import type { CSSProperties } from "react";
