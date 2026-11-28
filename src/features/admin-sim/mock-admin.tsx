@@ -1,4 +1,5 @@
 import type { TFunction } from "i18next";
+import type { Ref } from "react";
 import { useTranslation } from "react-i18next";
 import type { SimulationScenario } from "./scenarios/types";
 
@@ -13,10 +14,17 @@ export function requestFields(scenario: SimulationScenario, t: TFunction<"admin-
 	];
 }
 
-export function MockAdmin({ scenario, onSubmit }: { scenario: SimulationScenario; onSubmit: (draft: RequestDraft) => void }) {
+type MockAdminProps = {
+	scenario: SimulationScenario;
+	onSubmit: (draft: RequestDraft) => void;
+	formRef?: Ref<HTMLFormElement>;
+	onInvalid?: () => void;
+};
+
+export function MockAdmin({ scenario, onSubmit, formRef, onInvalid }: MockAdminProps) {
 	const { t } = useTranslation("admin-sim");
 	let characters = 0;
-	return <form id={requestFormId} className="pass sim-request" aria-label={t("requestHeader")} onSubmit={(event) => {
+	return <form ref={formRef} onInvalid={onInvalid} id={requestFormId} className="pass sim-request" aria-label={t("requestHeader")} onSubmit={(event) => {
 		event.preventDefault();
 		const data = new FormData(event.currentTarget);
 		onSubmit({ type: data.get("type") as RequestDraft["type"], title: String(data.get("title")), description: String(data.get("description")) });

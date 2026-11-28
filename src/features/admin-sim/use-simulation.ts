@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useState, useSyncExternalStore } from "react";
+import { useEffect, useReducer, useRef, useState, useSyncExternalStore } from "react";
 import { useTranslation } from "react-i18next";
 import { useReducedMotion } from "../../motion/use-reduced-motion";
 import { initialState, transition } from "./machine";
@@ -15,6 +15,9 @@ function subscribeToVisibility(onChange: () => void) {
 export function useSimulation(scenario: SimulationScenario = brokenBookingButton) {
 	const [state, send] = useReducer(transition, initialState);
 	const [autoplay, setAutoplay] = useState(true);
+	const requestForm = useRef<HTMLFormElement>(null);
+	const automaticallyAdvanced = useRef(false);
+	const autoSubmitting = useRef(false);
 	const { t } = useTranslation("admin-sim");
 	const reducedMotion = useReducedMotion();
 	const hidden = useSyncExternalStore(subscribeToVisibility, () => document.hidden, () => true);
@@ -28,12 +31,14 @@ export function useSimulation(scenario: SimulationScenario = brokenBookingButton
 	}
 
 	function dispatch(event: SimEvent) {
-		pausePlayback();
+		automaticallyAdvanced.current = autoSubmitting.current;
+		if (event.type === "restarted" && state.step === "live") setAutoplay(true);
+		else if (!autoSubmitting.current) pausePlayback();
 		send(event);
 	}
 
 	function togglePlayback() {
-		setAutoplay((enabled) => !enabled);
+		if (!reducedMotion && state.step !== "live") setAutoplay((enabled) => !enabled);
 	}
 
 	useEffect(() => {
@@ -88,14 +93,23 @@ export function useSimulation(scenario: SimulationScenario = brokenBookingButton
 		const { timing } = scenario;
 		const effectMs = state.step === "ticket_drafting" ? typingMs
 			: state.step === "ticket_submitted" ? timing.flightMs : 0;
-		const event: SimEvent = state.step === "ticket_drafting"
-			? { type: "ticket_submitted", ticketId: scenario.ticket.id }
-			: { type: "next_requested" };
 		const timer = setTimeout(() => {
-			if (!document.hidden) send(event);
+			if (document.hidden) return;
+			if (state.step === "ticket_drafting") {
+				// Native submission shares validation and the visitor's submit handler.
+				autoSubmitting.current = true;
+				try {
+					requestForm.current?.requestSubmit();
+				} finally {
+					autoSubmitting.current = false;
+				}
+			} else {
+				automaticallyAdvanced.current = true;
+				send({ type: "next_requested" });
+			}
 		}, effectMs + timing.beatDwellMs[state.step]);
 		return () => clearTimeout(timer);
 	}, [state, scenario, playing, hidden, typingMs]);
 
-	return { state, dispatch, scenario, reducedMotion, playing, pausePlayback, togglePlayback };
+	return { state, dispatch, scenario, reducedMotion, playing, automaticallyAdvanced, pausePlayback, togglePlayback, requestForm };
 }

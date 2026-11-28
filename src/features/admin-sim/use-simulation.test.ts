@@ -1,7 +1,8 @@
-import { act, cleanup, renderHook } from "@testing-library/react";
+import { act, cleanup, render, renderHook } from "@testing-library/react";
 import { StrictMode, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { brokenBookingButton as scenario } from "./scenarios/broken-booking-button";
+import { MockAdmin } from "./mock-admin";
 import { useSimulation } from "./use-simulation";
 import type { SimStep } from "./machine";
 import { i18n } from "../../i18n";
@@ -38,6 +39,11 @@ describe("simulation effects", () => {
 		advance(1);
 		expect(result.current.state.step).toBe("ticket_drafting");
 
+		render(createElement(MockAdmin, {
+			scenario,
+			formRef: result.current.requestForm,
+			onSubmit: () => result.current.dispatch({ type: "ticket_submitted", ticketId: scenario.ticket.id }),
+		}));
 		const typedText = "Problem" + "The booking button is cut off on mobile" +
 			"The button on the home page goes off screen, so nobody can book.";
 		advance(typedText.length * characterMs + beatDwellMs.ticket_drafting - 1);
