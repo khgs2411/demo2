@@ -1,13 +1,15 @@
 import type { ComponentProps, MouseEvent } from "react";
 
-type SectionLinkProps = Omit<ComponentProps<"a">, "href"> & { targetId: string };
+type SectionLinkProps = ComponentProps<"a"> & { targetId: string };
 
-export function SectionLink({ targetId, onClick, ...props }: SectionLinkProps) {
+export function SectionLink({ targetId, href = `#${targetId}`, onClick, ...props }: SectionLinkProps) {
 	function handleClick(event: MouseEvent<HTMLAnchorElement>) {
 		onClick?.(event);
 		if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
 		event.preventDefault();
-		document.getElementById(targetId)?.scrollIntoView();
+		const target = document.getElementById(targetId);
+		target?.focus({ preventScroll: true });
+		target?.scrollIntoView();
 	}
-	return <a {...props} href={`#${targetId}`} onClick={handleClick} />;
+	return <a {...props} href={href} onClick={handleClick} />;
 }

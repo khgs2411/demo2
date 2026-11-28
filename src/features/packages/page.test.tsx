@@ -85,5 +85,5 @@ it.each(["he", "en"])("shows named extras and only the remaining FAQ topics in %
 		expect(question.tagName).toBe("SUMMARY");
 		expect(question.closest("details")?.querySelector("p")?.textContent).toBe(t(`faq.${key}.answer`));
 	}
-	expect(screen.getAllByRole("link")).toHaveLength(7);
+	expect(screen.getAllByRole("link")).toHaveLength(9);
 });

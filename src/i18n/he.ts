@@ -155,6 +155,13 @@ export const he = {
 	packages: {
 		pageTitle: "אתר לעסק שלך",
 		explainTitle: "מה זה ClassKit?",
+		priceHint: "המחיר לא מסתדר לך?",
+		priceHintLink: "דבר איתי, אפשר להתאים אותו.",
+		priceNote: {
+			title: "המחיר לא מסתדר?",
+			body: "אל תוותר בגלל המחיר. ספר לי מה מתאים לעסק שלך ונמצא דרך, למשל מחיר מוזל לחודשים הראשונים, עד שהאתר מתחיל להביא לקוחות.",
+			cta: "לדבר על המחיר",
+		},
 		moreAboutClassKit: "עוד על ClassKit",
 		monthly: "לחודש",
 		once: "בתשלום אחד",
