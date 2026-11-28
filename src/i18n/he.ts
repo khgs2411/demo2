@@ -5,6 +5,7 @@ export const he = {
 		howItWorks: "איך זה עובד",
 		liveDemo: "הדגמה חיה",
 		packages: "חבילות",
+		about: "למה אני",
 		bookMeeting: "לקבוע פגישה",
 		ticketNumber: "№ 01",
 		myRequests: "הבקשות שלי",

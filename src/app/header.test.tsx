@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { makeBookingContext } from "../features/booking/context-fixture";
 import type { useBookingContext } from "../features/booking/adapter";
@@ -18,6 +18,29 @@ beforeEach(async () => {
 	await i18n.changeLanguage("en");
 });
 afterEach(cleanup);
+
+it.each([
+	["en", "Packages", "Why me"],
+	["he", "חבילות", "למה אני"],
+])("links to About after Packages and marks the current page in %s", async (language, packagesLabel, aboutLabel) => {
+	await i18n.changeLanguage(language);
+	window.history.replaceState(null, "", "#/packages");
+	render(<Header />);
+
+	const navigation = within(screen.getByRole("navigation"));
+	const about = navigation.getByRole("link", { name: aboutLabel });
+	const packages = navigation.getByRole("link", { name: packagesLabel });
+	expect(about.previousElementSibling).toBe(packages);
+	expect(about.getAttribute("href")).toBe("#/about");
+	expect(about.getAttribute("aria-current")).toBeNull();
+
+	act(() => {
+		window.history.replaceState(null, "", "#/about");
+		window.dispatchEvent(new HashChangeEvent("hashchange"));
+	});
+	expect(about.getAttribute("aria-current")).toBe("page");
+	expect(packages.getAttribute("aria-current")).toBeNull();
+});
 
 it.each([false, true])("hides account links while loading (session present: %s)", sessionPresent => {
 	context.loading = true;

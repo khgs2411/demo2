@@ -6,6 +6,7 @@ describe("hash routes", () => {
 		["#/", { page: "showcase" }],
 		["#get", { page: "showcase", section: "get" }],
 		["#/packages", { page: "packages" }],
+		["#/about", { page: "about" }],
 		["#/demo", { page: "admin-sim" }],
 		["#/book", { page: "booking" }],
 		["#/book/system", { page: "booking", packageId: "system" }],
