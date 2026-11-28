@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 export type PassRow = { label: ReactNode; value: ReactNode; state?: "done" | "now" | "next" };
 
 type PassProps = { stamp?: ReactNode } & (
-	| { variant?: "gate"; kicker: ReactNode; code: ReactNode; rows: readonly PassRow[]; status: ReactNode; num: ReactNode }
+	| { variant?: "gate"; tone?: "coral" | "sand" | "ink"; kicker: ReactNode; code: ReactNode; rows: readonly PassRow[]; status: ReactNode; num: ReactNode }
 	| { variant: "package"; tone: "sand" | "coral" | "ink"; children: ReactNode; stub: ReactNode }
 );
 
@@ -15,10 +15,10 @@ export function Pass(props: PassProps) {
 			<div className="stub">{props.stub}</div>
 		</article>;
 	}
-	const { kicker, code, rows, status, num, stamp } = props;
+	const { kicker, code, rows, status, num, stamp, tone = "coral" } = props;
 	const hasStamp = stamp != null && typeof stamp !== "boolean" && stamp !== "";
-	return <aside className={`pass gate-pass ${hasStamp ? "stamped" : ""}`}>
-		<header><span className="pass-label">{kicker}</span><span className="pass-label">{code}</span></header>
+	return <aside className={`pass gate-pass gate-pass-${tone} ${hasStamp ? "stamped" : ""}`}>
+		<header><strong>{kicker}</strong><span className="pass-label">{code}</span></header>
 		<dl>{rows.map((row, index) => <div key={index} className={row.state ?? ""}>
 			<dt className="pass-label">{row.label}</dt><dd>{row.value}</dd>
 		</div>)}</dl>

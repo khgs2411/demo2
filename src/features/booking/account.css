@@ -1,0 +1,34 @@
+.account-columns { display: grid; gap: 48px 72px; padding-block-start: 36px; }
+.account-columns > div { min-inline-size: 0; }
+.inner-page .account-columns h2 { font: 700 1.5rem/1.15 var(--font-display); margin-block-end: 18px; }
+@media (min-width: 960px) { .account-columns { grid-template-columns: minmax(0, 1fr) 340px; } }
+
+.account-page .reqs { display: grid; gap: 14px; }
+.account-page .req {
+	--date-width: 96px; --notch: 10px; --tear-position: var(--date-width);
+	display: grid; grid-template-columns: var(--date-width) minmax(0, 1fr);
+	background: var(--surface); border-radius: 16px; transition: background var(--duration-ticket);
+}
+.account-page .req:dir(rtl) { --tear-position: calc(100% - var(--date-width)); }
+.account-page .req .date { display: grid; place-content: center; text-align: center; gap: 2px; padding: 16px 8px; border-inline-end: 2px dashed var(--perf); margin-block: 12px; }
+.account-page .req .date b { font: 900 2rem/1 var(--font-display); }
+.account-page .req .date span { color: var(--muted); font-size: .78rem; }
+.account-page .req .date time { font: 500 .8rem/1 var(--font-mono); margin-block-start: 4px; }
+.account-page .req .body { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; padding: 18px 22px; overflow-wrap: anywhere; }
+.account-page .req .what b { font: 700 1.15rem/1.2 var(--font-display); }
+.account-page .req .what time { display: block; font-size: .86rem; color: var(--muted); margin-block-start: 2px; }
+.account-page .req .side { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+.account-page .req .cal { font-size: .86rem; }
+.account-page .req.past { background: transparent; box-shadow: inset 0 0 0 1px var(--line); }
+.account-page .req.past b { color: var(--muted); }
+
+.account-page .accepted-terms { margin-block-start: 48px; }
+.account-page .accepted-terms li { border-block-end: 1px solid var(--line); }
+.account-page .acceptance-row { inline-size: 100%; text-decoration: none; text-align: start; overflow-wrap: anywhere; }
+.account-page .acceptance-row .main { inline-size: 100%; display: flex; justify-content: space-between; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; padding-block: 14px; }
+.account-page .acceptance-row .when, .account-page .booking-terms { color: var(--muted); font-size: .84rem; }
+.account-page .booking-terms { padding-block-end: 16px; }
+.account-page :is(.account-details, .password-change) .fields { margin-block-start: 0; gap: 14px; }
+.account-page :is(.account-details, .password-change) .actions { margin-block-start: 18px; }
+.account-page .account-details + .password-change, .account-page .signout { margin-block-start: 34px; padding-block-start: 30px; border-block-start: 2px dashed var(--perf); }
+@media (prefers-reduced-motion: reduce) { .account-page .req { transition: none; } }

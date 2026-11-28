@@ -29,9 +29,14 @@ export function AccountStep({ stepStub = "02", product, loading, busy, onPasswor
 			{product?.email_password_enabled && <form onSubmit={submit}>
 				<fieldset disabled={busy} className="fields">
 					<Input label={t("email")} name="email" ref={emailField} defaultValue={email ?? (readResetEmail() || undefined)} readOnly={emailReadOnly} type="email" dir="ltr" autoComplete="email" required />
-					<div><Input label={t("password")} name="password" type="password" autoComplete={signIn ? "current-password" : "new-password"} minLength={signIn ? undefined : 8} aria-describedby={signIn ? undefined : "password-hint"} required />
+					<div>
+						<Input label={t("password")} name="password" type="password" autoComplete={signIn ? "current-password" : "new-password"}
+							minLength={signIn ? undefined : 8} aria-describedby={signIn ? undefined : "password-hint"} required
+							labelAction={signIn && <TextLink className="forgot-link" href="#/forgot-password" onClick={() => rememberResetEmail(emailField.current?.value ?? "")}>
+								{t("forgotLink", { ns: "passwordReset" })}
+							</TextLink>} />
 						{!signIn && <span className="hint" id="password-hint">{t("pwHint")}</span>}
-						{signIn && <TextLink className="forgot-link" href="#/forgot-password" onClick={() => rememberResetEmail(emailField.current?.value ?? "")}>{t("forgotLink", { ns: "passwordReset" })}</TextLink>}</div>
+					</div>
 				</fieldset>
 				{canSignUp && <p className="switch">{!signIn && <>{t("haveAccount")} </>}<Ticket stub="" className="booking-link" disabled={busy} onClick={() => setSigningIn(!signingIn)}>{t(signIn ? "createAccount" : "signIn")}</Ticket></p>}
 				<div className="actions"><Ticket type="submit" stub={stepStub} disabled={busy}>{busy ? t("loading") : t(signIn ? "signIn" : "createAccount")}</Ticket>
