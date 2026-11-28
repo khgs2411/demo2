@@ -17,6 +17,20 @@ function advance(ms: number) {
 	act(() => { vi.advanceTimersByTime(ms); });
 }
 
+it("plays the untouched walkthrough in about two-thirds of the original time", async () => {
+	await i18n.changeLanguage("en");
+	render(<AdminSimPage />);
+	const masterDurationMs = 25_420; // Measured on master at e991fb2 with the same fake clock.
+	const targetDurationMs = masterDurationMs * 2 / 3;
+	const toleranceMs = targetDurationMs * 0.03;
+	const startedAt = performance.now();
+	while (!screen.queryByRole("slider") && vi.getTimerCount() && performance.now() - startedAt <= targetDurationMs + toleranceMs) {
+		act(() => { vi.advanceTimersToNextTimer(); });
+	}
+	expect(Math.abs(performance.now() - startedAt - targetDurationMs)).toBeLessThanOrEqual(toleranceMs);
+	expect(screen.getByRole("slider")).toBeDefined();
+});
+
 it("starts drafting within four seconds of showing the demo untouched", async () => {
 	await i18n.changeLanguage("en");
 	render(<AdminSimPage />);
@@ -37,14 +51,14 @@ it("fills between dots on the autoplay clock and freezes on visitor and tab paus
 		expect(fill.closest('[aria-hidden="true"]')).not.toBeNull();
 		expect(fraction()).toBe(0);
 		advance(976);
-		expect(fraction()).toBeCloseTo(0.05, 3);
+		expect(fraction()).toBeCloseTo(0.075, 3);
 		click("Pause");
 		const visitorPaused = fraction();
 		advance(4000);
 		expect(fraction()).toBe(visitorPaused);
 		click("Play");
 		advance(976);
-		expect(fraction()).toBeCloseTo(0.1, 3);
+		expect(fraction()).toBeCloseTo(0.15, 3);
 		hidden.mockReturnValue(true);
 		act(() => { document.dispatchEvent(new Event("visibilitychange")); });
 		const tabPaused = fraction();
@@ -52,7 +66,7 @@ it("fills between dots on the autoplay clock and freezes on visitor and tab paus
 		expect(fraction()).toBe(tabPaused);
 		hidden.mockReturnValue(false);
 		act(() => { document.dispatchEvent(new Event("visibilitychange")); });
-		advance(1947);
+		advance(647);
 		expect(screen.getByRole("button", { name: "01 Problem", current: "step" })).toBeDefined();
 		advance(1);
 		expect(screen.getByRole("button", { name: "02 Request", current: "step" })).toBeDefined();
@@ -77,15 +91,15 @@ it("snaps to manual destinations, keeps playing through jumps and fills at live"
 	click("Hand it to the assistant");
 	expect(fraction()).toBe(0.6);
 	advance(1040);
-	// Fixing runs for 2.6 s of log streaming, 300 ms of reveal, and 3 s of dwell.
-	expect(fraction()).toBeCloseTo(0.635, 3);
+	// Fixing takes 3935 ms: five 347 ms intervals, 200 ms of reveal, and 2000 ms of dwell.
+	expect(fraction()).toBeCloseTo(0.653, 3);
 	click("Back");
 	expect(fraction()).toBe(0.4);
 	click("05 Going up");
 	expect(fraction()).toBe(0.8);
 	advance(2000);
-	// Deployment runs for 4 s of effects and 1.7 s of dwell.
-	expect(fraction()).toBeCloseTo(0.87, 3);
+	// Deployment takes 3800 ms: 2667 ms of effects and 1133 ms of dwell.
+	expect(fraction()).toBeCloseTo(0.905, 3);
 	click("Restart");
 	expect(fraction()).toBe(0);
 	advance(976);

@@ -44,11 +44,16 @@ describe("broken booking button scenario", () => {
 		}
 	});
 
-	it("ports the six beats and effect timings from the approved mockup", () => {
+	it("keeps the six beats and plays their effects at 1.5× speed", () => {
 		expect(Object.keys(scenario.beats)).toEqual(["bug", "ticket_drafting", "ticket_submitted", "agent_fixing", "deploying", "live"]);
 		expect(Object.values(scenario.beats).map((beat) => beat.side)).toEqual(["top", "under", "under", "under", "top", "top"]);
-		expect(scenario.timing).toMatchObject({ characterMs: 28, inboxLogMs: 420, fixLineMs: 520, deployLogMs: 700, scanStartMs: 2400, scanDurationMs: 1600, stageFillMs: 600, flightMs: 920, flightMotionMs: 900 });
+		expect(scenario.timing).toMatchObject({
+			beatDwellMs: { bug: 2400, ticket_drafting: 1600, ticket_submitted: 2200, agent_fixing: 2000, deploying: 1133 },
+			logRevealMs: 200,
+			characterMs: 19, inboxLogMs: 280, fixLineMs: 347, deployLogMs: 467, scanStartMs: 1600,
+			scanDurationMs: 1067, stageFillMs: 400, flightMs: 613, flightMotionMs: 600,
+		});
 		expect(scenario.timing.beatDwellMs.bug).toBeGreaterThan(scenario.timing.beatDwellMs.deploying);
-		expect(scenario.deployStages.map((stage) => stage.startMs)).toEqual([400, 1100, 1800]);
+		expect(scenario.deployStages.map((stage) => stage.startMs)).toEqual([267, 733, 1200]);
 	});
 });
