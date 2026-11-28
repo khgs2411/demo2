@@ -65,7 +65,7 @@ export function HomePackages({ copy, reduced, english }: { copy: HomeCopy; reduc
 	const fan = usePassFan(reduced, english);
 	return <section className="packs" id="packs" aria-labelledby="home-packages-heading"><div className="wrap">
 		<div className="head"><h2 id="home-packages-heading">{copy.packsTitle[0]}<br />{copy.packsTitle[1]}</h2><p>{copy.packsSub}</p></div>
-		<div className="passes" ref={fan}>
+		<div className="passes package-passes" ref={fan}>
 			{offers.map(({ id, priceKey, recommended }, index) => <Pass key={id} variant="package" tone={tones[index]}
 				stamp={recommended ? copy.rec : undefined}
 				stub={<><a href={`#/book/${id}`}>{t("homeBookMeeting")}</a><span className="serial">{copy.min}</span></>}

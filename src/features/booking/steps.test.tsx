@@ -44,17 +44,19 @@ it.each(["he", "en"])("lists the six packages under their service lines in %s", 
 		{ line: "site", ids: ["site-quick", "site-landing", "site-business"] },
 	];
 	const groups = within(screen.getByRole("radiogroup")).getAllByRole("region");
-	expect(groups.map(group => group.querySelector("h2")?.textContent)).toEqual(lines.map(({ line }) => t(`lines.${line}.name`)));
+	expect(groups.map(group => group.querySelector("h2")?.firstChild?.textContent)).toEqual(lines.map(({ line }) => t(`lines.${line}.name`)));
 	for (const [index, { ids, line }] of lines.entries()) {
 		const radios = within(groups[index]).getAllByRole<HTMLInputElement>("radio");
 		expect(radios.map(radio => radio.value)).toEqual(ids);
 		for (const radio of radios) {
-			const name = i18n.t("packageName", { ns: "packages", name: t(`offers.${radio.value}.name`) });
+			const name = t(`offers.${radio.value}.name`);
 			expect(radio.labels?.[0].textContent).toContain(name);
 			expect(radio.labels?.[0].textContent).toContain(t(`offers.${radio.value}.price`));
-			expect(radio.labels?.[0].textContent).toContain(t(`lines.${line}.payment`));
+			expect(radio.labels?.[0].textContent).toContain(i18n.t(`pricePeriod.${line}`, { ns: "booking" }));
 		}
 	}
+	expect(screen.getAllByRole("list")).toHaveLength(1);
+	expect(screen.getByRole("list").textContent).toContain(i18n.t("benefits.system-studio.0", { ns: "booking" }));
 	fireEvent.click(within(groups[1]).getAllByRole("radio")[0]);
 	expect(change).toHaveBeenCalledWith({ packageId: "site-quick", addonInterests: ["agent-voice"], slotId: null });
 });

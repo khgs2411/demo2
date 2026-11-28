@@ -8,7 +8,7 @@ import { TermsConsent } from "./terms-reader";
 import type { useBooking } from "./use-booking";
 import { useTurnstile } from "./use-turnstile";
 
-export function SignupStep({ flow, draft, onChange }: {
+export function SignupStep({ stepStub = "03", flow, draft, onChange }: { stepStub?: string;
 	flow: ReturnType<typeof useBooking>; draft: SignupDraft; onChange: (draft: SignupDraft) => void;
 }) {
 	const { t, i18n } = useTranslation("booking");
@@ -41,9 +41,9 @@ export function SignupStep({ flow, draft, onChange }: {
 					<TermsConsent terms={terms} accepted={accepted} onChange={accepted => flow.send({ type: "terms_accepted", accepted })} />
 				</> : loadingTerms && <p role="status">{t("loading")}</p>}
 			</fieldset>
-			<div ref={turnstile.container} />
+			<div className="booking-turnstile" ref={turnstile.container} />
 			<div className="actions">
-				<Ticket stub="03" type="submit" disabled={busy || !accepted || turnstile.status !== "verified"}>{t(busy ? "loading" : "send")}</Ticket>
+				<Ticket stub={stepStub} type="submit" disabled={busy || !accepted || turnstile.status !== "verified"}>{t(busy ? "loading" : "send")}</Ticket>
 				<Ticket stub="" className="booking-link" disabled={busy} onClick={() => flow.send({ type: "signup_back" })}>{t("back")}</Ticket>
 			</div>
 		</form>

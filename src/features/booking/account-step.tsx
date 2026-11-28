@@ -2,10 +2,10 @@ import { useRef, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Input } from "../../ui/input";
 import { TextLink } from "../../ui/text-link";
-import { Ticket } from "../../ui/ticket";
+import { Ticket, type TicketTone } from "../../ui/ticket";
 import { readResetEmail, rememberResetEmail } from "./password-reset/memory";
 
-export function AccountStep({ product, loading, busy, onPassword, onGoogle, onBack, signInOnly = false, title, description, email, emailReadOnly }: {
+export function AccountStep({ stepStub = "02", tone, product, loading, busy, onPassword, onGoogle, onBack, signInOnly = false, title, description, email, emailReadOnly }: { stepStub?: string; tone?: TicketTone;
 	product: { auth_mode: string; email_password_enabled: boolean; google_oauth_enabled: boolean } | null;
 	loading: boolean; busy: boolean; onPassword: (method: "signIn" | "signUp", email: string, password: string) => void;
 	onGoogle: () => void; onBack?: () => void;
@@ -29,12 +29,17 @@ export function AccountStep({ product, loading, busy, onPassword, onGoogle, onBa
 			{product?.email_password_enabled && <form onSubmit={submit}>
 				<fieldset disabled={busy} className="fields">
 					<Input label={t("email")} name="email" ref={emailField} defaultValue={email ?? (readResetEmail() || undefined)} readOnly={emailReadOnly} type="email" dir="ltr" autoComplete="email" required />
-					<div><Input label={t("password")} name="password" type="password" autoComplete={signIn ? "current-password" : "new-password"} minLength={signIn ? undefined : 8} aria-describedby={signIn ? undefined : "password-hint"} required />
+					<div>
+						<Input label={t("password")} name="password" type="password" autoComplete={signIn ? "current-password" : "new-password"}
+							minLength={signIn ? undefined : 8} aria-describedby={signIn ? undefined : "password-hint"} required
+							labelAction={signIn && <TextLink className="forgot-link" href="#/forgot-password" onClick={() => rememberResetEmail(emailField.current?.value ?? "")}>
+								{t("forgotLink", { ns: "passwordReset" })}
+							</TextLink>} />
 						{!signIn && <span className="hint" id="password-hint">{t("pwHint")}</span>}
-						{signIn && <TextLink className="forgot-link" href="#/forgot-password" onClick={() => rememberResetEmail(emailField.current?.value ?? "")}>{t("forgotLink", { ns: "passwordReset" })}</TextLink>}</div>
+					</div>
 				</fieldset>
 				{canSignUp && <p className="switch">{!signIn && <>{t("haveAccount")} </>}<Ticket stub="" className="booking-link" disabled={busy} onClick={() => setSigningIn(!signingIn)}>{t(signIn ? "createAccount" : "signIn")}</Ticket></p>}
-				<div className="actions"><Ticket type="submit" stub="02" disabled={busy}>{busy ? t("loading") : t(signIn ? "signIn" : "createAccount")}</Ticket>
+				<div className="actions"><Ticket type="submit" stub={stepStub} tone={tone} disabled={busy}>{busy ? t("loading") : t(signIn ? "signIn" : "createAccount")}</Ticket>
 					{onBack && <Ticket stub="" className="booking-link" disabled={busy} onClick={onBack}>{t("back")}</Ticket>}</div>
 			</form>}
 			{!product?.email_password_enabled && !product?.google_oauth_enabled && <p role="status">{t("authUnavailable")}</p>}

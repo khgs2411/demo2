@@ -13,7 +13,7 @@
 	--paper: #f2eadb; --paper-2: #e7dcc6; --ink: #1a1814;
 	--surface: #fdfaf4; --card: #f8f3ea; --sand: #e9dfcf; --forest: #24362c;
 	--coral: #ff5a36; --mustard: #f2b33d; --sage: #8db596; --glass: #cfe3e8;
-	--status-error: #ff4d6d;
+	--status-error: #ff4d6d; --fault-ink: #c2402a;
 	--line: rgb(26 24 20 / .09); --perf: rgb(26 24 20 / .2); --muted: rgb(26 24 20 / .62);
 	--font-display: "Frank Ruhl Libre", Georgia, serif;
 	--font-sans: "IBM Plex Sans Hebrew", "IBM Plex Sans", system-ui, sans-serif;
@@ -38,6 +38,7 @@
 	--duration-link: .3s;
 	--duration-ticket: .35s;
 	--duration-flip: .6s;
+	--duration-reveal: .4s; --duration-stamp: .5s; --duration-control: .25s;
 }
 
 html:lang(en) { --font-sans: "IBM Plex Sans", "IBM Plex Sans Hebrew", system-ui, sans-serif; }
@@ -97,14 +98,14 @@ small { font-size: var(--text-small); line-height: var(--leading-small); }
 	-webkit-mask: radial-gradient(circle var(--notch) at 0 calc(100% - var(--tear)), transparent 97%, var(--ink)) 0 0 / 51% 100% no-repeat, radial-gradient(circle var(--notch) at 100% calc(100% - var(--tear)), transparent 97%, var(--ink)) 100% 0 / 51% 100% no-repeat;
 	mask: radial-gradient(circle var(--notch) at 0 calc(100% - var(--tear)), transparent 97%, var(--ink)) 0 0 / 51% 100% no-repeat, radial-gradient(circle var(--notch) at 100% calc(100% - var(--tear)), transparent 97%, var(--ink)) 100% 0 / 51% 100% no-repeat; }
 .gate-pass { padding: 28px 28px 0; }
-.package-pass { --notch: 13px; --tear: 76px; display: flex; flex-direction: column; border-radius: 18px; background: var(--sand); }
+.package-pass { align-self: stretch; --notch: 13px; --tear: 76px; display: flex; flex-direction: column; border-radius: 18px; background: var(--sand); }
 .package-pass-coral { background: var(--coral); z-index: 2; }
 .package-pass-ink { background: var(--ink); color: var(--paper); }
 .pass-label { font: 500 var(--text-label)/var(--leading-small) var(--font-sans); letter-spacing: var(--tracking-label); text-transform: uppercase; }
 .gate-pass header { display: flex; justify-content: space-between; gap: 16px; margin-block-end: 18px; }
 .gate-pass dl > div { display: grid; gap: 6px; padding-block: 16px; border-block-end: 1.5px solid color-mix(in srgb, var(--ink), transparent 72%); transition: opacity var(--duration-ticket); }
-.pass dt { opacity: .7; display: flex; align-items: center; gap: 8px; }
-.pass dd { font: 700 var(--text-title)/var(--leading-heading) var(--font-display); }
+.gate-pass dt { opacity: .7; display: flex; align-items: center; gap: 8px; }
+.gate-pass dd { font: 700 var(--text-title)/var(--leading-heading) var(--font-display); }
 .pass .next { opacity: .42; }
 .pass .now dt::before { content: ""; inline-size: 8px; block-size: 8px; background: var(--ink); }
 .pass .done dt::after { content: "✓"; font-size: var(--text-small); line-height: var(--leading-small); }
@@ -136,3 +137,129 @@ small { font-size: var(--text-small); line-height: var(--leading-small); }
  .ticket { transition: none; }
  .ticket:hover { transform: none; }
 }
+
+.package-passes { display: grid; gap: 22px; padding-block: 16px; }
+@media (min-width: 860px) { .package-passes { grid-template-columns: repeat(3, 1fr); gap: 20px; } }
+
+.package-pass .body { padding: 28px 28px 24px; display: flex; flex-direction: column; gap: 16px; flex: 1; }
+.package-pass .name { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.package-pass h3 { font-size: 1.7rem; }
+.package-pass .admit { font: 500 .74rem/1.3 var(--font-sans); opacity: .7; text-align: end; }
+.package-pass .price { font: 900 clamp(3rem, 2.4rem + 1.6vw, 3.8rem)/1 var(--font-display); letter-spacing: -.03em; }
+.package-pass .price small { font: 500 .88rem/1 var(--font-sans); opacity: .7; letter-spacing: 0; margin-inline-start: 6px; }
+.package-pass ul { list-style: none; display: grid; gap: 9px; font-size: .92rem; }
+.package-pass li { display: flex; gap: 10px; }
+.package-pass li::before { content: ""; inline-size: 9px; block-size: 9px; border-radius: 50%; border: 1.5px solid currentColor; margin-block-start: .5em; flex: none; }
+.package-pass .stub { block-size: var(--tear); border-block-start: 2px dashed rgb(26 24 20 / .3); margin-inline: 18px; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-inline: 10px; }
+.package-pass-ink .stub { border-color: rgb(242 234 219 / .3); }
+.package-pass .stub a { font-weight: 600; text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 6px; }
+.package-pass .stub .serial { font-size: .78rem; opacity: .65; }
+.package-pass .stamp { position: absolute; inset-block-start: 74px; inset-inline-end: 22px; inline-size: 78px; block-size: 78px; border-radius: 50%; border: 2px solid var(--ink); display: grid; place-items: center; text-align: center;
+	font: 700 .9rem/1.05 var(--font-display); rotate: -14deg; hyphens: manual; box-shadow: 0 0 0 4px var(--coral), 0 0 0 5.5px var(--ink); }
+
+/* Inner page layout, shared by the redesign. */
+.shell-content > main.inner-page {
+	display: block;
+	min-block-size: auto;
+	padding: clamp(28px, 5vw, 64px) 0 clamp(56px, 8vw, 110px);
+}
+.inner-wrap { max-inline-size: 1120px; margin-inline: auto; padding-inline: var(--gutter); }
+.shell-content .inner-page h1 {
+	max-inline-size: none;
+	font: 900 clamp(2.4rem, 1.2rem + 3.6vw, 4.1rem)/1.04 var(--font-display);
+	overflow-wrap: normal;
+}
+.inner-page h2 { font: 900 clamp(2rem, 1.2rem + 2.8vw, 3.3rem)/1.06 var(--font-display); letter-spacing: var(--tracking-display); }
+
+.inner-page .lede { font-size: clamp(1.02rem, .96rem + .3vw, 1.18rem); color: var(--muted); max-inline-size: 42ch; margin-block-start: 14px; }
+.inner-page .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 24px; margin-block-start: 28px; }
+.inner-page .tag { display: inline-block; font: 500 .75rem/1.2 var(--font-sans); padding: 4px 8px; border-radius: 4px; background: color-mix(in srgb, var(--sage) 32%, transparent); white-space: nowrap; }
+.inner-page .tag.wait { background: color-mix(in srgb, var(--mustard) 38%, transparent); }
+.inner-page .tag.off { background: color-mix(in srgb, var(--ink) 7%, transparent); color: var(--muted); }
+.inner-page .notice { padding: 12px 16px; border-radius: 12px; background: color-mix(in srgb, var(--mustard) 28%, transparent); font-size: .92rem; max-inline-size: 46ch; margin-block-start: 18px; }
+.inner-page .notice.error { background: color-mix(in srgb, var(--fault-ink) 10%, transparent); color: #8a2817; box-shadow: inset 3px 0 0 var(--fault-ink); }
+.inner-page:dir(rtl) .notice.error { box-shadow: inset -3px 0 0 var(--fault-ink); }
+.inner-page .notice.ok { background: color-mix(in srgb, var(--sage) 28%, transparent); }
+
+/* Forms: plain fields on the paper, no panels */
+.inner-page .fields { display: grid; gap: 18px; border: 0; max-inline-size: 440px; margin-block-start: 26px; }
+.inner-page .field { display: grid; gap: 6px; }
+.inner-page .field-label { font: 500 .875rem/1.3 var(--font-sans); }
+.inner-page .field .input { inline-size: 100%; min-block-size: 50px; padding: 12px 14px; border-radius: 12px; border: 1.5px solid rgb(26 24 20 / .2); background: var(--surface); transition: border-color .2s; }
+.inner-page .field .input:hover { border-color: rgb(26 24 20 / .4); }
+.inner-page .field .input:focus-visible { outline: 2px solid var(--coral); outline-offset: 1px; border-color: var(--ink); }
+.inner-page .field .input[dir="ltr"] { text-align: start; }
+.inner-page:dir(rtl) .field .input[dir="ltr"] { text-align: right; }
+.inner-page .field-label { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.inner-page .check { display: flex; gap: 10px; align-items: flex-start; font-size: .95rem; cursor: pointer; }
+.inner-page .check input { inline-size: 20px; block-size: 20px; margin-block-start: 2px; accent-color: var(--ink); flex: none; }
+.inner-page .or { display: flex; align-items: center; gap: 14px; font-size: .84rem; color: var(--muted); max-inline-size: 440px; margin-block: 22px 0; }
+.inner-page .or::before, .inner-page .or::after { content: ""; flex: 1; border-block-start: 2px dashed var(--perf); }
+.inner-page .booking-google { margin-block-start: 26px; }
+.inner-page .booking-google .main { display: inline-flex; align-items: center; gap: 10px; }
+.inner-page .booking-google svg { inline-size: 18px; block-size: 18px; }
+
+
+.inner-page .ticket:where(:not(.ticket-small)) { --notch: 8px; --ticket-main-padding: 14px 22px; --ticket-stub-padding: 14px; --ticket-size: 1rem; }
+.inner-page .ticket:disabled { opacity: .4; transform: none; }
+.inner-page .booking-google { background: var(--sand); }
+.inner-page .hint { font-size: .8rem; color: var(--muted); }
+.inner-page .forgot-link { font-size: .84rem; }
+.inner-page .booking-link { font-size: inherit; background: none; mask: none; text-decoration: underline; text-underline-offset: 6px; }
+.inner-page .booking-link .main { padding: 0; }
+.inner-page .booking-link .stub { display: none; }
+.inner-page .booking-link.ticket-ghost { background: none; }
+.inner-page .booking-link:hover { transform: none; }
+.inner-page .booking-link:focus-visible { outline: 2px solid var(--ink); }
+
+/* A ticket with its tear line running across the inline axis. */
+.tear-across {
+	--tear-across-mask: radial-gradient(circle var(--notch) at var(--tear-position) 0, transparent 97%, var(--ink)) 0 0 / 100% 51% no-repeat,
+		radial-gradient(circle var(--notch) at var(--tear-position) 100%, transparent 97%, var(--ink)) 0 100% / 100% 51% no-repeat;
+}
+
+
+.gate-layout { display: grid; gap: 48px; align-items: center; }
+@media (min-width: 900px) {
+	.gate-layout { grid-template-columns: minmax(0, 1fr) 360px; gap: 80px; min-block-size: calc(100svh - 68px - 220px); }
+}
+.gate-layout .gate-pass {
+	--tear: 92px; --notch: 13px;
+	overflow: clip; inline-size: min(360px, 100%); justify-self: center;
+	align-self: center; padding: 0; border-radius: 18px; rotate: 2.5deg;
+}
+.gate-pass-ink { background: var(--ink); color: var(--paper); }
+.gate-pass-sand { background: var(--sand); }
+.gate-layout .gate-pass header { align-items: baseline; gap: 12px; padding: 26px 26px 6px; margin: 0; }
+.gate-layout .gate-pass header strong { font: 700 1.5rem/1.1 var(--font-display); }
+.gate-layout .gate-pass dl { padding: 4px 26px 20px; }
+.gate-layout .gate-pass dl > div { display: grid; gap: 3px; padding-block: 13px; border-block-end: 1px solid color-mix(in srgb, currentColor 14%, transparent); }
+.gate-layout .gate-pass dl > div:last-child { border: 0; }
+.gate-layout .pass-label { text-transform: none; letter-spacing: 0; font-size: .8rem; }
+.gate-layout .gate-pass dd { font: 700 1.08rem/1.25 var(--font-display); }
+.gate-layout .pass-tear { margin: 0 18px; padding-inline: 8px; border-color: color-mix(in srgb, currentColor 30%, transparent); }
+.gate-layout .pass-tear b { font: 500 1.5rem/1 var(--font-mono); }
+
+.inner-page { font-size: 1rem; }
+.inner-page .page-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 20px 40px; padding-block-end: 28px; border-block-end: 2px dashed var(--perf); }
+.inner-page .ledger-empty { padding: 26px; border: 2px dashed var(--perf); border-radius: 16px; color: var(--muted); }
+.inner-page .switch { margin-block-start: 26px; font-size: .92rem; }
+.inner-page .booking-terms { white-space: pre-wrap; overflow-wrap: anywhere; }
+.inner-page .ticket-ghost { background: var(--sand); }
+
+.punch-hole { inline-size: var(--hole-size, 28px); block-size: var(--hole-size, 28px); border-radius: 50%; border: 1.5px dashed color-mix(in srgb, var(--ink) 45%, transparent); display: grid; place-items: center; font: 500 .75rem/1 var(--font-mono); flex: none; }
+.done > .punch-hole { border: 0; background: var(--paper); box-shadow: inset 0 2px 4px color-mix(in srgb, var(--ink) 45%, transparent); color: transparent; }
+.now > .punch-hole { border: 0; background: var(--coral); color: var(--ink); }
+.gate-layout .pass-numbered dl > div { grid-template-columns: 30px 1fr; gap: 3px 14px; align-items: center; }
+.pass-numbered .punch-hole { --hole-size: 26px; grid-row: span 2; }
+.pass-numbered :is(.done, .now) dt::before, .pass-numbered :is(.done, .now) dt::after { display: none; }
+.pass-numbered .done dd { opacity: .6; }
+.gate-layout .pass-numbered .pass-stamp {
+	inset: auto auto 8px calc(50% - 38px); inline-size: 76px; block-size: 76px; padding: 0;
+	display: grid; place-items: center; border-radius: 50%; border: 2px solid var(--ink); translate: none; rotate: -14deg;
+	background: var(--sand); box-shadow: 0 0 0 4px var(--sand), 0 0 0 5.5px var(--ink);
+	font: 900 1.1rem/1 var(--font-display); animation: pass-stamp var(--duration-stamp) var(--duration-reveal) var(--spring) both;
+}
+.shell-content .password-page h1 { font-size: clamp(2.2rem, 1.3rem + 3vw, 3.6rem); }
+.password-page .turnstile-host { margin-block-start: 22px; }
+@media (prefers-reduced-motion: reduce) { .gate-layout .pass-numbered .pass-stamp { animation: none; } }

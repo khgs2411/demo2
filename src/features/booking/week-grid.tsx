@@ -20,13 +20,13 @@ export function WeekGrid({ range, slots, selectedId, timeZone, onChoose, onMove,
 			<span className="range">{date.format(days[0].date)} – {date.format(days.at(-1)!.date)}</span>
 			<Ticket stub="" className="booking-link" onClick={() => onMove(1)}>{t("nextWeek")}</Ticket></div>
 		<div className="days-row" style={{ gridTemplateColumns: `repeat(${days.length}, 1fr)` }}>
-			{days.map(day => <Ticket stub="" key={day.key} className={`day-tab ${day === active ? "active" : ""}`} aria-pressed={day === active} onClick={() => setActiveKey(day.key)}>
+			{days.map(day => <Ticket stub="" key={day.key} className="day-tab" aria-pressed={day === active} onClick={() => setActiveKey(day.key)}>
 				{weekday.format(day.date)}<b>{new Intl.DateTimeFormat(i18n.language, { timeZone, day: "numeric" }).format(day.date)}</b>
 			</Ticket>)}
 		</div>
 		<div className="week" style={{ "--days": days.length } as React.CSSProperties}>
 			{days.map(day => <section className={`day ${day === active ? "active" : ""}`} key={day.key} aria-label={date.format(day.date)}>
-				<h2>{weekday.format(day.date)}<span>{date.format(day.date)}</span></h2>
+				<h2>{weekday.format(day.date)}<b>{day.date.toLocaleDateString(i18n.language, { timeZone, day: "numeric" })}</b></h2>
 				<div className="times">{day.slots.length ? day.slots.map(slot => <Ticket stub="" key={slot.id} className={`time ${slot.id === selectedId ? "picked" : ""}`}
 					disabled={!slot.canRegister} aria-pressed={slot.id === selectedId} onClick={() => onChoose(slot.id)}>
 					{formatStart(slot.startsAt, i18n.language, timeZone)}{slot.id === selectedId && <span className="mine">{t("picked")}</span>}

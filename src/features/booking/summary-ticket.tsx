@@ -8,8 +8,8 @@ export function SummaryTicket({ selection, profile, slot, registration, timeZone
 }) {
 	const { t, i18n } = useTranslation(["booking", "packages"]);
 	const person = [profile?.displayName, profile?.businessName].filter(Boolean).join(" · ");
-	return <aside className={`summary ${registration ? "requested" : ""}`} aria-label={t("ticketHead")}>
-		<header><span className="booking-label">{t("ticketHead")}</span><span className="booking-label" aria-hidden="true">TOPSYDE</span></header>
+	return <aside className={`pass summary ${registration ? "requested" : ""}`} aria-label={t("ticketHead")}>
+		<header><b>{t("ticketHead")}</b><span aria-hidden="true">Topsyde</span></header>
 		<dl>
 			<div><dt>{t("tPackage")}</dt><dd>{selection ? t("packages:packageName", { name: t(`packages:offers.${selection.packageId}.name`) }) : "—"}
 				{selection?.addonInterests.map(id => <span className="addons-line" key={id}>+ {t(`packages:offers.${id}.name`)}</span>)}</dd></div>
@@ -17,7 +17,7 @@ export function SummaryTicket({ selection, profile, slot, registration, timeZone
 			<div className="hide-sm"><dt>{t("tFor")}</dt><dd className={person ? "" : "empty"}>{person || "—"}</dd></div>
 		</dl>
 		<div className="tear"><span className="status" role="status">{registration ? t(registration.status === "pending" ? "requestedStatus" : registration.status) : t("draft")}</span>
-			<span className="num">№ {registration?.id ?? "—"}</span></div>
-		{registration && <div className="stamp">{t("stamp")}</div>}
+			<bdi className="num">№ {registration?.id ?? "—"}</bdi></div>
+		{registration && <div className="stamp" aria-hidden="true">{t("stamp")}</div>}
 	</aside>;
 }

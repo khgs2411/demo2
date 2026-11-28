@@ -24,13 +24,13 @@ beforeEach(async () => {
 	await i18n.changeLanguage("en");
 });
 afterEach(cleanup);
-it("puts Another meeting in the account header and Sign out after the account forms", async () => {
+it("puts Book another meeting in the account header and Sign out after the account forms", async () => {
 	context.session!.user.identities = [{ id: "email", identity_id: "email", user_id: "visitor", provider: "email" }];
 	render(<AccountPage />);
 
 	const heading = await screen.findByRole("heading", { name: "My account", level: 1 });
 	const header = heading.closest("header")!;
-	expect(within(header).getByRole("link", { name: "Another meeting" }).getAttribute("href")).toBe("#/book");
+	expect(within(header).getByRole("link", { name: "Book another meeting" }).getAttribute("href")).toBe("#/book");
 
 	const details = await screen.findByRole("region", { name: "Your details" });
 	const side = details.parentElement!;
@@ -120,7 +120,7 @@ it("offers authentication to signed-out visitors without reading private request
 	expect(screen.getByRole("button",{name:"Continue with Google"})).toBeDefined();
 	expect(screen.getByRole("button", { name: "Sign in" })).toBeDefined();
 	expect(screen.queryByRole("button", { name: "Create account" })).toBeNull();
-	expect(screen.getByRole("link", { name: "No account? Book a meeting and we'll create one." }).getAttribute("href")).toBe("#/book");
+	expect(screen.getByRole("link", { name: "No account? Book a meeting, and your account opens with it." }).getAttribute("href")).toBe("#/book");
 	expect(listRequests).not.toHaveBeenCalled();
 	expect(loadAcceptedTerms).not.toHaveBeenCalled();
 });
@@ -130,7 +130,7 @@ it("shows the admission pass and Google ticket on the signed-out account gate", 
 	const main = screen.getByRole("main");
 	const pass = within(main).getByRole("complementary");
 	expect(main.classList.contains("gate")).toBe(true);
-	expect(within(pass).getByText("ADMIT ONE")).toBeDefined();
+	expect(within(pass).getByText("Your account")).toBeDefined();
 	const google = within(main).getByRole("button", { name: "Continue with Google" });
 	expect(google.classList.contains("ticket-ghost")).toBe(true);
 	expect(google.querySelector('[aria-hidden="true"].stub')?.textContent).toBe("↗");
@@ -220,7 +220,7 @@ it("opens each acceptance's own snapshot, including rows with the same title", a
 
 it.each([
 	["en", "Terms you accepted", "Loading accepted terms…", "We couldn't load your accepted terms.", "Try again", "You haven't accepted any terms yet."],
-	["he", "התנאים שאישרת", "טוענים את התנאים שאישרת…", "לא הצלחנו לטעון את התנאים שאישרת.", "ניסיון נוסף", "עדיין לא אישרת תנאים."],
+	["he", "התנאים שאישרת", "טוענים את התנאים שאישרת…", "לא הצלחנו לטעון את התנאים שאישרת.", "לנסות שוב", "עדיין לא אישרת תנאים."],
 ])("shows localized accepted-terms states and retries in %s", async (language, heading, loading, failure, retry, empty) => {
 	await i18n.changeLanguage(language);
 	let fail!: () => void;
@@ -309,7 +309,7 @@ it("retries a failed details load and opens the editor when it succeeds", async 
 
 it.each([
 	["en", "Save details", "Saving…"],
-	["he", "שמירת הפרטים", "שומרים…"],
+	["he", "לשמור את הפרטים", "שומרים…"],
 ])("shows a dedicated saving label in %s while the update is pending", async (language, saveLabel, savingLabel) => {
 	await i18n.changeLanguage(language);
 	let finishSave!: (result: { type: "saved" }) => void;
@@ -424,7 +424,7 @@ const passwordCopy = {
 		},
 	},
 	he: {
-		title: "סיסמה", save: "שינוי סיסמה", forgot: "שכחת את הסיסמה?", signIn: "כניסה",
+		title: "סיסמה", save: "לשנות סיסמה", forgot: "שכחת את הסיסמה?", signIn: "כניסה",
 		fields: ["הסיסמה הנוכחית", "סיסמה חדשה", "הסיסמה החדשה, שוב"],
 		outcomes: {
 			password_changed: "הסיסמה שלך שונתה.",
@@ -483,7 +483,7 @@ it("clears mismatched passwords and keeps the SDK out of local validation", asyn
 	const inputs = fillPasswordChange(form, passwordCopy.en.fields, "different-password");
 	fireEvent.click(form.getByRole("button", { name: "Change password" }));
 
-	await form.findByText("The two passwords don't match.");
+	await form.findByText("The two passwords don’t match.");
 	expect(adapter.changePassword).not.toHaveBeenCalled();
 	for (const input of inputs) expect(input.value).toBe("");
 });

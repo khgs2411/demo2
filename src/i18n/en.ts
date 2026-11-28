@@ -12,7 +12,7 @@ export const en = {
 		myAccount: "My account",
 		brand: "Topsyde Studios",
 		sample: { kicker: "ClassKit", meeting: "Business meeting", request: "Request", name: "Name", log: "agent ▸ idle", book: "Book a meeting", demo: "See it work", ticketNumber: "№ 01" },
-		description: "Websites and systems built with ClassKit. Choose a package and book a business meeting.",
+		description: "Websites with ClassKit for businesses that run classes and appointments. Choose a package and book a meeting.",
 		credit: "Made by Topsyde Studios",
 		whatYouGet: "What you get",
 		homeBookMeeting: "Book a meeting",
@@ -153,18 +153,22 @@ export const en = {
 		closeSub: "One meeting, and you know exactly what you’ll get and what it costs."
 	},
 	packages: {
-		title: "Two ways to begin. One keeps working for you.",
 		pageTitle: "A website for your business",
+		explainTitle: "What is ClassKit?",
+		monthly: "a month",
+		once: "paid once",
+		minimum: "3-month minimum",
+		recommendedStamp: "Recom­mended",
+		inherits: { "system-basic": "Everything in Basic, plus:", "system-studio": "Everything in Studio, plus:" },
 		intro: "ClassKit is a ready-made app for managing customers, appointments, and requests. I adapt it for your business alongside your website. It started as a kit for businesses that run classes and appointments, and the name stayed.",
-		label: "Packages",
 		packageName: "{{name}} package",
 		book: "Book a meeting",
-		bookPackage: "Book a meeting about {{name}}",
+		bookPackage: "Book a meeting about the {{name}} package",
 		recommended: "Recommended",
 		liveInSevenDays: "Live in 7 days",
 		lines: {
-			system: { name: "Website + ClassKit", payment: "a month for your website and app. You sign up for at least 3 months and pay for the first month up front." },
-			site: { name: "Website", payment: "to build your website, paid once. You pay separately each month for your web address and keeping the site online. The cost depends on the address." },
+			system: { name: "Website + ClassKit", terms: "A monthly price for your website and app. You sign up for at least 3 months and pay for the first month up front." },
+			site: { name: "Just a website", terms: "One payment to build your website. You pay separately each month for your web address and keeping the site online. The cost depends on the address." },
 		},
 		offers: {
 			"system-basic": { name: "Basic", price: "₪150" },
@@ -207,23 +211,22 @@ export const en = {
 	},
 	"admin-sim": {
 		"title": "Demo",
-		"placeholder": "A demonstration of the system will appear here.",
-		"demoNotice": "A scripted demonstration: no real ticket is submitted and no real site is changed.",
-		"demoFlag": "DEMO · no real request is submitted",
-		"demoTiming": "Demo timing · shortened timings",
+		"demoNotice": "A demo: no real request is sent and no real site changes. Timings are shortened.",
+		"demoTiming": "Demo timings are shortened.",
 		"back": "Back",
 		"restart": "Restart",
-		"railLabel": "Demonstration steps",
-		"topTab": "Your site",
-		"underTab": "Under the site",
-		"topLabel": "The client’s site",
-		"underLabel": "Behind the scenes · admin + agent",
+		"railLabel": "Demo steps",
+		"topTab": "The site",
+		"underTab": "Manage page",
+		"topLabel": "Shaked Studio’s site",
+		"sampleTag": "Sample site",
+		"underLabel": "Manage page and assistant",
 		"requestHeader": "New request",
 		"typeLabel": "Type",
 		"titleLabel": "Title",
 		"descriptionLabel": "Description",
-		"issue": "Issue",
-		"featureRequest": "Feature request",
+		"issue": "Problem",
+		"featureRequest": "Change request",
 		"attachment": "Screenshot attached automatically",
 		"open": "Open",
 		"doing": "In progress",
@@ -231,50 +234,50 @@ export const en = {
 		"cardTitle": "Clipped button",
 		"agentMark": "AI",
 		"progressLabel": "Fix progress",
-		"comparisonLabel": "Before and after comparison",
+		"comparisonLabel": "Before and after",
 		"before": "Before",
 		"after": "After",
 		"ship": {
-			"build": "BUILD",
-			"test": "TEST",
-			"deploy": "DEPLOY"
+			"build": "Build",
+			"test": "Test",
+			"deploy": "Put on site"
 		},
 		"beats": {
 			"bug": {
-				"title": "Something broke. The most important button — cut off.",
-				"body": "A customer messages you on WhatsApp: she cannot book. Instead of waiting for a developer, open a request from your admin.",
+				"title": "Something broke: the booking button is cut off.",
+				"body": "A customer messages you on WhatsApp: she can’t book. Instead of waiting for a developer, open a request from your manage page.",
 				"next": "Open a request",
-				"label": "Defect"
+				"label": "Problem"
 			},
 			"request": {
 				"title": "One request. No phone calls.",
-				"body": "Type, title, description. A screenshot attaches itself from the page you are on.",
-				"next": "Submit",
+				"body": "Type, title and description. A screenshot attaches itself from the page you’re on.",
+				"next": "Send",
 				"label": "Request"
 			},
 			"inbox": {
 				"title": "The request reaches me.",
-				"body": "It lands on my work board with all the context. Nobody needs to explain twice.",
-				"next": "Give it to the agent",
-				"label": "Inbox"
+				"body": "It lands on my work board with all the context. Nobody explains twice.",
+				"next": "Hand it to the assistant",
+				"label": "With me"
 			},
 			"agent": {
-				"title": "An AI agent picks it up.",
-				"body": "It reads the request, finds the code, and fixes it. I approve.",
-				"next": "Deploy the fix",
-				"label": "Agent"
+				"title": "An AI assistant picks it up.",
+				"body": "It reads the request, finds the code and fixes it. I check the fix before it goes up.",
+				"next": "Put it on the site",
+				"label": "AI assistant"
 			},
 			"deploy": {
-				"title": "Build, test, deploy.",
-				"body": "The fix passes its tests and reaches the live site. You do not have to do a thing.",
+				"title": "Build, test, put it on the site.",
+				"body": "The fix passes its tests and goes on your site. You don’t have to do a thing.",
 				"next": "See it on the site",
-				"label": "Deploy"
+				"label": "Going up"
 			},
 			"live": {
-				"title": "Fixed. Live.",
-				"body": "The customer books. You never picked up the phone. (Demo timings are shortened.)",
-				"next": "Get your own agent",
-				"label": "Live"
+				"title": "Fixed, and on your site.",
+				"body": "The customer books, and you never picked up the phone.",
+				"next": "Book a meeting",
+				"label": "On the site"
 			}
 		},
 		"logs": {
@@ -296,20 +299,22 @@ export const en = {
 		"scenarios": {
 			"brokenBookingButton": {
 				"siteName": "Shaked Studio",
-				"siteNav": "Classes · Schedule · Contact",
+				"siteNav": "Classes, Schedule, Contact",
 				"siteTitle": "Strength you feel beyond the studio.",
 				"siteBody": "Small-group strength classes. Choose a time, book, show up.",
 				"bookingLabel": "Book a class",
-				"faultNote": "The button runs off the screen. Clients can't book.",
+				"faultNote": "The button runs off the screen. Customers can’t book.",
 				"fixedNote": "The button is back. Booking works.",
 				"defect": "The booking button is cut off on mobile",
 				"ticketTitle": "The booking button is cut off on mobile",
-				"ticketDescription": "The button on the home page goes off screen. It is impossible to book.",
+				"ticketDescription": "The button on the home page goes off screen, so nobody can book.",
 				"screenshotAlt": "Demo screenshot of the clipped booking button on the Shaked Studio site."
 			}
 		}
 	},
 	studio: {
+		approvedStamp: "Approved",
+		declinedStamp: "Declined",
 		storageError: "Could not save the return page. Allow session storage before signing in with Google.",
 		networkError: "Could not reach ClassKit. Please try again.",
 		customer: "Customer",
@@ -318,25 +323,58 @@ export const en = {
 		package: "Package",
 		startsAt: "Meeting start",
 		requestedAt: "Requested at",
-		reason: "Rejection reason (optional)",
+		reason: "Reason for declining (optional)",
 		approve: "Approve",
-		reject: "Reject",
+		reject: "Decline",
 		unavailable: "Not provided",
 		pending: "Pending requests",
 		upcoming: "Upcoming meetings",
 		noPending: "No requests waiting.",
 		noUpcoming: "No upcoming meetings.",
 		history: "History",
-		counts: "{{pending}} pending · {{upcoming}} upcoming",
-		noHistory: "No rejected or cancelled requests.",
+		counts: "{{pending}} pending, {{upcoming}} upcoming",
+		noHistory: "No declined or cancelled requests.",
 		status: "Status",
 		loading: "Loading…",
 		notManager: "This page is for the studio manager.",
 		signOut: "Sign out",
 		title: "Studio manager",
-		signInDescription: "Sign in to manage business meetings.",
+		signInDescription: "Sign in to manage your meetings.",
 	},
 	booking: {
+		lineTerms: {
+			"system": "Monthly, 3-month minimum",
+			"site": "Paid once"
+		},
+		pricePeriod: {
+			"system": "a month",
+			"site": "once"
+		},
+		benefits: {
+			"system-basic": [
+				"A website your customers see, and an app for your customers and appointments.",
+				"1 hour of help a month. Change requests answered within 5 business days."
+			],
+			"system-studio": [
+				"Everything in Basic.",
+				"3 hours of help a month. Answers within 2 business days.",
+				"An AI assistant makes your change requests and puts them on your site."
+			],
+			"system-partner": [
+				"Everything in Studio.",
+				"8 hours of help a month. Same-day answers.",
+				"One AI assistant included, and a meeting every 3 months."
+			],
+			"site-quick": [
+				"One page with your content on a ready-made design. 1 round of changes."
+			],
+			"site-landing": [
+				"A one-page site designed for your business. Help with the words, 2 rounds of changes."
+			],
+			"site-business": [
+				"Up to 5 pages in Hebrew and English. Help with the words, 3 rounds of changes, 30 days of fixes."
+			]
+		},
 		signupTitle: "Your details for the meeting.",
 		acceptTerms: "I accept the terms of service",
 		termsTitle: "Terms of service",
@@ -370,7 +408,7 @@ export const en = {
 		next: "Continue",
 		back: "Back",
 		aTitle: "First, who are you?",
-		aLede: "Your account opens in ClassKit, the same system you'd get. That's also how I see your request.",
+		aLede: "Your account opens in ClassKit, the same app you’d get. That’s how I see your request.",
 		google: "Continue with Google",
 		or: "or with email",
 		email: "Email",
@@ -387,21 +425,22 @@ export const en = {
 		website: "Current website",
 		optional: "Optional",
 		sTitle: "When suits you?",
-		sLede: "Pick a start time. You can request a time someone else already asked for. I'll confirm it or suggest another.",
-		prevWeek: "← Previous week",
-		nextWeek: "Next week →",
+		sLede: "Pick a start time. You can ask for a time someone else already asked for: I’ll confirm it or suggest another.",
+		prevWeek: "Go to previous week",
+		nextWeek: "Go to next week",
 		tz: "Times are in Israel time.",
 		send: "Send request",
 		slotFull: "That time just filled up. The calendar is refreshed; pick another time.",
-		closedTitle: "The calendar isn't open yet.",
+		closedTitle: "The calendar isn’t open yet.",
 		closedBody: "The first times open soon. Come back any time; your choices are saved.",
 		dTitle: "Request sent.",
-		dLede: "I'll confirm the time or suggest another. The status updates here and in your account.",
+		dLede: "I’ll confirm the time or suggest another. The status updates here and in your account.",
 		n1: "I receive your request with the details you filled in.",
 		n2: "I confirm the time, or suggest another.",
 		n3: "We meet, and build what you need together.",
 		myRequests: "My requests",
 		cancel: "Cancel request",
+		cancelShort: "Cancel",
 		accTitle: "My requests",
 		accNoAccess: "This account does not have access to this product.",
 		accDetailsTitle: "Your details",
@@ -431,22 +470,22 @@ export const en = {
 		accTermsLoadFailed: "We couldn't load your accepted terms.",
 		termsVersion: "Version {{version}}",
 		accLede: "Every meeting you asked for, and where it stands.",
-		accSignInLede: "Sign in to view your meeting requests.",
-		accBookToCreate: "No account? Book a meeting and we'll create one.",
+		accSignInLede: "Sign in to see your meeting requests.",
+		accBookToCreate: "No account? Book a meeting, and your account opens with it.",
 		pending: "Awaiting confirmation",
 		approved: "Confirmed",
 		addToGoogleCalendar: "Add to Google Calendar",
 		cancelled: "Cancelled",
 		rejected: "Declined",
-		bookAnother: "Another meeting",
+		bookAnother: "Book another meeting",
 		signOut: "Sign out",
 		ticketHead: "Meeting request",
 		tPackage: "Package",
 		tWhen: "Time",
 		tFor: "For",
 		draft: "Draft",
-		requestedStatus: "REQUESTED · awaiting confirmation",
-		stamp: "SENT",
+		requestedStatus: "Awaiting confirmation",
+		stamp: "Sent",
 		picked: "Picked",
 		noSlots: "No times",
 		loading: "Loading…",
@@ -467,17 +506,17 @@ export const en = {
 		},
 	},
 	pass: {
-		account: { kicker: "Admission pass", code: "ADMIT ONE", status: "Opens your account", num: "№ 02",
+		account: { kicker: "Admission pass", code: "Your account", status: "Opens your account", num: "№ 02",
 			requests: "Requests", requestsValue: "Every meeting you asked for, and where it stands", details: "Details", detailsValue: "Your name and phone for the meeting", terms: "Terms", termsValue: "What you accepted, by version" },
-		studio: { kicker: "Staff pass", code: "STAFF", status: "Opens the studio", num: "№ 00",
+		studio: { kicker: "Staff pass", code: "The studio", status: "Opens the studio", num: "№ 00",
 			pending: "Pending", pendingValue: "Requests waiting on your decision", upcoming: "Upcoming", upcomingValue: "Meetings you approved", history: "History", historyValue: "What was rejected or cancelled" },
-		reset: { kicker: "Password reset", code: "RESET", status: "Step", stamp: "Saved",
-			email: "01 · Email", emailValue: "We send a link", choose: "02 · New password", chooseValue: "Chosen from the link", signIn: "03 · Sign in", signInValue: "With the new password" },
+		reset: { kicker: "Password reset", code: "Three steps", status: "Step", stamp: "Saved",
+			email: "Email", emailValue: "We send a link", choose: "New password", chooseValue: "Chosen from the link", signIn: "Sign in", signInValue: "With the new password" },
 	},
 	passwordReset: {
 		forgotLink: "Forgot password?",
 		forgotTitle: "Forgot your password?",
-		forgotLede: "Enter your account's email and I'll send a link to choose a new one.",
+		forgotLede: "Enter your account’s email and I’ll send a link to choose a new one.",
 		email: "Email",
 		send: "Send link",
 		loading: "Loading…",
@@ -513,7 +552,7 @@ export const en = {
 			failed: "We could not set your password. Please try again. Your link still works.",
 			too_short: "The password needs at least 8 characters.",
 			too_long: "The password is too long: 72 at most, and Hebrew letters count as two.",
-			mismatch: "The two passwords don't match.",
+			mismatch: "The two passwords don’t match.",
 		},
 	},
 };

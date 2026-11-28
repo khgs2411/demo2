@@ -34,8 +34,10 @@ i18n.on("languageChanged", (language) => {
 	}
 });
 
+const requestedLanguage = new URLSearchParams(window.location.search).get("lang");
+
 void i18n.use(initReactI18next).init({
-	lng: readStoredLanguage(),
+	lng: requestedLanguage === "en" || requestedLanguage === "he" ? requestedLanguage : readStoredLanguage(),
 	fallbackLng: "he",
 	supportedLngs: ["he", "en"],
 	defaultNS: "shell",

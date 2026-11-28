@@ -28,7 +28,7 @@ describe("package catalog", () => {
 	it.each([he, en])("resolves all catalog copy in each language", (language) => {
 		for (const entry of catalog) {
 			const keys = entry.kind === "base"
-				? [`offers.${entry.id}.name`, entry.priceKey, ...entry.featureKeys, `lines.${entry.line}.payment`]
+				? [`offers.${entry.id}.name`, entry.priceKey, ...entry.featureKeys, `lines.${entry.line}.terms`]
 				: [`offers.${entry.id}.name`, "addons.price"];
 			for (const key of keys) {
 				const value = key.split(".").reduce<unknown>((node, part) =>

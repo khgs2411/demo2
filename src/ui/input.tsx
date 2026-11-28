@@ -1,10 +1,13 @@
 import { useId } from "react";
-import type { ComponentProps } from "react";
+import type { ComponentProps, ReactNode } from "react";
 
-type InputProps = ComponentProps<"input"> & { label: string };
+type InputProps = ComponentProps<"input"> & { label: string; labelAction?: ReactNode };
 
-export function Input({ label, id, className = "", ...props }: InputProps) {
+export function Input({ label, labelAction, id, className = "", ...props }: InputProps) {
 	const generatedId = useId();
 	const inputId = id ?? generatedId;
-	return <label className="field" htmlFor={inputId}><span>{label}</span><input {...props} id={inputId} className={`input ${className}`} /></label>;
+	return <div className="field">
+		<div className="field-label"><label htmlFor={inputId}>{label}</label>{labelAction}</div>
+		<input {...props} id={inputId} className={`input ${className}`} />
+	</div>;
 }

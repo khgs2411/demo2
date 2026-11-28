@@ -12,7 +12,7 @@ import { PasswordChange } from "./password-change";
 import { RequestLedger } from "./request-ledger";
 import { usePasswordChange } from "./use-password-change";
 import { useRequests } from "./use-requests";
-import "./booking.css";
+import "./account.css";
 
 type AuthState = { busy: boolean; error: string | null; rejectedAccessToken: string | null };
 type AuthEvent =
@@ -101,12 +101,12 @@ export function AccountPage() {
 	const gate = !context.loading && signedOut;
 	const ledger = <RequestLedger {...requests} timeZone={Intl.DateTimeFormat().resolvedOptions().timeZone} />;
 	const signOutTicket = <Ticket small tone="ghost" stub="↩" disabled={auth.busy} onClick={() => void signOut()}>{t("signOut")}</Ticket>;
-	return <main data-module="booking" className={`booking-page account-page${gate ? " gate" : ""}`}>
-		<section>
+	return <main data-module="booking" className={`inner-page account-page${gate ? " gate" : ""}`}>
+		<div className={`inner-wrap${gate ? " gate-layout" : ""}`}><section>
 			{!revoked && auth.error && <p role="alert" className="notice error">{t(auth.error)}</p>}
 			{context.loading ? <><h1>{t("accTitle")}</h1><p role="status">{t("loading")}</p></> : signedOut ? <>
 				{passwordChange.signedOut && <p role="status">{t("passwordChange.outcomes.signed_out")}</p>}
-				<AccountStep product={context.product} loading={false} busy={auth.busy} signInOnly title={t("signIn")} description={t("accSignInLede")}
+				<AccountStep stepStub="№ 02" product={context.product} loading={false} busy={auth.busy} signInOnly title={t("signIn", { ns: "shell" })} description={t("accSignInLede")}
 					onPassword={(_method,email,password) => void authenticate(() => adapter.signIn(email,password))} onGoogle={() => void authenticate(() => adapter.signInWithGoogle())} />
 				<p className="switch"><TextLink href="#/book">{t("accBookToCreate")}</TextLink></p>
 			</> : noAccess ? <>
@@ -130,11 +130,12 @@ export function AccountPage() {
 							adapter={adapter} userId={userId} onSignedOut={() => dispatch({ type: "profile_signed_out", accessToken: session.access_token })} />}
 						{showAccountSections && passwordChange.canChangePassword && <PasswordChange key={`password:${userId}`}
 							state={passwordChange.state} busy={auth.busy} onRejected={passwordChange.onRejected} onSubmit={changePassword} />}
-						<div className="actions side-actions">{signOutTicket}</div>
+						<div className="signout">{signOutTicket}</div>
 					</div>
 				</div>
 			</>}
 		</section>
 		{gate && <AccountPass />}
+		</div>
 	</main>;
 }

@@ -10,14 +10,15 @@ import { useRoute } from "./router";
 export function Header() {
 	const { t } = useTranslation("shell");
 	const studioAccess = getStudioAccess(useProductContext());
-	const home = useRoute()?.page === "showcase";
+	const route = useRoute();
+	const home = route?.page === "showcase";
 	return <header className={home ? "topline home-topline" : "topline"}><div className="chrome-wrap">
 		<a className="mark" href="#/">{t("brand")}</a>
 		<nav className="links" aria-label={t("navigation")}>
 			{home && <SectionLink targetId="get">{t("whatYouGet")}</SectionLink>}
 			<TextLink href="#/">{t("howItWorks")}</TextLink>
-			<TextLink href="#/demo">{t("liveDemo")}</TextLink>
-			<TextLink href="#/packages">{t("packages")}</TextLink>
+			<TextLink href="#/demo" aria-current={route?.page === "admin-sim" ? "page" : undefined}>{t("liveDemo")}</TextLink>
+			<TextLink href="#/packages" aria-current={route?.page === "packages" ? "page" : undefined}>{t("packages")}</TextLink>
 		</nav>
 		<div className="account-tools">
 			{studioAccess !== "loading" && <TextLink className="account-link" href={studioAccess === "manager" ? "#/studio" : "#/account"}>
@@ -25,6 +26,6 @@ export function Header() {
 			</TextLink>}
 			<LanguageSwitch />
 		</div>
-		<Ticket href="#/book" stub={t("ticketNumber")} tone="ink" small className={home ? "home-ticket" : "inner-ticket"}>{t(home ? "homeBookMeeting" : "bookMeeting")}</Ticket>
+		{route?.page !== "booking" && <Ticket href="#/book" stub={t("ticketNumber")} tone="ink" small className={home ? "home-ticket" : "inner-ticket"}>{t(home ? "homeBookMeeting" : "bookMeeting")}</Ticket>}
 	</div></header>;
 }

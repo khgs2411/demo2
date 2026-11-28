@@ -170,24 +170,6 @@
 
 /* Packages: three admission passes */
 .showcase-page .packs { padding-block: clamp(48px, 7vw, 100px); overflow-x: clip; }
-.showcase-page .passes { display: grid; gap: 22px; padding-block: 16px; }
-@media (min-width: 860px) { .showcase-page .passes { grid-template-columns: repeat(3, 1fr); gap: 20px; } }
-
-.showcase-page .package-pass .body { padding: 28px 28px 24px; display: flex; flex-direction: column; gap: 16px; flex: 1; }
-.showcase-page .package-pass .name { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
-.showcase-page .package-pass h3 { font-size: 1.7rem; }
-.showcase-page .package-pass .admit { font: 500 .74rem/1.3 var(--font-sans); opacity: .7; text-align: end; }
-.showcase-page .package-pass .price { font: 900 clamp(3rem, 2.4rem + 1.6vw, 3.8rem)/1 var(--font-display); letter-spacing: -.03em; }
-.showcase-page .package-pass .price small { font: 500 .88rem/1 var(--font-sans); opacity: .7; letter-spacing: 0; margin-inline-start: 6px; }
-.showcase-page .package-pass ul { list-style: none; display: grid; gap: 9px; font-size: .92rem; }
-.showcase-page .package-pass li { display: flex; gap: 10px; }
-.showcase-page .package-pass li::before { content: ""; inline-size: 9px; block-size: 9px; border-radius: 50%; border: 1.5px solid currentColor; margin-block-start: .5em; flex: none; }
-.showcase-page .package-pass .stub { block-size: var(--tear); border-block-start: 2px dashed rgb(26 24 20 / .3); margin-inline: 18px; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-inline: 10px; }
-.showcase-page .package-pass-ink .stub { border-color: rgb(242 234 219 / .3); }
-.showcase-page .package-pass .stub a { font-weight: 600; text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 6px; }
-.showcase-page .package-pass .stub .serial { font-size: .78rem; opacity: .65; }
-.showcase-page .stamp { position: absolute; inset-block-start: 74px; inset-inline-end: 22px; inline-size: 78px; block-size: 78px; border-radius: 50%; border: 2px solid var(--ink); display: grid; place-items: center; text-align: center;
-	font: 700 .9rem/1.05 var(--font-display); rotate: -14deg; hyphens: manual; box-shadow: 0 0 0 4px var(--coral), 0 0 0 5.5px var(--ink); }
 .showcase-page .terms { margin-block-start: 10px; font-size: .84rem; color: var(--muted); }
 .showcase-page .extras { margin-block-start: 22px; display: grid; gap: 14px; }
 @media (min-width: 820px) { .showcase-page .extras { grid-template-columns: 1fr 1fr; } }

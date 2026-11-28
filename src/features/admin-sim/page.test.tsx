@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { AdminSimPage } from "./page";
 import { App } from "../../app/app";
@@ -42,29 +42,29 @@ it.each(["he", "en"])("plays all six visitor-paced beats and books system in %s 
 it("supports back, beat skipping, keyboard tabs and restart without leaking timers", async () => {
 	await i18n.changeLanguage("en");
 	render(<AdminSimPage />);
-	click("04 Agent");
-	fireEvent.click(screen.getByRole("tab", { name: "Your site" }));
-	expect(screen.getByRole("tab", { name: "Your site" }).getAttribute("aria-selected")).toBe("true");
-	fireEvent.keyDown(screen.getByRole("tab", { name: "Your site" }), { key: "ArrowRight" });
-	expect(screen.getByRole("tab", { name: "Under the site" }).getAttribute("aria-selected")).toBe("true");
+	click("04 AI assistant");
+	fireEvent.click(screen.getByRole("tab", { name: "The site" }));
+	expect(screen.getByRole("tab", { name: "The site" }).getAttribute("aria-selected")).toBe("true");
+	fireEvent.keyDown(screen.getByRole("tab", { name: "The site" }), { key: "ArrowRight" });
+	expect(screen.getByRole("tab", { name: "Manage page" }).getAttribute("aria-selected")).toBe("true");
 	click("Back");
 	expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("The request reaches me.");
-	click("06 Live");
+	click("06 On the site");
 	click("Restart");
 	expect(screen.getByRole("heading", { level: 1 }).textContent).toBe(i18n.t(scenario.beats.bug.titleKey, { ns: "admin-sim" }));
 	expect(vi.getTimerCount()).toBe(0);
-	click("03 Inbox");
+	click("03 With me");
 	expect(document.querySelector(".sim-fly")).not.toBeNull();
 	click("Restart");
 	expect(document.querySelector(".sim-fly")).toBeNull();
 	expect(vi.getTimerCount()).toBe(0);
-	click("04 Agent");
+	click("04 AI assistant");
 	expect(vi.getTimerCount()).toBe(1);
 	click("Restart");
 	expect(vi.getTimerCount()).toBe(0);
 });
 
-it.each(["03 Inbox", "04 Agent"])("leaving and returning during %s restarts the walkthrough", async (beat) => {
+it.each(["03 With me", "04 AI assistant"])("leaving and returning during %s restarts the walkthrough", async (beat) => {
 	await i18n.changeLanguage("en");
 	window.history.replaceState(null, "", "#/demo");
 	render(<App />);
@@ -85,11 +85,11 @@ it("validates required request text and carries edited content into the local bo
 	render(<AdminSimPage />);
 	click("Open a request");
 	fireEvent.change(screen.getByLabelText("Title"), { target: { value: "" } });
-	click("Submit");
+	click("Send");
 	expect(screen.getByRole("heading", { level: 1 }).textContent).toBe("One request. No phone calls.");
 	fireEvent.change(screen.getByLabelText("Title"), { target: { value: "Please repair my button" } });
 	fireEvent.change(screen.getByLabelText("Type"), { target: { value: "feature_request" } });
-	click("Submit");
+	click("Send");
 	act(() => { vi.advanceTimersByTime(scenario.timing.flightMs); });
 	expect(screen.getByText("Please repair my button")).toBeDefined();
 	expect(screen.getByRole("log").textContent).toContain("type: feature_request");
@@ -99,12 +99,19 @@ it("shows the complete fix with reduced motion and keeps Next visitor-paced", as
 	await i18n.changeLanguage("en");
 	vi.stubGlobal("matchMedia", () => ({ matches: true, addEventListener() {}, removeEventListener() {} }));
 	render(<AdminSimPage />);
-	click("04 Agent");
+	click("04 AI assistant");
 	expect(screen.getByText(scenario.diff.lines[1])).toBeDefined();
 	expect(screen.getByRole("progressbar").getAttribute("value")).toBe("1");
 	expect(vi.getTimerCount()).toBe(0);
-	click("Deploy the fix");
+	click("Put it on the site");
 	expect(vi.getTimerCount()).toBe(0);
 	click("See it on the site");
 	expect(screen.getByRole("slider")).toBeDefined();
+});
+
+it("renders the demo with the site header and footer", () => {
+	window.history.replaceState(null, "", "#/demo");
+	render(<App />);
+	expect(within(screen.getByRole("banner")).getByRole("link", { name: i18n.t("brand") }).getAttribute("href")).toBe("#/");
+	expect(within(screen.getByRole("contentinfo")).getByText(i18n.t("credit"))).toBeDefined();
 });
