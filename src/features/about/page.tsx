@@ -27,14 +27,14 @@ function JobList({ copy, reduced }: { copy: AboutCopy["jobs"]; reduced: boolean 
 	const pick = (next: Side) => { setTouched(true); setSide(next); };
 	const mine = side === "me";
 	return <div className={`jobs${mine ? " mine" : ""}`} ref={ref}>
-		<header className="jobs-head">
+		<div className="jobs-head">
 			<span>{copy.label}</span>
 			<div className="jobs-switch" role="group" aria-label={copy.label}>
 				<button type="button" aria-pressed={!mine} onClick={() => pick("agent")}>{copy.agent}</button>
 				<button type="button" aria-pressed={mine} onClick={() => pick("me")}>{copy.me}</button>
 				<i className="thumb" aria-hidden="true" />
 			</div>
-		</header>
+		</div>
 		<ul className="jobs-list">
 			{copy.items.map((job, index) => <li key={job} style={{ "--i": index } as CSSProperties}>
 				<i className="jobs-hole" aria-hidden="true" />
@@ -71,34 +71,33 @@ export function AboutPage() {
 			<JobList copy={copy.jobs} reduced={reduced} />
 		</div></section>
 
-		<section className="about-part" aria-labelledby="about-work"><div className="inner-wrap">
-			<div className="about-text"><h2 id="about-work">{copy.work.title}</h2><p>{copy.work.body}</p></div>
-			<div className="site-log">
-				<span className="site-log-title">{copy.work.logTitle}</span>
-				<ul>{copy.work.log.map(([event, state], index) => <li key={event} className={index === 0 ? "live" : ""}>
-					<span>{event}</span><b>{state}</b>
-				</li>)}</ul>
+		<section className="about-reasons"><div className="inner-wrap"><div className="reasons">
+			<article className="reason r-work" aria-labelledby="about-work">
+				<div className="reason-text"><h2 id="about-work">{copy.work.title}</h2><p>{copy.work.body}</p></div>
+				<div className="site-log">
+					<span className="site-log-title">{copy.work.logTitle}</span>
+					<ul>{copy.work.log.map(([event, state], index) => <li key={event} className={index === 0 ? "live" : ""}>
+						<span>{event}</span><b>{state}</b>
+					</li>)}</ul>
+				</div>
+			</article>
+			<article className="reason r-years" aria-labelledby="about-years">
+				<YearsCard copy={copy.years} reduced={reduced} />
+				<div className="reason-text"><h2 id="about-years">{copy.years.title}</h2><p>{copy.years.body}</p></div>
+			</article>
+			<article className="reason r-tool" aria-labelledby="about-tool">
+				<div className="reason-text"><h2 id="about-tool">{copy.tool.title}</h2><p>{copy.tool.body}</p></div>
+				<div className="tool-pass">
+					<Pass variant="package" tone="coral" stub={<span className="fine">{copy.tool.fine}</span>}>
+						<div className="name"><h3>{copy.tool.pass}</h3><span className="admit">{copy.tool.admit}</span></div>
+						<ul>{copy.tool.lines.map(line => <li key={line}>{line}</li>)}</ul>
+					</Pass>
+				</div>
+			</article>
+			<div className="reason r-close">
+				<div><h2>{copy.closeTitle}</h2><p>{copy.closeSub}</p></div>
+				<div className="cta"><Ticket href="#/book" tone="paper" large stub={t("ticketNumber")}>{t("homeBookMeeting")}</Ticket></div>
 			</div>
-		</div></section>
-
-		<section className="about-part about-years" aria-labelledby="about-years"><div className="inner-wrap">
-			<YearsCard copy={copy.years} reduced={reduced} />
-			<div className="about-text"><h2 id="about-years">{copy.years.title}</h2><p>{copy.years.body}</p></div>
-		</div></section>
-
-		<section className="about-part" aria-labelledby="about-tool"><div className="inner-wrap">
-			<div className="about-text"><h2 id="about-tool">{copy.tool.title}</h2><p>{copy.tool.body}</p></div>
-			<div className="tool-pass">
-				<Pass variant="package" tone="ink" stub={<span className="fine">{copy.tool.fine}</span>}>
-					<div className="name"><h3>{copy.tool.pass}</h3><span className="admit">{copy.tool.admit}</span></div>
-					<ul>{copy.tool.lines.map(line => <li key={line}>{line}</li>)}</ul>
-				</Pass>
-			</div>
-		</div></section>
-
-		<section className="about-close"><div className="inner-wrap">
-			<div><h2>{copy.closeTitle}</h2><p>{copy.closeSub}</p></div>
-			<div className="cta"><Ticket href="#/book" tone="paper" large stub={t("ticketNumber")}>{t("homeBookMeeting")}</Ticket></div>
-		</div></section>
+		</div></div></section>
 	</main>;
 }
