@@ -275,10 +275,12 @@
 	.showcase-page .on-app .b-bar { flex-wrap: wrap; gap: 4px 8px; }
 	.showcase-page .on-app .r-week .row { grid-template-columns: minmax(0, 1fr) auto; }
 	.showcase-page .on-app .r-week .t { grid-column: 1 / -1; }
+	/* Fit the offer title and its padding before placing two cards side by side. */
+	.showcase-page .on-app .r-offers { grid-template-columns: repeat(auto-fit, minmax(min(100%, 93px), 1fr)); padding-inline: 10px; }
 	.showcase-page .on-app .r-offer { padding-inline: 6px; }
 }
 @media (max-width: 360px) {
-	.showcase-page .on-app .r-hero, .showcase-page .on-app .r-offers { grid-template-columns: 1fr; }
+	.showcase-page .on-app .r-hero { grid-template-columns: 1fr; }
 	.showcase-page .on-app .r-hero .mini-art { display: none; }
 }
 
