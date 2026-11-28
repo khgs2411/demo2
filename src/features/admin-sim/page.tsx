@@ -11,7 +11,7 @@ import "./walkthrough.css";
 
 export function AdminSimPage() {
 	const { t } = useTranslation("admin-sim");
-	const { state, dispatch, scenario, reducedMotion, playing, automaticallyAdvanced, pausePlayback, togglePlayback, requestForm } = useSimulation();
+	const { state, dispatch, navigate, scenario, reducedMotion, playing, playback, automaticallyAdvanced, pausePlayback, togglePlayback, requestForm } = useSimulation();
 	const [draft, setDraft] = useState<RequestDraft>();
 	const beat = scenario.beats[state.step];
 	const next = t(beat.nextKey);
@@ -29,20 +29,21 @@ export function AdminSimPage() {
 		<section className="sim-narr">
 			<div><span className="sim-sample">{t(scenario.disclaimerKey)}</span><h1 ref={heading} tabIndex={-1}>{t(beat.titleKey)}</h1><p>{t(beat.bodyKey)}</p></div>
 			<div className="sim-controls">
-				<button type="button" className="sim-link" disabled={state.step === "bug"} onClick={() => dispatch({ type: "back_requested" })}>{t("back")}</button>
-				{state.step === "ticket_drafting" ? <Ticket stub={`#${scenario.ticket.number}`} type="submit" form={requestFormId} onFocus={pausePlayback} onClick={pausePlayback}>{next}</Ticket>
+				<button type="button" className="sim-link" disabled={state.step === "bug"} onClick={() => navigate({ type: "back_requested" })}>{t("back")}</button>
+				{state.step === "ticket_drafting" ? <Ticket stub={`#${scenario.ticket.number}`} type="submit" form={requestFormId}>{next}</Ticket>
 					: state.step === "live" ? <Ticket stub={`#${scenario.ticket.number}`} href="#/book/system-studio" onClick={(event) => { event.preventDefault(); openBooking({ packageId: "system-studio" }); }}>{next}</Ticket>
-						: <Ticket stub={`#${scenario.ticket.number}`} onFocus={pausePlayback} onClick={() => dispatch({ type: "next_requested" })}>{next}</Ticket>}
+					: <Ticket stub={`#${scenario.ticket.number}`} onClick={() => navigate({ type: "next_requested" })}>{next}</Ticket>}
 				{!reducedMotion && <button type="button" className="sim-link" aria-disabled={state.step === "live" || undefined} onClick={togglePlayback}>{t(playing ? "pause" : "play")}</button>}
-				{state.step !== "bug" && <button type="button" className="sim-link sim-restart" onClick={() => { setDraft(undefined); dispatch({ type: "restarted" }); }}>{t("restart")}</button>}
+				{state.step !== "bug" && <button type="button" className="sim-link sim-restart" onClick={() => { setDraft(undefined); navigate({ type: "restarted" }); }}>{t("restart")}</button>}
 			</div>
 		</section>
-		<Stepper scenario={scenario} step={state.step} onSelect={(step) => dispatch({ type: "step_selected", step, ticketId: scenario.ticket.id })} />
+		<Stepper scenario={scenario} step={state.step} playback={playback} reducedMotion={reducedMotion}
+			onSelect={(step) => navigate({ type: "step_selected", step, ticketId: scenario.ticket.id })} />
 		<Sides key={state.step} scenario={scenario} state={state} reducedMotion={reducedMotion} draft={draft}
 			requestForm={requestForm} onManualAction={pausePlayback}
 			onOpenTicket={() => dispatch({ type: "ticket_opened" })} onSubmit={(values) => {
 				setDraft(values);
-				dispatch({ type: "ticket_submitted", ticketId: scenario.ticket.id });
+				navigate({ type: "ticket_submitted", ticketId: scenario.ticket.id });
 			}} />
 		</div>
 	</main>;
