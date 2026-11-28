@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { SectionLink } from "../../ui/section-link";
 import { Ticket } from "../../ui/ticket";
 import { localBounds, useFrames } from "./home-motion";
-import { BookingRows, PunchCard, StudioLandscape, type HomeCopy } from "./home-scenes";
+import { BookingRows, ManagePerson, ManagePhone, PunchCard, StudioBrowserBar, StudioLandscape, type HomeCopy } from "./home-scenes";
 
 const heroFrames = [
 	{ delay: 1500, phase: "ready" },
@@ -17,7 +17,6 @@ const heroFrames = [
 ] as const;
 const heroDelays = heroFrames.map(value => value.delay);
 const sceneWidth = 460;
-const seatCount = 8;
 
 function FlyingTicket({ scene, from, to, copy }: {
 	scene: RefObject<HTMLDivElement | null>;
@@ -53,10 +52,6 @@ function FlyingTicket({ scene, from, to, copy }: {
 	return <div className="fly" ref={fly}><Ticket disabled small stub={copy[1]}>{copy[0]}</Ticket></div>;
 }
 
-function Person({ name, status }: { name: string; status: string }) {
-	return <div className="m-row"><i>{name[0]}</i><span><b>{name}</b><small>{status}</small></span></div>;
-}
-
 function HeroScene({ copy, reduced }: { copy: HomeCopy; reduced: boolean }) {
 	const stage = useRef<HTMLDivElement>(null);
 	const scene = useRef<HTMLDivElement>(null);
@@ -85,40 +80,24 @@ function HeroScene({ copy, reduced }: { copy: HomeCopy; reduced: boolean }) {
 	const punched = phase === "punched" || phase === "full" || phase === "close";
 	const button = phase === "full" || phase === "close" ? "full" : booked ? "done" : phase === "press" ? "press" : undefined;
 	const { site, manage, card } = copy;
-	const tuesday = site.rows[1];
 
 	return <div className="stage" aria-hidden="true" ref={stage}><div className="scene" ref={scene}>
 		<div className="browser">
-			<div className="b-bar"><b>{site.name}</b><span>{copy.mini.nav[0]}</span><span className="sample">{site.sample}</span></div>
+			<StudioBrowserBar copy={copy} />
 			<div className="b-week"><h4>{site.week}</h4>
 				<BookingRows rows={site.rows} copy={site} activeRow={1} spots={booked ? 0 : 1} state={button} actionRef={booking} />
 			</div>
 			<div className="b-art"><StudioLandscape strip /></div>
 		</div>
 		<PunchCard copy={card} used={punched ? 7 : 6} reduced={reduced} scene={scene} />
-		<div className="phone"><div className="screen">
-			<div className="island" />
-			<div className="m-url">shaked-studio/manage</div>
-			<div className="m-head"><b>{manage.title}</b><span>{site.name}</span></div>
-			<div className="m-tabs">{manage.tabs.map((tab, i) =>
-				<span key={tab} className={i === 0 ? "on" : undefined}>{tab}{i === 1 && <em>1</em>}</span>
-			)}</div>
-			<div className="m-class"><div className="m-top">
-				<b>{tuesday[0]}</b><span className={filled ? "cnt full" : "cnt"}>{filled ? manage.full : "7/8"}</span>
-			</div><small>{tuesday[1]}</small>
-				<div className="seats">{Array.from({ length: seatCount }, (_, i) =>
-					<i key={i} className={i === seatCount - 1 ? filled ? "new" : "open" : undefined} />
-				)}</div>
-			</div>
-			<div className="m-label">{manage.coming}</div>
+		<ManagePhone copy={copy} filled={filled} waiting>
 			<div className="m-list" ref={attendees}>
 				<div className={`m-new${filled && phase !== "close" ? " on" : ""}${phase === "land" ? " flash" : ""}`}>
-					<div><Person name={card.who} status={manage.maya} /></div>
+					<div><ManagePerson name={card.who} status={manage.maya} /></div>
 				</div>
-				{manage.people.map(([name, status]) => <Person key={name} name={name} status={status} />)}
+				{manage.people.map(([name, status]) => <ManagePerson key={name} name={name} status={status} />)}
 			</div>
-			<div className="home-bar" />
-		</div></div>
+		</ManagePhone>
 		{phase === "fly" && <FlyingTicket scene={scene} from={booking} to={attendees} copy={copy.fly} />}
 	</div></div>;
 }

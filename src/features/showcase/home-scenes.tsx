@@ -1,4 +1,4 @@
-import { useRef, type RefObject } from "react";
+import { useRef, type ReactNode, type RefObject } from "react";
 import { useTranslation } from "react-i18next";
 import type { he } from "../../i18n/he";
 import { usePunchChad } from "./home-motion";
@@ -6,22 +6,24 @@ import { usePunchChad } from "./home-motion";
 export type HomeCopy = typeof he.home;
 type BookingState = "press" | "done" | "full";
 
-export function BookingRows({ rows, copy, activeRow, state, spots, actionRef }: {
+export function BookingRows({ rows, copy, activeRow, state, spots, actionRef, restrictedRow }: {
 	rows: HomeCopy["site"]["rows"];
 	copy: HomeCopy["site"];
 	activeRow: number;
 	state?: BookingState;
 	spots?: number;
 	actionRef?: RefObject<HTMLSpanElement | null>;
+	restrictedRow?: { index: number; label: string };
 }) {
 	const { t } = useTranslation("home");
 	return rows.map(([time, name, availability], index) => {
 		const active = activeRow === index;
+		const restricted = restrictedRow?.index === index;
 		const count = active && spots !== undefined ? spots : Number(availability);
 		return <div className="row" key={name}>
 			<span className="t">{time}</span>
-			<span className="nm">{name}<span className={count === 1 ? "sp last" : "sp"}>
-				{count === 0 ? copy.noSpots : count === 1 ? copy.lastSpot : t("site.spots", { count })}
+			<span className="nm">{name}<span className={restricted ? "sp sp-members" : count === 1 ? "sp last" : "sp"}>
+				{restricted ? restrictedRow.label : count === 0 ? copy.noSpots : count === 1 ? copy.lastSpot : t("site.spots", { count })}
 			</span></span>
 			<span ref={active ? actionRef : undefined} className={active && state ? `bk ${state}` : "bk"}>
 				{active && state === "done" ? copy.booked : active && state === "full" ? copy.full : copy.book}
@@ -67,4 +69,42 @@ export function StudioLandscape({ strip = false }: { strip?: boolean }) {
 				<path d="M22 2 L22 44 M22 14 L-4 30 M22 14 L50 -2 M22 44 L4 76 M22 44 L44 74" />
 			</g>
 		</svg>;
+}
+
+export function ManagePerson({ name, status }: { name: string; status: string }) {
+	return <div className="m-row"><i>{name[0]}</i><span><b>{name}</b><small>{status}</small></span></div>;
+}
+
+export function StudioBrowserBar({ copy }: { copy: HomeCopy }) {
+	const { site } = copy;
+	return <div className="b-bar"><b>{site.name}</b><span>{copy.mini.nav[0]}</span><span className="sample">{site.sample}</span></div>;
+}
+
+export function ManagePhone({ copy, filled = false, waiting, children }: {
+	copy: HomeCopy;
+	filled?: boolean;
+	waiting: boolean;
+	children: ReactNode;
+}) {
+	const { manage, site } = copy;
+	const tuesday = site.rows[1];
+	const seatCount = 8;
+	return <div className="phone"><div className="screen">
+			<div className="island" />
+			<div className="m-url">shaked-studio/manage</div>
+			<div className="m-head"><b>{manage.title}</b><span>{site.name}</span></div>
+			<div className="m-tabs">{manage.tabs.map((tab, i) =>
+				<span key={tab} className={i === 0 ? "on" : undefined}>{tab}{i === 1 && waiting && <em>1</em>}</span>
+			)}</div>
+			<div className="m-class"><div className="m-top">
+				<b>{tuesday[0]}</b><span className={filled ? "cnt full" : "cnt"}>{filled ? manage.full : "7/8"}</span>
+			</div><small>{tuesday[1]}</small>
+				<div className="seats">{Array.from({ length: seatCount }, (_, i) =>
+					<i key={i} className={i === seatCount - 1 ? filled ? "new" : "open" : undefined} />
+				)}</div>
+			</div>
+			<div className="m-label">{manage.coming}</div>
+			{children}
+			<div className="home-bar" />
+		</div></div>;
 }

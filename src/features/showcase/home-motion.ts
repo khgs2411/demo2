@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type RefObject } from "react";
 
-export function useInView<T extends HTMLElement>(reduced: boolean) {
+export function useInView<T extends HTMLElement>(reduced: boolean, threshold = .45) {
 	const ref = useRef<T>(null);
 	const [seen, setSeen] = useState(false);
 	useEffect(() => {
@@ -11,10 +11,10 @@ export function useInView<T extends HTMLElement>(reduced: boolean) {
 				observer.disconnect();
 				setSeen(true);
 			}
-		}, { threshold: .45 });
+		}, { threshold });
 		observer.observe(element);
 		return () => observer.disconnect();
-	}, [reduced, seen]);
+	}, [reduced, seen, threshold]);
 	return { ref, seen };
 }
 
@@ -39,11 +39,10 @@ export function useFrames(delays: readonly number[], active: boolean, loop = fal
 	return frame;
 }
 
-export function useSnippet<T extends HTMLElement>(delays: readonly number[], reduced: boolean) {
-	const { ref, seen } = useInView<T>(reduced);
-	const frame = useFrames(delays, seen && !reduced);
+export function useSnippet(delays: readonly number[], animate: boolean) {
+	const frame = useFrames(delays, animate);
 	const finalFrame = delays.length - 1;
-	return { ref, frame: reduced ? finalFrame : frame, playing: seen && !reduced && frame < finalFrame };
+	return { frame: animate ? frame : finalFrame, playing: animate && frame < finalFrame };
 }
 
 export function localBounds(element: HTMLElement, host: HTMLElement) {
@@ -68,19 +67,43 @@ export function usePunchChad(
 		if (reduced || !shouldPunch || !element) return;
 		const hole = element.querySelectorAll<HTMLElement>(".holes i")[used - 1];
 		const host = scene?.current ?? element;
-		const { x, y } = localBounds(hole, host);
-		const chad = document.createElement("i");
-		chad.className = "chad";
-		chad.style.left = `${x}px`;
-		chad.style.top = `${y}px`;
-		host.append(chad);
-		const dx = Math.random() * 30 - 15;
-		const animation = chad.animate([
-			{ transform: "translate(0,0) rotate(0)", opacity: 1 },
-			{ transform: `translate(${dx}px, 26px) rotate(80deg) scaleY(.6)`, opacity: 1, offset: .55 },
-			{ transform: `translate(${dx * 1.6}px, 90px) rotate(200deg) scaleY(.3)`, opacity: 0 },
-		], { duration: 1100, easing: "cubic-bezier(.4,0,.9,.6)" });
-		animation.onfinish = () => chad.remove();
-		return () => { animation.cancel(); chad.remove(); };
+		return animateChad(hole, host, "chad", 1100);
 	}, [card, reduced, scene, used]);
+}
+
+export function animateChad(hole: HTMLElement, host: HTMLElement, className: string, duration: number) {
+	const { x, y } = localBounds(hole, host);
+	const chad = document.createElement("i");
+	chad.className = className;
+	chad.style.left = `${x}px`;
+	chad.style.top = `${y}px`;
+	host.append(chad);
+	const dx = Math.random() * 30 - 15;
+	const animation = chad.animate([
+		{ transform: "translate(0,0) rotate(0)", opacity: 1 },
+		{ transform: `translate(${dx}px, 26px) rotate(80deg) scaleY(.6)`, opacity: 1, offset: .55 },
+		{ transform: `translate(${dx * 1.6}px, 90px) rotate(200deg) scaleY(.3)`, opacity: 0 },
+	], { duration, easing: "cubic-bezier(.4,0,.9,.6)" });
+	animation.onfinish = () => chad.remove();
+	return () => { animation.cancel(); chad.remove(); };
+}
+
+export function useResultBar(sheet: RefObject<HTMLDivElement | null>, stage: RefObject<HTMLDivElement | null>) {
+	const [shown, setShown] = useState(false);
+	useEffect(() => {
+		const sheetNode = sheet.current, stageNode = stage.current;
+		if (!sheetNode || !stageNode || typeof IntersectionObserver === "undefined") return;
+		let sheetVisible = false, stageVisible = false;
+		const observer = new IntersectionObserver(entries => {
+			for (const entry of entries) {
+				if (entry.target === sheetNode) sheetVisible = entry.isIntersecting;
+				else stageVisible = entry.isIntersecting;
+			}
+			setShown(sheetVisible && !stageVisible);
+		});
+		observer.observe(sheetNode);
+		observer.observe(stageNode);
+		return () => observer.disconnect();
+	}, [sheet, stage]);
+	return shown;
 }
