@@ -5,6 +5,9 @@
 .inner-page .package-explain h2 { font: 700 1.25rem/1.2 var(--font-display); letter-spacing: -.01em; }
 .package-explain p { color: var(--muted); margin-block-start: 8px; max-inline-size: 46ch; }
 .package-explain .link-arrow { display: inline-block; margin-block-start: 8px; }
+.packages-page .ast { color: var(--coral); font-family: var(--font-display); font-weight: 900; margin-inline-end: 4px; }
+.price-hint { grid-column: 1 / -1; font-size: .95rem; color: var(--muted); }
+.price-hint a { color: var(--ink); }
 
 /* A service line */
 .package-line { padding-block: clamp(48px, 7vw, 88px) 0; }
@@ -67,6 +70,20 @@ html[dir="ltr"] .packages-page .package-passes { --side: -1; } html[dir="rtl"] .
 .package-faq summary i::after { rotate: 90deg; }
 .package-faq details[open] summary i::after { rotate: 0deg; }
 .package-faq details p { color: var(--muted); padding-block-end: 22px; max-inline-size: 52ch; }
+
+.price-note {
+	margin-block-start: clamp(56px, 8vw, 100px);
+	border-block-start: 2px dashed var(--perf);
+	padding-block-start: clamp(28px, 4vw, 44px);
+	display: grid;
+	gap: 18px 48px;
+	align-items: center;
+	scroll-margin-block-start: 90px;
+}
+@media (min-width: 820px) { .price-note { grid-template-columns: 1fr auto; } }
+.inner-page .price-note h2 { font-size: clamp(1.6rem, 1.2rem + 1.4vw, 2.2rem); }
+.price-note p { color: var(--muted); margin-block-start: 10px; max-inline-size: 56ch; }
+.price-note .ticket { justify-self: start; }
 
 .package-pass li.inherited { font-weight: 600; }
 .package-pass li.inherited::before { background: currentColor; }
