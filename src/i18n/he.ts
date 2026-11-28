@@ -291,7 +291,7 @@ export const he = {
 			}
 		},
 		"logs": {
-			"idle": "agent ▸ idle · waiting for requests",
+			"idle": "site ▸ booking button clipped",
 			"received": "inbox ▸ request #214 from studio-shaked",
 			"context": "type: {{type}} · context: / (home)",
 			"cardCreated": "→ card created on board 'studio-shaked — requests'",

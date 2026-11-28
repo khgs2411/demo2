@@ -1,8 +1,8 @@
-import { useEffect, useReducer, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useLayoutEffect, useReducer, useRef, useState, useSyncExternalStore } from "react";
 import { useTranslation } from "react-i18next";
 import { useReducedMotion } from "../../motion/use-reduced-motion";
 import { initialState, transition } from "./machine";
-import type { SimEvent } from "./machine";
+import type { SimEvent, SimStep } from "./machine";
 import { requestTyping } from "./request-draft";
 import { brokenBookingButton } from "./scenarios/broken-booking-button";
 import type { SimulationScenario } from "./scenarios/types";
@@ -16,9 +16,35 @@ function logDuration(lineCount: number, revealMs: number, gapMs = 0) {
 	return lineCount === 0 ? 0 : (lineCount - 1) * gapMs + revealMs;
 }
 
+function effectDuration(step: SimStep, scenario: SimulationScenario, typingMs: number) {
+	const { timing, logs, deployStages } = scenario;
+	switch (step) {
+		case "bug": return logDuration(logs.idle.length, timing.logRevealMs);
+		case "ticket_drafting": return typingMs;
+		case "ticket_submitted": return Math.max(timing.flightMs, logDuration(logs.inbox.length, timing.logRevealMs, timing.inboxLogMs));
+		case "agent_fixing": return (logs.agent.length - 1) * timing.fixLineMs + logDuration(logs.agent.length, timing.logRevealMs);
+		case "deploying": return Math.max(
+			timing.scanStartMs + timing.scanDurationMs,
+			logDuration(logs.deploy.length, timing.logRevealMs, timing.deployLogMs),
+			...deployStages.map((stage) => stage.startMs + timing.stageFillMs),
+		);
+		case "live": return 0;
+	}
+}
+
+type BeatClock = { elapsedMs: number; startedAt: number | null };
+export type BeatPlayback = { beatDurationMs: number; readElapsedMs: () => number; running: boolean; jump: number };
+
+function elapsedTime(clock: BeatClock) {
+	return clock.elapsedMs + (clock.startedAt === null ? 0 : performance.now() - clock.startedAt);
+}
+
 export function useSimulation(scenario: SimulationScenario = brokenBookingButton) {
 	const [state, send] = useReducer(transition, initialState);
 	const [autoplay, setAutoplay] = useState(true);
+	const [jump, setJump] = useState(0);
+	const clock = useRef<BeatClock>({ elapsedMs: 0, startedAt: null });
+	const readElapsedMs = useCallback(() => elapsedTime(clock.current), []);
 	const requestForm = useRef<HTMLFormElement>(null);
 	const automaticallyAdvanced = useRef(false);
 	const autoSubmitting = useRef(false);
@@ -26,19 +52,31 @@ export function useSimulation(scenario: SimulationScenario = brokenBookingButton
 	const reducedMotion = useReducedMotion();
 	const hidden = useSyncExternalStore(subscribeToVisibility, () => document.hidden, () => true);
 	const playing = autoplay && !reducedMotion && state.step !== "live";
+	const running = playing && !hidden;
 	const typingMs = state.step === "ticket_drafting"
 		? requestTyping(scenario, t).durationMs
 		: 0;
+	const effectMs = effectDuration(state.step, scenario, typingMs);
+	const beatDurationMs = state.step === "live" ? 0 : effectMs + scenario.timing.beatDwellMs[state.step];
+	const ready = state.step === "agent_fixing" ? state.progress === 1
+		: state.step === "deploying" ? state.finished : true;
 
 	function pausePlayback() {
 		setAutoplay(false);
 	}
 
-	function dispatch(event: SimEvent) {
+	function dispatch(event: SimEvent, keepPlaying = false) {
 		automaticallyAdvanced.current = autoSubmitting.current;
-		if (event.type === "restarted" && state.step === "live") setAutoplay(true);
-		else if (!autoSubmitting.current) pausePlayback();
+		if (!autoSubmitting.current) {
+			setJump((entry) => entry + 1);
+			if (state.step === "live") setAutoplay(event.type === "restarted");
+			else if (!keepPlaying) pausePlayback();
+		}
 		send(event);
+	}
+
+	function navigate(event: SimEvent) {
+		dispatch(event, true);
 	}
 
 	function togglePlayback() {
@@ -83,42 +121,21 @@ export function useSimulation(scenario: SimulationScenario = brokenBookingButton
 			delay = scenario.timing.fixLineMs;
 		} else if (state.step === "deploying" && !state.finished) {
 			event = { type: "deploy_finished" };
-			const { timing, logs, deployStages } = scenario;
-			delay = Math.max(
-				timing.scanStartMs + timing.scanDurationMs,
-				logDuration(logs.deploy.length, timing.logRevealMs, timing.deployLogMs),
-				...deployStages.map((stage) => stage.startMs + timing.stageFillMs),
-			);
+			delay = effectMs;
 		} else return;
 		const timer = setTimeout(() => send(event), delay);
 		return () => clearTimeout(timer);
-	}, [state, scenario, reducedMotion]);
+	}, [state, scenario, reducedMotion, effectMs]);
 
-	useEffect(() => {
-		if (!playing || hidden) return;
-		if (state.step === "agent_fixing" && state.progress < 1) return;
-		if (state.step === "deploying" && !state.finished) return;
+	useLayoutEffect(() => {
+		clock.current = { elapsedMs: 0, startedAt: null };
+	}, [state.step, jump, reducedMotion]);
 
-		const { timing, logs } = scenario;
-		let effectMs: number;
-		switch (state.step) {
-			case "bug":
-				effectMs = logDuration(logs.idle.length, timing.logRevealMs);
-				break;
-			case "ticket_drafting":
-				effectMs = typingMs;
-				break;
-			case "ticket_submitted":
-				effectMs = Math.max(timing.flightMs, logDuration(logs.inbox.length, timing.logRevealMs, timing.inboxLogMs));
-				break;
-			case "agent_fixing":
-				effectMs = logDuration(logs.agent.length, timing.logRevealMs);
-				break;
-			case "deploying":
-				effectMs = 0;
-				break;
-		}
-		const timer = setTimeout(() => {
+	useLayoutEffect(() => {
+		if (!running) return;
+		const beatClock = clock.current;
+		beatClock.startedAt = performance.now();
+		const timer = ready ? setTimeout(() => {
 			if (document.hidden) return;
 			if (state.step === "ticket_drafting") {
 				// Native submission shares validation and the visitor's submit handler.
@@ -132,9 +149,16 @@ export function useSimulation(scenario: SimulationScenario = brokenBookingButton
 				automaticallyAdvanced.current = true;
 				send({ type: "next_requested" });
 			}
-		}, effectMs + timing.beatDwellMs[state.step]);
-		return () => clearTimeout(timer);
-	}, [state, scenario, playing, hidden, typingMs]);
+		}, Math.max(0, Math.ceil(beatDurationMs - beatClock.elapsedMs))) : undefined;
+		return () => {
+			beatClock.elapsedMs = elapsedTime(beatClock);
+			beatClock.startedAt = null;
+			clearTimeout(timer);
+		};
+	}, [state.step, jump, running, ready, beatDurationMs]);
 
-	return { state, dispatch, scenario, reducedMotion, playing, automaticallyAdvanced, pausePlayback, togglePlayback, requestForm };
+	return {
+		state, dispatch, navigate, scenario, reducedMotion, playing, automaticallyAdvanced, pausePlayback, togglePlayback, requestForm,
+		playback: { beatDurationMs, running, jump, readElapsedMs },
+	};
 }

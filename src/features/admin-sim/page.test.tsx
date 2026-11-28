@@ -6,7 +6,7 @@ import { brokenBookingButton as scenario } from "./scenarios/broken-booking-butt
 import { i18n } from "../../i18n";
 
 // Fake the simulation's timeout clock; leave jsdom's focus/selection task queue real.
-beforeEach(() => { vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] }); vi.stubGlobal("fetch", vi.fn()); });
+beforeEach(() => { vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "performance"] }); vi.stubGlobal("fetch", vi.fn()); });
 afterEach(() => { cleanup(); expect(vi.getTimerCount()).toBe(0); vi.useRealTimers(); vi.unstubAllGlobals(); });
 
 const click = (name: string) => fireEvent.click(screen.getByRole("button", { name }));
@@ -16,6 +16,90 @@ const bugBeatMs = scenario.timing.logRevealMs + scenario.timing.beatDwellMs.bug;
 function advance(ms: number) {
 	act(() => { vi.advanceTimersByTime(ms); });
 }
+
+it("starts drafting within four seconds of showing the demo untouched", async () => {
+	await i18n.changeLanguage("en");
+	render(<AdminSimPage />);
+	expect(screen.queryByRole("form", { name: "New request" })).toBeNull();
+	advance(4000);
+	expect(screen.getByRole("form", { name: "New request" })).toBeDefined();
+});
+
+it("fills between dots on the autoplay clock and freezes on visitor and tab pauses", async () => {
+	await i18n.changeLanguage("en");
+	vi.useRealTimers();
+	vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "performance", "requestAnimationFrame", "cancelAnimationFrame"] });
+	const hidden = vi.spyOn(document, "hidden", "get").mockReturnValue(false);
+	try {
+		const { container } = render(<AdminSimPage />);
+		const fill = container.querySelector<HTMLElement>(".sim-rail-fill")!;
+		const fraction = () => Number(fill.style.getPropertyValue("--sim-fill"));
+		expect(fill.closest('[aria-hidden="true"]')).not.toBeNull();
+		expect(fraction()).toBe(0);
+		advance(976);
+		expect(fraction()).toBeCloseTo(0.05, 3);
+		click("Pause");
+		const visitorPaused = fraction();
+		advance(4000);
+		expect(fraction()).toBe(visitorPaused);
+		click("Play");
+		advance(976);
+		expect(fraction()).toBeCloseTo(0.1, 3);
+		hidden.mockReturnValue(true);
+		act(() => { document.dispatchEvent(new Event("visibilitychange")); });
+		const tabPaused = fraction();
+		advance(4000);
+		expect(fraction()).toBe(tabPaused);
+		hidden.mockReturnValue(false);
+		act(() => { document.dispatchEvent(new Event("visibilitychange")); });
+		advance(1947);
+		expect(screen.getByRole("button", { name: "01 Problem", current: "step" })).toBeDefined();
+		advance(1);
+		expect(screen.getByRole("button", { name: "02 Request", current: "step" })).toBeDefined();
+		expect(fraction()).toBe(0.2);
+	} finally {
+		hidden.mockRestore();
+	}
+});
+
+it("snaps to manual destinations, keeps playing through jumps and fills at live", async () => {
+	await i18n.changeLanguage("en");
+	vi.useRealTimers();
+	vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "performance", "requestAnimationFrame", "cancelAnimationFrame"] });
+	const { container } = render(<AdminSimPage />);
+	const fill = container.querySelector<HTMLElement>(".sim-rail-fill")!;
+	const fraction = () => Number(fill.style.getPropertyValue("--sim-fill"));
+
+	click("03 With me");
+	expect(fraction()).toBe(0.4);
+	advance(1120);
+	expect(fraction()).toBeGreaterThan(0.4);
+	click("Hand it to the assistant");
+	expect(fraction()).toBe(0.6);
+	advance(1040);
+	// Fixing runs for 2.6 s of log streaming, 300 ms of reveal, and 3 s of dwell.
+	expect(fraction()).toBeCloseTo(0.635, 3);
+	click("Back");
+	expect(fraction()).toBe(0.4);
+	click("05 Going up");
+	expect(fraction()).toBe(0.8);
+	advance(2000);
+	// Deployment runs for 4 s of effects and 1.7 s of dwell.
+	expect(fraction()).toBeCloseTo(0.87, 3);
+	click("Restart");
+	expect(fraction()).toBe(0);
+	advance(976);
+	expect(fraction()).toBeGreaterThan(0);
+	click("Pause");
+	click("01 Problem");
+	expect(fraction()).toBe(0);
+	advance(4000);
+	expect(fraction()).toBe(0);
+	click("06 On the site");
+	expect(fraction()).toBe(1);
+	advance(4000);
+	expect(fraction()).toBe(1);
+});
 
 it("plays to the comparison without a click and can replay from the end", async () => {
 	await i18n.changeLanguage("en");
@@ -126,6 +210,7 @@ it("supports back, beat skipping, keyboard tabs and restart without leaking time
 	click("Restart");
 	expect(screen.getByRole("heading", { level: 1 }).textContent).toBe(i18n.t(scenario.beats.bug.titleKey, { ns: "admin-sim" }));
 	expect(vi.getTimerCount()).toBe(1);
+	click("Pause");
 	click("03 With me");
 	expect(document.querySelector(".sim-fly")).not.toBeNull();
 	click("Restart");
@@ -141,6 +226,7 @@ it.each(["03 With me", "04 AI assistant"])("leaving and returning during %s rest
 	await i18n.changeLanguage("en");
 	window.history.replaceState(null, "", "#/demo");
 	render(<App />);
+	click("Pause");
 	click(beat);
 	expect(vi.getTimerCount()).toBe(1);
 	act(() => { window.location.hash = "#/packages"; window.dispatchEvent(new HashChangeEvent("hashchange")); });
@@ -171,11 +257,14 @@ it("validates required request text and carries edited content into the local bo
 it("shows the complete fix with reduced motion and keeps Next visitor-paced", async () => {
 	await i18n.changeLanguage("en");
 	vi.stubGlobal("matchMedia", () => ({ matches: true, addEventListener() {}, removeEventListener() {} }));
-	render(<AdminSimPage />);
+	const { container } = render(<AdminSimPage />);
+	const fill = container.querySelector<HTMLElement>(".sim-rail-fill")!;
+	expect(fill.style.getPropertyValue("--sim-fill")).toBe("0");
 	expect(screen.queryByRole("button", { name: /^(Pause|Play)$/ })).toBeNull();
 	advance(bugBeatMs);
 	expect(screen.getByRole("heading", { level: 1 }).textContent).toBe(i18n.t(scenario.beats.bug.titleKey, { ns: "admin-sim" }));
 	click("04 AI assistant");
+	expect(fill.style.getPropertyValue("--sim-fill")).toBe("0.6");
 	expect(screen.getByText(scenario.diff.lines[1])).toBeDefined();
 	expect(screen.getByRole("progressbar").getAttribute("value")).toBe("1");
 	expect(vi.getTimerCount()).toBe(0);
@@ -183,6 +272,7 @@ it("shows the complete fix with reduced motion and keeps Next visitor-paced", as
 	expect(vi.getTimerCount()).toBe(0);
 	click("See it on the site");
 	expect(screen.getByRole("slider")).toBeDefined();
+	expect(fill.style.getPropertyValue("--sim-fill")).toBe("1");
 });
 
 it("renders the demo with the site header and footer", () => {
