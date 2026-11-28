@@ -26,10 +26,10 @@ describe("broken booking button scenario", () => {
 	});
 
 	it("honestly labels the demonstration and its elapsed time", () => {
-		expect(en["admin-sim"].demoNotice).toMatch(/demonstration.*no real ticket/i);
-		expect(he["admin-sim"].demoNotice).toContain("לא נשלחת בקשה אמיתית");
-		expect(en["admin-sim"].demoTiming).toContain("Demo timing");
-		expect(he["admin-sim"].demoTiming).toContain("זמן הדגמה");
+		expect(en["admin-sim"].demoNotice).toMatch(/demo.*no real request/i);
+		expect(he["admin-sim"].demoNotice).toContain("שום בקשה אמיתית לא נשלחת");
+		expect(en["admin-sim"].demoTiming).toContain("Demo timings are shortened.");
+		expect(he["admin-sim"].demoTiming).toContain("זמני ההדגמה מקוצרים.");
 	});
 
 	it("streams the actual CSS change between the defect and fixed styles", () => {

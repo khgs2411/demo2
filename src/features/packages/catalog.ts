@@ -16,11 +16,11 @@ const studioPackages = [
 	},
 	{
 		id: "system-studio", kind: "base", line: "system", templateId: templates.system, priceKey: "offers.system-studio.price",
-		featureKeys: [...websiteAndApp, "features.studioHelp", ...studioExtras], recommended: true,
+		featureKeys: [...websiteAndApp, "features.studioHelp", ...studioExtras], inherits: "system-basic", recommended: true,
 	},
 	{
 		id: "system-partner", kind: "base", line: "system", templateId: templates.system, priceKey: "offers.system-partner.price",
-		featureKeys: [...websiteAndApp, "features.partnerHelp", ...studioExtras, "features.includedAssistant", "features.review"],
+		featureKeys: [...websiteAndApp, "features.partnerHelp", ...studioExtras, "features.includedAssistant", "features.review"], inherits: "system-studio",
 	},
 	{
 		id: "site-quick", kind: "base", line: "site", templateId: templates.site, priceKey: "offers.site-quick.price",
@@ -51,6 +51,7 @@ export type StudioPackage = {
 	readonly templateId: string | null;
 	readonly priceKey: string;
 	readonly featureKeys: readonly string[];
+	readonly inherits?: "system-basic" | "system-studio";
 	readonly recommended?: boolean;
 	readonly mark?: "liveInSevenDays";
 };

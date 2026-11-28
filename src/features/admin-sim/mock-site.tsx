@@ -13,12 +13,12 @@ export function MockSite({ scenario, step, onOpenTicket, shown = true }: MockSit
 	const brokenStyle = rtl ? scenario.defect.brokenStyle : scenario.defect.ltrBrokenStyle;
 	const site = "scenarios.brokenBookingButton.";
 	return <section className={`sim-topside ${fixed ? "fixed" : "broken"} ${shown ? "shown" : ""}`} data-side="top" id="sim-panel-top" role="tabpanel" aria-label={t("topTab")}>
-		<span className="sim-label">{t("topLabel")}</span>
+		<div className="sim-label">{t("topLabel")} <span className="tag">{t("sampleTag")}</span></div>
 		<div className="sim-stage">
 			<p className={`sim-fault-note ${fixed ? "ok" : ""}`}><b aria-hidden="true">{fixed ? "✓" : "✕"}</b>{t(`${site}${fixed ? "fixedNote" : "faultNote"}`)}</p>
 			<div className="sim-phone">
 				<div className="sim-site">
-					<div className="sim-site-nav"><span>{t(scenario.siteNameKey)}</span><small>{t(`${site}siteNav`)}</small></div>
+					<div className="sim-site-nav"><b>{t(scenario.siteNameKey)}</b><small>{t(`${site}siteNav`)}</small></div>
 					<h2>{t(`${site}siteTitle`)}</h2><p>{t(`${site}siteBody`)}</p>
 					<div className="sim-cta-wrap">
 						{!fixed && (step === "bug"
@@ -38,7 +38,7 @@ export function MockSite({ scenario, step, onOpenTicket, shown = true }: MockSit
 			</div>
 		</div>
 		{fixed && <div className="sim-comparison">
-			<label htmlFor="sim-compare">{t("comparisonLabel")}</label>
+			<label className="sr-only" htmlFor="sim-compare">{t("comparisonLabel")}</label>
 			<div className="sim-comparison-labels"><span>{t("before")}</span><span>{t("after")}</span></div>
 			<input id="sim-compare" type="range" min="0" max="100" value={comparison} onChange={(event) => setComparison(Number(event.target.value))} />
 			<p className="sim-timing">{t(scenario.elapsedLabelKey)}</p>

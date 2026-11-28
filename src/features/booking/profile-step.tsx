@@ -4,7 +4,7 @@ import { Ticket } from "../../ui/ticket";
 import { ContactFields } from "./contact-fields";
 import type { BookingProfile } from "./machine";
 
-export function ProfileStep({ profile, onChange, onSubmit, busy }: { profile: BookingProfile; onChange: (profile: BookingProfile) => void; onSubmit: () => void; busy: boolean }) {
+export function ProfileStep({ stepStub = "03", profile, onChange, onSubmit, busy }: { stepStub?: string; profile: BookingProfile; onChange: (profile: BookingProfile) => void; onSubmit: () => void; busy: boolean }) {
 	const { t } = useTranslation("booking");
 	return <>
 		<h1 tabIndex={-1}>{t("prTitle")}</h1><p className="lede">{t("prLede")}</p>
@@ -15,7 +15,7 @@ export function ProfileStep({ profile, onChange, onSubmit, busy }: { profile: Bo
 				<div><Input label={t("website")} value={profile.websiteUrl ?? ""} onChange={e => onChange({ ...profile, websiteUrl: e.target.value })} type="url" dir="ltr" autoComplete="url" placeholder="https://" aria-describedby="website-hint" />
 					<span className="hint" id="website-hint">{t("optional")}</span></div>
 			</fieldset>
-			<div className="actions"><Ticket stub="03" type="submit" disabled={busy}>{t(busy ? "loading" : "next")}</Ticket></div>
+			<div className="actions"><Ticket stub={stepStub} type="submit" disabled={busy}>{t(busy ? "loading" : "next")}</Ticket></div>
 		</form>
 	</>;
 }

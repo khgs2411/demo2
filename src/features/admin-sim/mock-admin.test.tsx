@@ -15,5 +15,5 @@ it("prefills editable request fields and submits only local values", async () =>
 	fireEvent.change(screen.getByLabelText("Type"), { target: { value: "feature_request" } });
 	expect(screen.getByRole("img", { name: i18n.t(scenario.ticket.screenshot.altKey, { ns: "admin-sim" }) })).toBeDefined();
 	fireEvent.submit(screen.getByRole("form", { name: "New request" }));
-	expect(submit).toHaveBeenCalledWith({ type: "feature_request", title: "My button is clipped", description: "The button on the home page goes off screen. It is impossible to book." });
+	expect(submit).toHaveBeenCalledWith({ type: "feature_request", title: "My button is clipped", description: "The button on the home page goes off screen, so nobody can book." });
 });

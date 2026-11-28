@@ -26,23 +26,23 @@ function StudioSession({ context, access, accountAdapter, passwordChange }: {
 	passwordChange: ReturnType<typeof usePasswordChange>;
 }) {
 	const { t } = useTranslation(["studio", "booking"]);
-	const { state, decide, retry, signIn, signOut, signInWithGoogle, onSignedOut } = useStudio(context, access);
+	const { state, decide, stampedDecision, retry, signIn, signOut, signInWithGoogle, onSignedOut } = useStudio(context, access);
 	const busy = Boolean(state.busy) || passwordChange.busy;
 	const showAccount = access === "manager" && (state.step === "ready" || state.step === "failed" || state.step === "not_manager");
 	const { session } = context;
 	const gate = state.step === "signed_out";
-	return <main data-module="studio" className={`booking-page studio-page${gate ? " gate" : ""}`}><section>
+	return <main data-module="studio" className={`inner-page studio-page${gate ? " gate" : ""}`}><div className={`inner-wrap${gate ? " gate-layout" : ""}`}><section>
 		{state.error && <p role="alert" className="notice error">{state.error.message ?? t(state.error.code === "redirect_storage" ? "storageError" : "networkError")}</p>}
 		{gate ? <>
 			{passwordChange.signedOut && <p role="status">{t("passwordChange.outcomes.signed_out", { ns: "booking" })}</p>}
-			<AccountStep product={context.product} loading={false} busy={busy} signInOnly title={t("title")} description={t("signInDescription")}
+			<AccountStep stepStub="№ 00" tone="ink" product={context.product} loading={false} busy={busy} signInOnly title={t("title")} description={t("signInDescription")}
 				onPassword={(_method, email, password) => void passwordChange.runAuth(() => signIn(email, password))}
 				onGoogle={() => void passwordChange.runAuth(signInWithGoogle)} />
 		</> : <>
 			<header className="page-head">
 				<div>
 					<h1>{t("title")}</h1>
-					{state.step === "ready" && <span className="head-label">{t("counts", { pending: state.pending.length, upcoming: state.upcoming.length })}</span>}
+					{state.step === "ready" && <p className="counts">{t("counts", { pending: state.pending.length, upcoming: state.upcoming.length })}</p>}
 				</div>
 				{session && <Ticket small tone="ghost" stub="↩" disabled={busy} onClick={() => void passwordChange.runAuth(signOut)}>{t("signOut")}</Ticket>}
 			</header>
@@ -51,7 +51,7 @@ function StudioSession({ context, access, accountAdapter, passwordChange }: {
 			{state.step === "failed" && <RetryTicket tone="ink" onClick={retry} />}
 			{state.step === "ready" && <>
 				<StudioPart id="studio-pending" title={t("pending")} count={state.pending.length}>
-					{state.pending.length ? <MeetingList rows={state.pending} busy={busy} onDecide={(id, action, reason) => void decide(id, action, reason)} /> : <p>{t("noPending")}</p>}
+					{state.pending.length ? <MeetingList rows={state.pending} busy={busy} stampedDecision={stampedDecision} onDecide={(id, action, reason) => void decide(id, action, reason)} /> : <p>{t("noPending")}</p>}
 				</StudioPart>
 				<StudioPart id="studio-upcoming" title={t("upcoming")} count={state.upcoming.length}>
 					{state.upcoming.length ? <MeetingList rows={state.upcoming} /> : <p>{t("noUpcoming")}</p>}
@@ -68,7 +68,7 @@ function StudioSession({ context, access, accountAdapter, passwordChange }: {
 					onRejected={passwordChange.onRejected} onSubmit={(current, next) => void passwordChange.submit(current, next)} />}
 			</div>}
 		</>}
-	</section>{gate && <StudioPass />}</main>;
+	</section>{gate && <StudioPass />}</div></main>;
 }
 
 function StudioPart({ id, title, count, children }: { id: string; title: string; count: number; children: ReactNode }) {

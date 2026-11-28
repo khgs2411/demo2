@@ -1,32 +1,43 @@
-.shell-content > main.studio-page { grid-template-columns: minmax(0, 1fr); }
-.studio-page {
-	> section { min-inline-size: 0; }
-	.page-head .head-label { display: block; margin-block-start: 14px; font: 500 var(--text-label)/var(--leading-small) var(--font-sans); letter-spacing: var(--tracking-label); }
-	.studio-part + .studio-part, .studio-account { margin-block-start: 72px; }
-	.studio-part > h2 small { align-self: flex-start; margin-inline-start: -6px; font: 500 var(--text-label)/var(--leading-small) var(--font-sans); letter-spacing: var(--tracking-label); color: var(--coral); }
-	.studio-meetings { list-style: none; padding: 0; }
-	.studio-meetings > li { padding-block: 28px; border-block-end: 1px solid var(--rule); }
-	.studio-meetings dl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px 24px; }
-	.studio-meetings dt { font: 500 var(--text-label)/var(--leading-small) var(--font-sans); margin-block-end: 4px; opacity: .55; letter-spacing: var(--tracking-label); }
-	.studio-meetings dd { margin: 0; overflow-wrap: anywhere; }
-	.studio-meetings .customer-name { font: 700 var(--text-heading)/var(--leading-heading) var(--font-display); }
-	.studio-meetings .package-name { font-weight: 600; }
-	.studio-meetings .meeting-meta { font: 500 var(--text-small)/var(--leading-small) var(--font-sans); }
-	.studio-meetings form { margin-block-start: 20px; }
-	.studio-meetings fieldset { display: flex; align-items: end; flex-wrap: wrap; gap: 24px; }
-	.studio-meetings .field { flex: 1 1 240px; max-inline-size: 460px; min-inline-size: 0; }
-	.studio-meetings input { inline-size: 100%; min-inline-size: 0; }
-	.studio-meetings .actions { margin: 0; gap: 14px; }
-	.studio-account { display: grid; gap: 56px; }
-	@media (max-width: 719px) { .studio-meetings dl { grid-template-columns: minmax(0, 1fr); gap: 14px; } }
-	@media (min-width: 1000px) {
-		.studio-account { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: clamp(40px, 6vw, 110px); }
-		.studio-account :is(.fields, .password-change) { max-inline-size: none; }
-	}
-	@media (min-width: 1100px) {
-		.studio-meetings > li:has(form) { display: grid; grid-template-columns: minmax(0, 1fr) 340px; column-gap: 56px; align-items: end; }
-		.studio-meetings form { margin-block-start: 0; }
-		.studio-meetings fieldset { display: grid; gap: 18px; }
-		.studio-meetings .field { max-inline-size: none; }
-	}
+.studio-page .counts { margin-block-start: 10px; color: var(--muted); }
+.studio-part { padding-block-start: 40px; }
+.inner-page .studio-part h2 { display: flex; align-items: center; gap: 12px; font: 700 1.5rem/1.15 var(--font-display); margin-block-end: 18px; }
+.studio-part h2 small { inline-size: 30px; block-size: 30px; border-radius: 50%; display: grid; place-items: center; font: 500 .82rem/1 var(--font-mono); box-shadow: inset 0 2px 4px color-mix(in srgb, var(--ink) 40%, transparent), 0 0 0 1.5px var(--line); }
+.studio-part > p { color: var(--muted); }
+.studio-meetings { display: grid; gap: 16px; }
+.studio-meetings .mt { display: grid; background: var(--surface); border-radius: 18px; }
+.studio-meetings .pending { --tear: 178px; --notch: 12px; --stub-width: 300px; }
+.studio-meetings dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(140px, 100%), 1fr)); gap: 14px 24px; padding: 24px 26px; }
+.studio-meetings dt { font: 500 .78rem/1.3 var(--font-sans); color: var(--muted); }
+.studio-meetings .mt dd { font-size: .95rem; margin-block-start: 2px; overflow-wrap: anywhere; }
+.studio-meetings .mt .customer-name { font: 700 1.2rem/1.2 var(--font-display); }
+.studio-meetings .package-name { font-weight: 600; }
+.studio-meetings .decide { padding: 22px 24px; border-block-start: 2px dashed var(--perf); margin-inline: 14px; display: grid; gap: 14px; align-content: center; }
+.studio-meetings .decide .fields { margin: 0; max-inline-size: none; }
+.studio-meetings .decide .actions { margin: 0; gap: 10px; }
+.studio-meetings .plain { background: transparent; box-shadow: inset 0 0 0 1px var(--line); }
+.studio-meetings .mt.plain .customer-name { font-size: 1.1rem; }
+@media (min-width: 900px) {
+	.studio-meetings .pending { grid-template-columns: minmax(0, 1fr) var(--stub-width); --tear-position: calc(100% - var(--stub-width)); mask: var(--tear-across-mask); }
+	.studio-meetings .pending:dir(rtl) { --tear-position: var(--stub-width); }
+	.studio-meetings .decide { border-block-start: 0; border-inline-start: 2px dashed var(--perf); margin: 14px 0; }
 }
+
+.studio-meetings .stamp {
+	position: absolute; inset-block-start: 50%; inset-inline-end: 110px; margin-block-start: -46px;
+	inline-size: 92px; block-size: 92px; display: grid; place-items: center; text-align: center;
+	border-radius: 50%; border: 2px solid var(--ink); rotate: -14deg;
+	box-shadow: 0 0 0 4px var(--surface), 0 0 0 5.5px var(--ink);
+	background: color-mix(in srgb, var(--sage) 50%, var(--surface));
+	font: 900 1.1rem/1 var(--font-display); animation: studio-stamp .45s var(--spring) both;
+}
+.studio-meetings .stamp.reject { background: var(--sand); }
+.studio-meetings .leaving { animation: studio-leave .5s .7s var(--ease) both; }
+@keyframes studio-stamp { from { opacity: 0; scale: 1.8; rotate: -30deg; } }
+@keyframes studio-leave { to { opacity: 0; translate: 0 18px; } }
+@media (prefers-reduced-motion: reduce) { .studio-meetings :is(.stamp, .leaving) { animation: none; } }
+
+.studio-account { margin-block-start: 56px; padding-block-start: 40px; border-block-start: 2px dashed var(--perf); display: grid; gap: 40px 72px; }
+@media (min-width: 860px) { .studio-account { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.inner-page .studio-account h2 { font: 700 1.5rem/1.15 var(--font-display); margin-block-end: 16px; }
+.studio-account .fields { margin-block-start: 0; gap: 14px; }
+.studio-account .actions { margin-block-start: 18px; }

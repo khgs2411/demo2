@@ -8,15 +8,11 @@ import { i18n } from "../i18n";
 let context: ReturnType<typeof useBookingContext>;
 vi.mock("@class-kit/react", () => ({useProductContext:() => context}));
 
-// These routes can mount the lazy showcase scene, which needs layout observers jsdom lacks.
-class LayoutObserver {
-	observe() {}
-	disconnect() {}
-}
-
 beforeEach(async () => {
-	vi.stubGlobal("IntersectionObserver", LayoutObserver);
-	vi.stubGlobal("ResizeObserver", LayoutObserver);
+	// These routes can mount the home page. jsdom does not run its animation APIs.
+	vi.stubGlobal("matchMedia", (media: string) => ({
+		matches: media === "(prefers-reduced-motion: reduce)", addEventListener() {}, removeEventListener() {},
+	}));
 	context = makeBookingContext();
 	sessionStorage.clear();
 	await i18n.changeLanguage("en");

@@ -22,6 +22,7 @@ export function useBooking(locale: string, draft: BookingSelection) {
 	// The registration sign-up API requires Google to be enabled.
 	const guestAvailable = context.product?.auth_mode === "open"
 		&& context.product.email_password_enabled && context.product.google_oauth_enabled;
+	const canBookAsGuest = !context.loading && !context.session && guestAvailable;
 	const send = useCallback((event: BookingEvent) => {
 		current.current = transition(current.current, event);
 		dispatch(event);
@@ -144,7 +145,7 @@ export function useBooking(locale: string, draft: BookingSelection) {
 	}
 
 	return {
-		state, context, adapter, range, send,
+		state, context, adapter, range, send, canBookAsGuest,
 		signup(draft: SignupDraft, turnstileToken: string) {
 			const flow = current.current;
 			if (flow.step !== "signup_details" || !flow.terms || !flow.accepted) return;
@@ -152,7 +153,7 @@ export function useBooking(locale: string, draft: BookingSelection) {
 			return run({ type: "signup_started" }, () => adapter.requestWithSignup(flow.selection.slotId, draft, terms, turnstileToken));
 		},
 		choosePackage(selection: BookingSelection) {
-			const guest = !context.loading && !context.session && guestAvailable;
+			const guest = canBookAsGuest;
 			autoSession.current = !guest;
 			send({ type: "package_chosen", ...selection, guest });
 		},

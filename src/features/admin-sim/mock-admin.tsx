@@ -12,7 +12,7 @@ export function MockAdmin({ scenario, onSubmit }: { scenario: SimulationScenario
 		{ name: "description", label: "descriptionLabel", text: t(scenario.ticket.descriptionKey) },
 	];
 	let characters = 0;
-	return <form id={requestFormId} className="sim-request" aria-label={t("requestHeader")} onSubmit={(event) => {
+	return <form id={requestFormId} className="pass sim-request" aria-label={t("requestHeader")} onSubmit={(event) => {
 		event.preventDefault();
 		const data = new FormData(event.currentTarget);
 		onSubmit({ type: data.get("type") as RequestDraft["type"], title: String(data.get("title")), description: String(data.get("description")) });

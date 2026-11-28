@@ -7,7 +7,7 @@ import { ResetPass } from "../gate-passes";
 import { passwordProblem } from "../password-validation";
 import { initialResetState, resetTransition } from "./machine";
 import { dropResetToken, readResetToken } from "./memory";
-import "../booking.css";
+
 
 export function ResetPasswordPage() {
 	const { t } = useTranslation("passwordReset");
@@ -44,12 +44,12 @@ export function ResetPasswordPage() {
 		} finally { locked.current = false; }
 	}
 
-	return <main data-module="booking" className="booking-page account-page gate" ref={main}>
-		<section aria-busy={state.step === "saving"}>
+	return <main data-module="booking" className="inner-page password-page gate" ref={main}>
+		<div className="inner-wrap gate-layout"><section aria-busy={state.step === "saving"}>
 			{state.step === "no_link" && <>
 				<h1 tabIndex={-1}>{t("resetTitle")}</h1>
 				<p className="notice" role="status">{t("noLink")}</p>
-				<div className="actions"><Ticket href="#/forgot-password" stub="→">{t("requestLink")}</Ticket></div>
+				<div className="actions"><Ticket href="#/forgot-password" stub="1/3">{t("requestLink")}</Ticket></div>
 			</>}
 			{state.step === "link_unusable" && <>
 				<h1 tabIndex={-1}>{t("resetTitle")}</h1>
@@ -59,7 +59,7 @@ export function ResetPasswordPage() {
 			{state.step === "done" && <>
 				<h1 tabIndex={-1}>{t("doneTitle")}</h1>
 				<p className="lede" role="status">{t("doneLede")}</p>
-				<div className="actions"><Ticket href="#/account" stub="→">{t("signIn")}</Ticket></div>
+				<div className="actions"><Ticket href="#/account" stub="3/3">{t("signIn")}</Ticket></div>
 			</>}
 			{(state.step === "choosing" || state.step === "saving") && <>
 				<h1 tabIndex={-1}>{t("resetTitle")}</h1><p className="lede">{t("resetLede")}</p>
@@ -71,11 +71,12 @@ export function ResetPasswordPage() {
 						<Input label={t("confirmPassword")} name="confirmation" type="password" autoComplete="new-password" required />
 					</fieldset>
 					<div className="actions">
-						<Ticket type="submit" stub="→" disabled={state.step === "saving"}>{t(state.step === "saving" ? "loading" : "save")}</Ticket>
+						<Ticket type="submit" stub="2/3" disabled={state.step === "saving"}>{t(state.step === "saving" ? "loading" : "save")}</Ticket>
 					</div>
 				</form>
 			</>}
 		</section>
-		<ResetPass step={state.step === "done" ? 3 : state.step === "no_link" ? 1 : 2} />
+		<ResetPass step={state.step === "done" ? 3 : state.step === "no_link" || state.step === "link_unusable" ? 1 : 2} />
+		</div>
 	</main>;
 }

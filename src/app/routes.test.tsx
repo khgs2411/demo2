@@ -122,7 +122,7 @@ it("takes a visitor signing in with a password on the account page to their stud
 		view.rerender(<Routes />);
 	};
 	const view = render(<Routes />);
-	expect(screen.getByRole("heading", { name: i18n.t("signIn", { ns: "booking" }) })).toBeDefined();
+	expect(screen.getByRole("heading", { name: i18n.t("signIn", { ns: "shell" }) })).toBeDefined();
 	fireEvent.change(screen.getByLabelText(i18n.t("email", { ns: "booking" })), { target: { value: "manager@example.test" } });
 	fireEvent.change(screen.getByLabelText(i18n.t("password", { ns: "booking" })), { target: { value: "test-password" } });
 	await act(async () => fireEvent.click(screen.getByRole("button", { name: i18n.t("signIn", { ns: "booking" }) })));
@@ -158,17 +158,17 @@ it("replaces the restored account entry after the Google sign-in callback", asyn
 });
 
 it.each([
-	["en", "Studio package", "Book a meeting about Studio"],
-	["he", "חבילת סטודיו", "לקבוע פגישה על סטודיו"],
-])("carries the package label from offers to booking in %s", async (language, label, action) => {
+	["en", "Studio", "Studio package", "Book a meeting about the Studio package"],
+	["he", "סטודיו", "חבילת סטודיו", "לקבוע פגישה על חבילת סטודיו"],
+])("carries the package label from offers to booking in %s", async (language, offer, label, action) => {
 	await i18n.changeLanguage(language);
 	window.history.replaceState(null, "", "#/packages");
 	render(<Routes />);
-	expect(screen.getByText(label, { selector: "h3" })).toBeDefined();
+	expect(screen.getByRole("heading", { name: offer, level: 3 })).toBeDefined();
 
-	fireEvent.click(screen.getByRole("button", { name: action }));
+	window.location.hash = screen.getByRole("link", { name: action }).getAttribute("href")!;
 	const group = await screen.findByRole("radiogroup");
 	const selected = within(group).getByRole<HTMLInputElement>("radio", { checked: true });
-	expect(within(selected.labels![0]).getByText(label)).toBeDefined();
+	expect(within(selected.labels![0]).getByText(offer)).toBeDefined();
 	expect(within(screen.getByRole("complementary")).getByText(label)).toBeDefined();
 });

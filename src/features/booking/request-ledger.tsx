@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { upcomingStartTime } from "../../lib/slot-time";
 import { TextLink } from "../../ui/text-link";
 import { Ticket } from "../../ui/ticket";
-import { formatWhen } from "./calendar";
+import { formatStart } from "./calendar";
 import { googleCalendarLink } from "./calendar-link";
 import type { MeetingRequest, RequestsState } from "./requests-machine";
 import { RetryTicket } from "./retry-ticket";
@@ -39,6 +39,9 @@ function useRequestClock(requests: readonly MeetingRequest[] | undefined): numbe
 
 export function RequestLedger({ state, refresh, cancel, timeZone }: { state: RequestsState; refresh: () => void; cancel: (id: string) => void; timeZone: string }) {
 	const { t, i18n } = useTranslation("booking");
+	const day = new Intl.DateTimeFormat(i18n.language, { timeZone, day: "numeric" });
+	const month = new Intl.DateTimeFormat(i18n.language, { timeZone, month: "short" });
+	const fullDate = new Intl.DateTimeFormat(i18n.language, { timeZone, dateStyle: "full" });
 	const now = useRequestClock(state.step === "ready" ? state.requests : undefined);
 	if (state.step === "loading") return <p role="status">{t("loading")}</p>;
 	if (state.step === "no_access") return <p role="alert" className="notice error">{t("accNoAccess")}</p>;
@@ -47,14 +50,26 @@ export function RequestLedger({ state, refresh, cancel, timeZone }: { state: Req
 	return <>
 		{state.cancellationFailed && <p role="alert" className="notice error">{t("cancelFailed")}</p>}
 		{state.lastCancellation && <p role="status">{t(state.lastCancellation.status)}</p>}
-		{!state.requests.length ? <p role="status">{t("emptyRequests")}</p> : <div className="reqs">
-			{state.requests.map(request => <article className="req" key={request.userRegistrationState!.id}>
-				<span><b>{request.name}</b><br /><span className="when">{formatWhen(request.startsAt, i18n.language, timeZone)}</span></span>
-				<span className="side"><span className={`state ${request.userRegistrationState!.status}`}>{t(request.userRegistrationState!.status)}</span>
-					{upcomingConfirmedStart(request, now) !== null &&
-						<TextLink href={googleCalendarLink(request)} target="_blank" rel="noopener noreferrer">{t("addToGoogleCalendar")}</TextLink>}
-					{request.canCancelRegistration && <Ticket stub="✕" small tone="ghost" disabled={state.cancellingId !== null} onClick={() => cancel(request.userRegistrationState!.id)}>{t(state.cancellingId === request.userRegistrationState!.id ? "loading" : "cancel")}</Ticket>}</span>
-			</article>)}
+		{!state.requests.length ? <p className="ledger-empty" role="status">{t("emptyRequests")}</p> : <div className="reqs">
+			{state.requests.map(request => {
+				const registration = request.userRegistrationState!;
+				const past = registration.status === "cancelled" || registration.status === "rejected";
+				const date = new Date(request.startsAt);
+				const time = formatStart(request.startsAt, i18n.language, timeZone);
+				return <article className={`req tear-across${past ? " past" : ""}`} key={registration.id}>
+					<div className="date" aria-hidden="true"><b>{day.format(date)}</b><span>{month.format(date)}</span><time>{time}</time></div>
+					<div className="body">
+						<div className="what"><b>{request.name}</b><time dateTime={request.startsAt}>{fullDate.format(date)}, <bdi>{time}</bdi></time></div>
+						<div className="side">
+							<span className={`tag${past ? " off" : registration.status === "pending" ? " wait" : ""}`} role="status">{t(registration.status)}</span>
+							{upcomingConfirmedStart(request, now) !== null &&
+								<TextLink className="cal" href={googleCalendarLink(request)} target="_blank" rel="noopener noreferrer">{t("addToGoogleCalendar")}</TextLink>}
+							{request.canCancelRegistration && <Ticket stub="✕" small tone="ghost" aria-label={t("cancel")} disabled={state.cancellingId !== null}
+								onClick={() => cancel(registration.id)}>{t(state.cancellingId === registration.id ? "loading" : "cancelShort")}</Ticket>}
+						</div>
+					</div>
+				</article>;
+			})}
 		</div>}
 	</>;
 }
