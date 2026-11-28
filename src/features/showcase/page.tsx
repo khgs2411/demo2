@@ -8,6 +8,7 @@ import { Ticket } from "../../ui/ticket";
 import { FeatureSheet } from "./feature-sheet";
 import { Hero } from "./hero";
 import { HomePackages } from "./home-packages";
+import { WhyStrip } from "./why-strip";
 import "./home.css";
 
 export function ShowcasePage({ section }: { section?: ShowcaseSection }) {
@@ -20,6 +21,7 @@ export function ShowcasePage({ section }: { section?: ShowcaseSection }) {
 	}, [section]);
 	return <main data-module="showcase" className="showcase-page">
 		<Hero copy={copy} reduced={reduced} />
+		<WhyStrip copy={copy.whyMe} reduced={reduced} />
 		<FeatureSheet copy={copy} reduced={reduced} english={english} />
 		<section className="what-is-classkit" id="what-is-classkit" aria-labelledby="what-is-classkit-heading">
 			<div className="wrap">

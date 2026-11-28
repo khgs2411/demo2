@@ -1,4 +1,4 @@
-.chrome-wrap { max-inline-size: 1120px; margin-inline: auto; padding-inline: var(--gutter); }
+.chrome-wrap { max-inline-size: var(--measure); margin-inline: auto; padding-inline: var(--gutter); }
 .topline { position: sticky; inset-block-start: 0; z-index: 20; background: color-mix(in oklab, var(--paper), transparent 6%); color: var(--ink); backdrop-filter: blur(6px); }
 .topline .chrome-wrap { display: flex; align-items: center; gap: 24px; min-block-size: 68px; }
 .topline .mark { flex: none; display: inline-flex; align-items: center; gap: 10px; margin-inline-end: auto; font: 900 1.15rem/1 var(--font-display); text-decoration: none; }
