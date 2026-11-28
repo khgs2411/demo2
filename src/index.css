@@ -134,8 +134,8 @@ small { font-size: var(--text-small); line-height: var(--leading-small); }
  .shell-content h1 { max-inline-size: min(40vw, 560px); }
 }
 @media (prefers-reduced-motion: reduce) {
- .ticket { transition: none; }
- .ticket:hover { transform: none; }
+ .ticket, .topline .mark b { transition: none; }
+ .ticket:hover, .topline .mark:hover b { transform: none; }
 }
 
 .package-passes { display: grid; gap: 22px; padding-block: 16px; }

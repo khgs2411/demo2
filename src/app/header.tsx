@@ -13,7 +13,7 @@ export function Header() {
 	const route = useRoute();
 	const home = route?.page === "showcase";
 	return <header className={home ? "topline home-topline" : "topline"}><div className="chrome-wrap">
-		<a className="mark" href="#/">{t("brand")}</a>
+		<a className="mark" href="#/"><b aria-hidden="true">{t("brandMark")}</b><span>{t("brand")}</span></a>
 		<nav className="links" aria-label={t("navigation")}>
 			{home && <SectionLink targetId="get">{t("whatYouGet")}</SectionLink>}
 			<TextLink href="#/">{t("howItWorks")}</TextLink>

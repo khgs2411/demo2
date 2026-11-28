@@ -14,6 +14,16 @@ beforeEach(() => {
 });
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
+it.each(["he", "en"])("shows the decorative T inside the header home link in %s", async (language) => {
+	await i18n.changeLanguage(language);
+	window.history.replaceState(null, "", "#/");
+	render(<App />);
+	const header = within(screen.getByRole("banner"));
+	const brand = header.getByRole("link", { name: "Topsyde Studios" });
+	expect(brand.getAttribute("href")).toBe("#/");
+	expect(within(brand).getByText("T").getAttribute("aria-hidden")).toBe("true");
+});
+
 it.each(["he", "en"])("connects the home header and footer in %s", async (language) => {
 	await i18n.changeLanguage(language);
 	window.history.replaceState(null, "", "#/");
