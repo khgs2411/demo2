@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { brokenBookingButton as scenario } from "./scenarios/broken-booking-button";
 import { useSimulation } from "./use-simulation";
 import type { SimStep } from "./machine";
+import { i18n } from "../../i18n";
 
 const timedSteps = ["agent_fixing", "deploying"] as const;
 const deployMs = scenario.timing.scanStartMs + scenario.timing.scanDurationMs;
@@ -28,10 +29,70 @@ function advance(ms: number) {
 }
 
 describe("simulation effects", () => {
+	it("plays every beat untouched and waits for typing, flight, fix and deployment before advancing", async () => {
+		await i18n.changeLanguage("en");
+		const { result } = renderHook(() => useSimulation());
+		const { beatDwellMs, characterMs, flightMs, fixLineMs } = scenario.timing;
+		advance(beatDwellMs.bug - 1);
+		expect(result.current.state.step).toBe("bug");
+		advance(1);
+		expect(result.current.state.step).toBe("ticket_drafting");
+
+		const typedText = "Problem" + "The booking button is cut off on mobile" +
+			"The button on the home page goes off screen, so nobody can book.";
+		advance(typedText.length * characterMs + beatDwellMs.ticket_drafting - 1);
+		expect(result.current.state.step).toBe("ticket_drafting");
+		advance(1);
+		expect(result.current.state).toEqual({ step: "ticket_submitted", ticketId: scenario.ticket.id });
+
+		advance(flightMs + beatDwellMs.ticket_submitted - 1);
+		expect(result.current.state.step).toBe("ticket_submitted");
+		advance(1);
+		expect(result.current.state.step).toBe("agent_fixing");
+		for (let line = 1; line < scenario.logs.agent.length; line++) advance(fixLineMs);
+		expect(result.current.state).toHaveProperty("progress", 1);
+		advance(beatDwellMs.agent_fixing);
+		expect(result.current.state.step).toBe("deploying");
+		advance(deployMs);
+		expect(result.current.state).toHaveProperty("finished", true);
+		advance(beatDwellMs.deploying);
+		expect(result.current.state.step).toBe("live");
+		expect(vi.getTimerCount()).toBe(0);
+	});
+
+	it("pauses on a manual action and resumes from that beat", () => {
+		const { result } = renderHook(() => useSimulation());
+		act(() => { result.current.dispatch({ type: "step_selected", step: "ticket_submitted", ticketId: scenario.ticket.id }); });
+		act(() => { vi.runAllTimers(); });
+		expect(result.current.state.step).toBe("ticket_submitted");
+		act(() => { result.current.togglePlayback(); });
+		advance(scenario.timing.flightMs + scenario.timing.beatDwellMs.ticket_submitted);
+		expect(result.current.state.step).toBe("agent_fixing");
+	});
+
+	it("waits when hidden during a dwell and resumes when visible", () => {
+		const hidden = vi.spyOn(document, "hidden", "get").mockReturnValue(false);
+		try {
+			const { result } = renderHook(() => useSimulation());
+			const dwell = scenario.timing.beatDwellMs.bug;
+			advance(dwell / 2);
+			hidden.mockReturnValue(true);
+			act(() => { document.dispatchEvent(new Event("visibilitychange")); });
+			advance(dwell);
+			expect(result.current.state.step).toBe("bug");
+			hidden.mockReturnValue(false);
+			act(() => { document.dispatchEvent(new Event("visibilitychange")); });
+			advance(dwell);
+			expect(result.current.state.step).toBe("ticket_drafting");
+		} finally {
+			hidden.mockRestore();
+		}
+	});
+
 	it("waits for submission, streams the fix and only renders fixed after deployment", () => {
 		const { result } = renderHook(() => useSimulation());
 		expect(result.current.state).toEqual({ step: "bug" });
-		expect(vi.getTimerCount()).toBe(0);
+		expect(vi.getTimerCount()).toBe(1);
 		act(() => { result.current.dispatch({ type: "ticket_opened" }); });
 		act(() => { vi.runAllTimers(); result.current.dispatch({ type: "next_requested" }); });
 		expect(result.current.state).toEqual({ step: "ticket_drafting" });
@@ -64,7 +125,7 @@ describe("simulation effects", () => {
 		unmount();
 		expect(vi.getTimerCount()).toBe(0);
 		const remounted = renderHook(() => useSimulation());
-		act(() => { vi.runAllTimers(); });
+		advance(scenario.timing.beatDwellMs.bug - 1);
 		expect(remounted.result.current.state).toEqual({ step: "bug" });
 	});
 
@@ -100,6 +161,8 @@ describe("simulation effects", () => {
 	it("reduced motion has no timers and advances each step instantly on Next", () => {
 		media.matches = true;
 		const { result } = renderHook(() => useSimulation());
+		act(() => { vi.runAllTimers(); });
+		expect(result.current.state.step).toBe("bug");
 		act(() => { result.current.dispatch({ type: "next_requested" }); });
 		expect(result.current.state.step).toBe("ticket_drafting");
 		act(() => { result.current.dispatch({ type: "ticket_submitted", ticketId: scenario.ticket.id }); });

@@ -1,13 +1,40 @@
-import { useEffect, useReducer } from "react";
+import { useEffect, useReducer, useState, useSyncExternalStore } from "react";
+import { useTranslation } from "react-i18next";
 import { useReducedMotion } from "../../motion/use-reduced-motion";
 import { initialState, transition } from "./machine";
 import type { SimEvent } from "./machine";
+import { requestFields } from "./mock-admin";
 import { brokenBookingButton } from "./scenarios/broken-booking-button";
 import type { SimulationScenario } from "./scenarios/types";
 
+function subscribeToVisibility(onChange: () => void) {
+	document.addEventListener("visibilitychange", onChange);
+	return () => document.removeEventListener("visibilitychange", onChange);
+}
+
 export function useSimulation(scenario: SimulationScenario = brokenBookingButton) {
-	const [state, dispatch] = useReducer(transition, initialState);
+	const [state, send] = useReducer(transition, initialState);
+	const [autoplay, setAutoplay] = useState(true);
+	const { t } = useTranslation("admin-sim");
 	const reducedMotion = useReducedMotion();
+	const hidden = useSyncExternalStore(subscribeToVisibility, () => document.hidden, () => true);
+	const playing = autoplay && !reducedMotion && state.step !== "live";
+	const typingMs = state.step === "ticket_drafting"
+		? requestFields(scenario, t).reduce((total, field) => total + field.text.length, 0) * scenario.timing.characterMs
+		: 0;
+
+	function pausePlayback() {
+		setAutoplay(false);
+	}
+
+	function dispatch(event: SimEvent) {
+		pausePlayback();
+		send(event);
+	}
+
+	function togglePlayback() {
+		setAutoplay((enabled) => !enabled);
+	}
 
 	useEffect(() => {
 		if (state.step !== "ticket_submitted" || reducedMotion) return;
@@ -38,7 +65,6 @@ export function useSimulation(scenario: SimulationScenario = brokenBookingButton
 	}, [state, scenario, reducedMotion]);
 
 	useEffect(() => {
-		// Each beat waits for Next, as in the reference. Only its effects run on a clock.
 		if (reducedMotion) return;
 		let event: SimEvent;
 		let delay: number;
@@ -50,9 +76,26 @@ export function useSimulation(scenario: SimulationScenario = brokenBookingButton
 			event = { type: "deploy_finished" };
 			delay = scenario.timing.scanStartMs + scenario.timing.scanDurationMs;
 		} else return;
-		const timer = setTimeout(() => dispatch(event), delay);
+		const timer = setTimeout(() => send(event), delay);
 		return () => clearTimeout(timer);
 	}, [state, scenario, reducedMotion]);
 
-	return { state, dispatch, scenario, reducedMotion };
+	useEffect(() => {
+		if (!playing || hidden) return;
+		if (state.step === "agent_fixing" && state.progress < 1) return;
+		if (state.step === "deploying" && !state.finished) return;
+
+		const { timing } = scenario;
+		const effectMs = state.step === "ticket_drafting" ? typingMs
+			: state.step === "ticket_submitted" ? timing.flightMs : 0;
+		const event: SimEvent = state.step === "ticket_drafting"
+			? { type: "ticket_submitted", ticketId: scenario.ticket.id }
+			: { type: "next_requested" };
+		const timer = setTimeout(() => {
+			if (!document.hidden) send(event);
+		}, effectMs + timing.beatDwellMs[state.step]);
+		return () => clearTimeout(timer);
+	}, [state, scenario, playing, hidden, typingMs]);
+
+	return { state, dispatch, scenario, reducedMotion, playing, pausePlayback, togglePlayback };
 }

@@ -76,7 +76,7 @@ it.each(["03 With me", "04 AI assistant"])("leaving and returning during %s rest
 	expect(vi.getTimerCount()).toBe(0);
 	expect(document.querySelector(".sim-fly")).toBeNull();
 	act(() => { window.location.hash = "#/demo"; window.dispatchEvent(new HashChangeEvent("hashchange")); });
-	act(() => { vi.runAllTimers(); });
+	act(() => { vi.advanceTimersByTime(scenario.timing.beatDwellMs.bug - 1); });
 	expect(screen.getByRole("heading", { level: 1 }).textContent).toBe(i18n.t(scenario.beats.bug.titleKey, { ns: "admin-sim" }));
 });
 
