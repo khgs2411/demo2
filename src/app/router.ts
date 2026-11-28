@@ -4,7 +4,7 @@ export type ShowcaseSection = "get" | "what-is-classkit";
 
 export type Route =
 	| { page: "showcase"; section?: ShowcaseSection }
-	| { page: "packages" | "admin-sim" | "account" | "studio" | "forgot-password" | "reset-password" }
+	| { page: "packages" | "about" | "admin-sim" | "account" | "studio" | "forgot-password" | "reset-password" }
 	| { page: "booking"; packageId?: string };
 
 export function parseHash(hash: string): Route | null {
@@ -13,6 +13,7 @@ export function parseHash(hash: string): Route | null {
 	if (hash && !hash.startsWith("#/")) return null;
 	switch (hash) {
 		case "#/packages": return { page: "packages" };
+		case "#/about": return { page: "about" };
 		case "#/demo": return { page: "admin-sim" };
 		case "#/book": return { page: "booking" };
 		case "#/studio": return { page: "studio" };

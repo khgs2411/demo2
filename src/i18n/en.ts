@@ -5,6 +5,7 @@ export const en = {
 		howItWorks: "How it works",
 		liveDemo: "Live demo",
 		packages: "Packages",
+		about: "Why me",
 		bookMeeting: "Book a meeting",
 		ticketNumber: "№ 01",
 		myRequests: "My requests",
