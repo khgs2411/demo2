@@ -29,7 +29,7 @@ export function AgentPanel({ scenario, state, reducedMotion, draft }: AgentPanel
 		</div>
 		{state.step === "agent_fixing" && <progress className="sim-progress" max="1" value={reducedMotion ? 1 : state.progress} aria-label={t("progressLabel")} />}
 		<div className="sim-ship" aria-label={t("beats.deploy.title")}>
-			{scenario.deployStages.map((stage) => <div key={stage.labelKey} className={state.step === "deploying" ? "go" : ""} style={{ "--stage-delay": `${stage.startMs}ms`, "--stage-fill": `${scenario.timing.stageFillMs}ms` } as CSSProperties}>
+			{scenario.deployStages.map((stage) => <div key={stage.labelKey} className={state.step === "deploying" ? "go" : state.step === "live" ? "full" : ""} style={{ "--stage-delay": `${stage.startMs}ms`, "--stage-fill": `${scenario.timing.stageFillMs}ms` } as CSSProperties}>
 				<i aria-hidden="true" />{t(stage.labelKey)}
 			</div>)}
 		</div>

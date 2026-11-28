@@ -24,8 +24,8 @@
 
 .account-page .accepted-terms { margin-block-start: 48px; }
 .account-page .accepted-terms li { border-block-end: 1px solid var(--line); }
-.account-page .acceptance-row { inline-size: 100%; text-decoration: none; text-align: start; overflow-wrap: anywhere; }
-.account-page .acceptance-row .main { inline-size: 100%; display: flex; justify-content: space-between; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; padding-block: 14px; }
+.account-page .booking-link.acceptance-row { inline-size: 100%; text-decoration: none; text-align: start; overflow-wrap: anywhere; }
+.account-page .booking-link.acceptance-row .main { inline-size: 100%; display: flex; justify-content: space-between; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; padding-block: 14px; }
 .account-page .acceptance-row .when, .account-page .booking-terms { color: var(--muted); font-size: .84rem; }
 .account-page .booking-terms { padding-block-end: 16px; }
 .account-page :is(.account-details, .password-change) .fields { margin-block-start: 0; gap: 14px; }

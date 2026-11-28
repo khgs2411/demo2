@@ -445,7 +445,7 @@ it("finishes an existing account request after the same email returns from Googl
 
 it.each([
 	["en", "Send request", "Try again", "The terms of service are unavailable. Please try again later.", "We couldn't record your acceptance. Please try again.", "The terms of service have changed. Please read and accept them again."],
-	["he", "לשלוח בקשה", "ניסיון נוסף", "תנאי השירות אינם זמינים כרגע. כדאי לנסות שוב מאוחר יותר.", "לא הצלחנו לשמור את האישור. כדאי לנסות שוב.", "תנאי השירות השתנו. צריך לקרוא ולאשר אותם שוב."],
+	["he", "לשלוח בקשה", "לנסות שוב", "תנאי השירות אינם זמינים כרגע. כדאי לנסות שוב מאוחר יותר.", "לא הצלחנו לשמור את האישור. כדאי לנסות שוב.", "תנאי השירות השתנו. צריך לקרוא ולאשר אותם שוב."],
 ])("retries terms load and acceptance and requires fresh consent after a publication change in %s", async (locale, sendLabel, retryLabel, loadError, acceptError, changedMessage) => {
 	await i18n.changeLanguage(locale);
 	const terms = { ...signedInTerms, locale };

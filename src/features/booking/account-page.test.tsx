@@ -220,7 +220,7 @@ it("opens each acceptance's own snapshot, including rows with the same title", a
 
 it.each([
 	["en", "Terms you accepted", "Loading accepted terms…", "We couldn't load your accepted terms.", "Try again", "You haven't accepted any terms yet."],
-	["he", "התנאים שאישרת", "טוענים את התנאים שאישרת…", "לא הצלחנו לטעון את התנאים שאישרת.", "ניסיון נוסף", "עדיין לא אישרת תנאים."],
+	["he", "התנאים שאישרת", "טוענים את התנאים שאישרת…", "לא הצלחנו לטעון את התנאים שאישרת.", "לנסות שוב", "עדיין לא אישרת תנאים."],
 ])("shows localized accepted-terms states and retries in %s", async (language, heading, loading, failure, retry, empty) => {
 	await i18n.changeLanguage(language);
 	let fail!: () => void;

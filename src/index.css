@@ -13,7 +13,7 @@
 	--paper: #f2eadb; --paper-2: #e7dcc6; --ink: #1a1814;
 	--surface: #fdfaf4; --card: #f8f3ea; --sand: #e9dfcf; --forest: #24362c;
 	--coral: #ff5a36; --mustard: #f2b33d; --sage: #8db596; --glass: #cfe3e8;
-	--status-error: #ff4d6d;
+	--status-error: #ff4d6d; --fault-ink: #c2402a;
 	--line: rgb(26 24 20 / .09); --perf: rgb(26 24 20 / .2); --muted: rgb(26 24 20 / .62);
 	--font-display: "Frank Ruhl Libre", Georgia, serif;
 	--font-sans: "IBM Plex Sans Hebrew", "IBM Plex Sans", system-ui, sans-serif;
@@ -104,8 +104,8 @@ small { font-size: var(--text-small); line-height: var(--leading-small); }
 .pass-label { font: 500 var(--text-label)/var(--leading-small) var(--font-sans); letter-spacing: var(--tracking-label); text-transform: uppercase; }
 .gate-pass header { display: flex; justify-content: space-between; gap: 16px; margin-block-end: 18px; }
 .gate-pass dl > div { display: grid; gap: 6px; padding-block: 16px; border-block-end: 1.5px solid color-mix(in srgb, var(--ink), transparent 72%); transition: opacity var(--duration-ticket); }
-.pass dt { opacity: .7; display: flex; align-items: center; gap: 8px; }
-.pass dd { font: 700 var(--text-title)/var(--leading-heading) var(--font-display); }
+.gate-pass dt { opacity: .7; display: flex; align-items: center; gap: 8px; }
+.gate-pass dd { font: 700 var(--text-title)/var(--leading-heading) var(--font-display); }
 .pass .next { opacity: .42; }
 .pass .now dt::before { content: ""; inline-size: 8px; block-size: 8px; background: var(--ink); }
 .pass .done dt::after { content: "✓"; font-size: var(--text-small); line-height: var(--leading-small); }
@@ -173,13 +173,13 @@ small { font-size: var(--text-small); line-height: var(--leading-small); }
 
 .inner-page .lede { font-size: clamp(1.02rem, .96rem + .3vw, 1.18rem); color: var(--muted); max-inline-size: 42ch; margin-block-start: 14px; }
 .inner-page .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 24px; margin-block-start: 28px; }
-.inner-page .tag { display: inline-block; font: 500 .75rem/1.2 var(--font-sans); padding: 4px 8px; border-radius: 4px; background: rgb(141 181 150 / .32); white-space: nowrap; }
-.inner-page .tag.wait { background: rgb(242 179 61 / .38); }
-.inner-page .tag.off { background: rgb(26 24 20 / .07); color: var(--muted); }
-.inner-page .notice { padding: 12px 16px; border-radius: 12px; background: rgb(242 179 61 / .28); font-size: .92rem; max-inline-size: 46ch; margin-block-start: 18px; }
-.inner-page .notice.error { background: rgb(194 64 42 / .1); color: #8a2817; box-shadow: inset 3px 0 0 var(--status-error); }
-.inner-page:dir(rtl) .notice.error { box-shadow: inset -3px 0 0 var(--status-error); }
-.inner-page .notice.ok { background: rgb(141 181 150 / .28); }
+.inner-page .tag { display: inline-block; font: 500 .75rem/1.2 var(--font-sans); padding: 4px 8px; border-radius: 4px; background: color-mix(in srgb, var(--sage) 32%, transparent); white-space: nowrap; }
+.inner-page .tag.wait { background: color-mix(in srgb, var(--mustard) 38%, transparent); }
+.inner-page .tag.off { background: color-mix(in srgb, var(--ink) 7%, transparent); color: var(--muted); }
+.inner-page .notice { padding: 12px 16px; border-radius: 12px; background: color-mix(in srgb, var(--mustard) 28%, transparent); font-size: .92rem; max-inline-size: 46ch; margin-block-start: 18px; }
+.inner-page .notice.error { background: color-mix(in srgb, var(--fault-ink) 10%, transparent); color: #8a2817; box-shadow: inset 3px 0 0 var(--fault-ink); }
+.inner-page:dir(rtl) .notice.error { box-shadow: inset -3px 0 0 var(--fault-ink); }
+.inner-page .notice.ok { background: color-mix(in srgb, var(--sage) 28%, transparent); }
 
 /* Forms: plain fields on the paper, no panels */
 .inner-page .fields { display: grid; gap: 18px; border: 0; max-inline-size: 440px; margin-block-start: 26px; }

@@ -118,6 +118,7 @@
 .book .time .stub { display: none; }
 .book .package-row .pr { text-align: end; }
 .book .week-nav .range { text-align: center; }
+@media (max-width: 440px) { .book .week-nav { font-size: .88rem; } .book .week-nav .range { font-size: .9rem; } }
 .book .day-tab { background: transparent; mask: none; display: block; }
 .book .day-tab .main { padding: 0; display: grid; }
 .book .day-tab .stub { display: none; }
